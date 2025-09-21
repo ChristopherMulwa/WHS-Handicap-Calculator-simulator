@@ -1,0 +1,2354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Golfers & Scores - WHS Simulator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* Shared base styles */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f2f5;
+            color: #1a202c;
+            line-height: 1.6;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        .main-container { flex-grow: 1; }
+        .card {
+            background-color: white;
+            border-radius: 0.75rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.07), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+            transition: box-shadow 0.3s ease-in-out;
+        }
+        .card:hover {
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        .nav-link {
+            transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out, border-color 0.2s ease-in-out, transform 0.1s ease-in-out;
+            border-bottom: 4px solid transparent;
+            text-decoration: none;
+            color: #4a5568;
+            padding-top: 1rem;
+            padding-bottom: 1rem;
+        }
+        .nav-link.active {
+            background-color: transparent;
+            color: #2c5282;
+            border-bottom-color: #2c5282;
+            font-weight: 600;
+        }
+        .nav-link:not(.active):hover {
+            background-color: #edf2f7;
+            color: #2b6cb0;
+            transform: translateY(-1px);
+        }
+        .form-input, .form-select {
+            border-color: #cbd5e0;
+            border-radius: 0.5rem;
+            padding: 0.75rem 1rem;
+            transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+            width: 100%;
+            background-color: #fdfdfe;
+        }
+        .form-input:disabled, .form-select:disabled {
+            background-color: #e2e8f0; /* Slightly grayer for disabled */
+            color: #718096;
+            cursor: not-allowed;
+        }
+        .form-input:focus, .form-select:focus {
+            border-color: #2b6cb0;
+            box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.3);
+            outline: none;
+            background-color: white;
+        }
+        label {
+            color: #2d3748;
+            font-weight: 500;
+        }
+        .hole-details-container::-webkit-scrollbar { width: 10px; }
+        .hole-details-container::-webkit-scrollbar-track { background: #e2e8f0; border-radius: 10px; }
+        .hole-details-container::-webkit-scrollbar-thumb { background: #a0aec0; border-radius: 10px; border: 2px solid #e2e8f0; }
+        .hole-details-container::-webkit-scrollbar-thumb:hover { background: #718096; }
+
+        /* Score color coding */
+        .score-eagle { background-color: #f97316 !important; color: white !important; }
+        .score-birdie { background-color: #b91c1c !important; color: white !important; }
+        .score-par { background-color: #22c55e !important; color: white !important; }
+        .score-bogey { background-color: #65a30d !important; color: white !important; }
+        .score-double-bogey { background-color: #475569 !important; color: white !important; }
+        .score-triple-bogey { background-color: #1e293b !important; color: white !important; }
+        .score-hole-in-one { background-color: #fbbf24 !important; color: black !important; }
+        .score-albatross { background-color: #15803d !important; color: white !important; }
+
+        /* Score legend */
+        .score-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 1rem;
+            padding: 1rem;
+            background-color: #f8fafc;
+            border-radius: 0.5rem;
+            border: 1px solid #e2e8f0;
+        }
+        .score-legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.875rem;
+        }
+        .button { /* Generic button base */
+            font-weight: 500;
+            padding: 0.625rem 1.25rem;
+            border-radius: 0.5rem;
+            transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out, box-shadow 0.2s ease-in-out;
+            border: none;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            box-shadow: 0 2px 4px 0 rgba(0,0,0,0.1);
+        }
+        .button:hover { transform: translateY(-1px); }
+        .button:active { transform: translateY(0px); }
+
+        .button-primary {
+            background-color: #2c5282; /* Dark Blue */
+            color: white;
+            font-weight: 600;
+            padding: 0.75rem 1.5rem;
+        }
+        .button-primary:hover { background-color: #2a4365; } /* Darker Blue */
+        .button-primary[disabled] { background-color: #a0aec0; cursor: not-allowed; box-shadow: none; }
+
+        .button-secondary {
+            background-color: #64748b; /* Slate 500 */
+            color: white;
+        }
+        .button-secondary:hover { background-color: #475569; } /* Slate 600 */
+        
+        .button-tertiary {
+            background-color: #4a5568; /* Cool Gray 600 */
+            color: white;
+        }
+        .button-tertiary:hover { background-color: #2d3748; } /* Cool Gray 700 */
+
+        .button-edit, .button-edit-name { /* Combined styles for edit buttons */
+            background-color: #2b6cb0; /* Indigo 600 */
+            color: white;
+            font-size: 0.75rem; /* Smaller for table actions */
+            padding: 0.375rem 0.75rem;
+        }
+        .button-edit:hover, .button-edit-name:hover { background-color: #2c5282; } /* Darker Indigo */
+
+
+        .button-danger {
+            background-color: #c53030; /* Red 600 */
+            color: white;
+            font-weight: 500;
+            padding: 0.375rem 0.75rem; /* Smaller for table actions */
+            border-radius: 0.375rem;
+            transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out;
+            font-size: 0.75rem;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 1px 2px 0 rgba(0,0,0,0.1);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+        }
+        .button-danger:hover { background-color: #9b2c2c; transform: translateY(-1px); } /* Darker Red */
+        .button-danger:active { transform: translateY(0px); }
+        .button-danger i, .button-edit i, .button-edit-name i { margin-right: 0.25rem; }
+
+        h1.page-title { font-size: 2rem; line-height: 2.5rem; color: #1a365d; letter-spacing: -0.025em; }
+        h2.section-title {
+            font-size: 1.5rem;
+            line-height: 2rem;
+            color: #2c5282;
+            padding-bottom: 0.75rem;
+            border-bottom-width: 2px;
+            border-color: #e2e8f0;
+        }
+        @media (min-width: 768px) {
+            h1.page-title { font-size: 2.5rem; line-height: 1; }
+            h2.section-title { font-size: 1.75rem; line-height: 2.25rem; }
+        }
+        .footer {
+            text-align: center;
+            margin-top: auto;
+            padding: 2rem 1rem;
+            border-top: 1px solid #e2e8f0;
+            background-color: #ffffff;
+        }
+        .footer p { color: #718096; }
+        .hole-input-item { background-color: #f8fafc; border: 1px solid #e2e8f0; }
+        .hole-input-item label { font-size: 0.8rem; color: #475569; }
+        #calculationLog {
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.5rem;
+            font-family: 'Menlo', 'Monaco', 'Consolas', "Liberation Mono", "Courier New", monospace;
+            line-height: 1.5;
+            color: #334155;
+        }
+        #calculationLog h3 { color: #1e293b; }
+        #calculationLog pre { white-space: pre-wrap; word-wrap: break-word; }
+        .golfer-list-container {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.5rem;
+        }
+        .golfer-table { width: 100%; border-collapse: collapse; }
+        .golfer-table th, .golfer-table td {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+            font-size: 0.875rem;
+            vertical-align: middle;
+        }
+        .golfer-table th {
+            background-color: #f8fafc;
+            font-weight: 600;
+            color: #475569;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        .golfer-table tbody tr:last-child td { border-bottom: none; }
+        .golfer-table tbody tr:nth-child(even) { background-color: #fdfdfe; }
+        .golfer-table tbody tr:hover { background-color: #eff6ff; }
+        .golfer-table .hi-value { font-weight: 600; }
+        .golfer-table .action-cell { text-align: right; white-space: nowrap; }
+        .golfer-table .action-cell button { margin-left: 0.375rem; } 
+        .golfer-list-container::-webkit-scrollbar { width: 8px; }
+        .golfer-list-container::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 8px; }
+        .golfer-list-container::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 8px; }
+        .golfer-list-container::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+        }
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        .modal-content {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            width: 90%;
+            max-width: 800px; 
+            max-height: 80vh; 
+            overflow-y: auto; 
+            position: relative;
+            transform: translateY(-20px);
+            transition: transform 0.3s ease-in-out;
+        }
+        .modal-overlay.active .modal-content {
+            transform: translateY(0);
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #2c5282;
+        }
+        .modal-close-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: #718096;
+            cursor: pointer;
+            padding: 0.5rem;
+            line-height: 1;
+        }
+        .modal-close-btn:hover { color: #2d3748; }
+        .scores-table-container {
+            max-height: calc(80vh - 12rem); 
+            overflow-y: auto;
+            overflow-x: auto; /* Added for horizontal scrolling */
+        }
+        .scores-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+        .scores-table th, .scores-table td {
+            padding: 0.6rem 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid #e9edf2;
+            vertical-align: middle;
+        }
+        .scores-table th { background-color: #f9fafb; font-weight: 600; color: #4a5568; position: sticky; top: 0; z-index:1; }
+        .scores-table tbody tr:last-child td { border-bottom: none; }
+        .scores-table tbody tr:nth-child(even) { background-color: #fdfdfe; }
+        .scores-table tbody tr:hover { background-color: #f0f5ff; }
+        .scores-table .action-cell { text-align: right; white-space: nowrap; }
+        .scores-table .button-edit, .scores-table .button-danger { margin-left: 0.25rem; }
+        .pcc-info-text { font-size: 0.8rem; color: #4a5568; margin-left: 0.5rem; }
+        .hole-score-info-text {font-size: 0.75rem; color: #4b5563; margin-top: 0.25rem;}
+
+
+        /* Styles for score input visibility on small screens */
+        @media (max-width: 767px) {
+            .score-table-container input[id^="score-input-"] {
+                text-shadow: 0 0 5px rgba(0,0,0,0.7), 0 0 3px rgba(0,0,0,0.7);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container container mx-auto p-4 sm:p-6 md:p-8 max-w-6xl">
+        <header class="mb-8 md:mb-10 text-center">
+            <h1 class="page-title font-bold">GolfPal WHS calculator</h1> </header>
+
+        <nav class="mb-8 md:mb-10 card !shadow-none border-b-2 border-gray-200 rounded-b-none">
+            <div class="flex">
+                <a href="index.html" class="nav-link flex-1 py-3 sm:py-4 px-2 sm:px-4 text-center font-medium text-xs sm:text-sm md:text-base focus:outline-none">
+                    <i class="fas fa-flag mr-1 sm:mr-2"></i>Course Management
+                </a>
+                <a href="golfers.html" class="nav-link active flex-1 py-3 sm:py-4 px-2 sm:px-4 text-center font-medium text-xs sm:text-sm md:text-base focus:outline-none">
+                    <i class="fas fa-users mr-1 sm:mr-2"></i>Golfers &amp; Scores
+                </a>
+                <a href="overview.html" class="nav-link flex-1 py-3 sm:py-4 px-2 sm:px-4 text-center font-medium text-xs sm:text-sm md:text-base focus:outline-none">
+                    <i class="fas fa-chart-line mr-1 sm:mr-2"></i>Handicap Overview
+                </a>
+                <a href="help.html" data-nav="help.html" class="nav-link flex-1 py-3 sm:py-4 px-2 sm:px-4 text-center font-medium text-xs sm:text-sm md:text-base focus:outline-none">
+                    <i class="fas fa-question-circle mr-1 sm:mr-2"></i>Help
+                </a>
+            </div>
+        </nav>
+
+        <main class="space-y-8">
+            <section class="card p-6 sm:p-8">
+                <h2 class="section-title font-semibold mb-8">Add New Golfer</h2>
+                <form id="addGolferForm" class="space-y-5">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-5">
+                        <div>
+                            <label for="golferNameInput" class="block text-sm font-medium mb-1">Golfer's Name <span class="text-red-500">*</span></label>
+                            <input type="text" id="golferNameInput" required class="form-input" placeholder="e.g., First Name, Last Name">
+                        </div>
+                        <div>
+                            <label for="initialHiInput" class="block text-sm font-medium mb-1">Initial HI (Optional)</label>
+                            <input type="number" step="0.1" id="initialHiInput" class="form-input" placeholder="e.g., 18.2 (-5.0 to 54.0)">
+                        </div>
+                        <div>
+                            <label for="initialLhiInput" class="block text-sm font-medium mb-1">Initial LHI (Optional)</label>
+                            <input type="number" step="0.1" id="initialLhiInput" class="form-input" placeholder="e.g., 17.5 (-5.0 to 54.0)">
+                        </div>
+                    </div>
+                    <div class="text-left pt-2">
+                        <button type="submit" class="button button-primary">
+                            <i class="fas fa-user-plus mr-2"></i>Add Golfer
+                        </button>
+                    </div>
+                </form>
+            </section>
+
+            <section class="card p-6 sm:p-8">
+                <h2 class="section-title font-semibold mb-6">Registered Golfers</h2>
+                <div id="savedGolfersListContainer" class="golfer-list-container">
+                    <p class="italic text-gray-500 p-4">Loading golfers...</p>
+                    </div>
+            </section>
+
+            <section id="scoreEntrySection" class="card p-6 sm:p-8">
+                <h2 id="scoreFormTitle" class="section-title font-semibold mb-8">Enter New Score</h2>
+                <form id="scoreEntryForm" class="space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-5 items-end">
+                        <div>
+                            <label for="scoreGolferSelect" class="block text-sm font-medium mb-1">Golfer <span class="text-red-500">*</span></label>
+                            <select id="scoreGolferSelect" required class="form-select"><option value="">Loading...</option></select>
+                        </div>
+                        <div>
+                            <label for="scoreCourseSelect" class="block text-sm font-medium mb-1">Course <span class="text-red-500">*</span></label>
+                            <select id="scoreCourseSelect" required class="form-select"><option value="">Loading...</option></select>
+                        </div>
+                        <div>
+                            <label for="scoreTeeSelect" class="block text-sm font-medium mb-1">Tee <span class="text-red-500">*</span></label>
+                            <select id="scoreTeeSelect" required class="form-select" disabled><option value="">Select course first...</option></select>
+                        </div>
+                        <div>
+                            <label for="scoreDateInput" class="block text-sm font-medium mb-1">Date of Round <span class="text-red-500">*</span></label>
+                            <input type="date" id="scoreDateInput" required class="form-input">
+                        </div>
+                        <div class="flex flex-col">
+                            <label for="scorePccAdjustment" class="block text-sm font-medium mb-1">PCC Adjustment</label>
+                            <div class="flex items-center">
+                                <select id="scorePccAdjustment" name="scorePccAdjustment" class="form-select" title="Playing Conditions Calculation Adjustment">
+                                    <option value="-1">-1 : Easier Conditions</option>
+                                    <option value= "0">0 : Normal Conditions</option>
+                                    <option value= "1">+1 : Slightly Harder</option>
+                                    <option value= "2">+2 : Harder</option>
+                                    <option value= "3">+3 : Much Harder</option>
+                                </select>
+                            </div>
+                            <span id="automatedPccDisplay" class="pcc-info-text mt-1"></span>
+                        </div>
+                        <div>
+                            <label for="actualHolesPlayed_GS" class="block text-sm font-medium mb-1">Actual Holes Played <span class="text-red-500">*</span></label>
+                            <input type="number" id="actualHolesPlayed_GS" name="actualHolesPlayed_GS" class="form-input" min="9" max="18" step="1" required disabled>
+                            <p id="actualHolesPlayedHelper_GS" class="text-xs text-gray-500 mt-1 hidden">Enter 9 for a 9-hole round, or 10-18 for an 18-hole round.</p>
+                        </div>
+                        <div>
+                            <label for="scoreDescriptionSelect" class="block text-sm font-medium mb-1">Score Type</label>
+                            <select id="scoreDescriptionSelect" name="scoreDescriptionSelect" class="form-select" title="Type of round played">
+                                <option value="General Play">General Play</option>
+                                <option value="Competition - Stroke Play">Competition - Stroke Play</option>
+                                <option value="Competition - Stableford">Competition - Stableford</option>
+                                <option value="Competition - Other">Competition - Other</option>
+                                <option value="Social Round">Social Round</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="pt-4 border-t border-gray-200">
+                         <button type="button" id="calculatePccButton" class="button button-tertiary text-sm" title="Calculate PCC for selected Tee and Date based on scores in system">
+                            <i class="fas fa-cloud-sun-rain mr-2"></i>Calculate PCC (Simulated)
+                        </button>
+                        <p class="text-xs text-gray-500 mt-1">Calculates PCC for the currently selected Tee & Date using all scores in the system. This will update PCC for relevant scores and trigger HI recalculations.</p>
+                    </div>
+
+                    <div class="pt-5 border-t border-gray-200">
+                        <p id="scoreHoleEntriesPrompt" class="text-sm text-gray-500 mb-4">Select golfer, course, and tee to enter scores for each hole.</p>
+                        <div id="scoreHoleEntriesContainer" class="space-y-4">
+                            <div id="frontNineScorecardContainer" class="mb-6 score-table-container"></div>
+                            <div id="backNineScorecardContainer" class="mb-6 score-table-container"></div>
+                            <div id="overallTotalsContainer" class="mt-6 pt-4 border-t border-gray-300"></div>
+                        </div>
+                        <p id="holeScoreHelpText" class="hole-score-info-text mt-4 hidden">For holes not played or where you picked up, leave blank. Net Double Bogey will be applied.</p>
+                    </div>
+                    <div class="pt-5 text-right space-x-3">
+                         <button type="button" id="cancelScoreEditButton" class="button button-secondary hidden">
+                            <i class="fas fa-times mr-2"></i>Cancel Edit
+                        </button>
+                        <button type="submit" id="submitScoreButton" class="button button-primary" disabled>
+                           <i class="fas fa-calculator mr-2"></i>Submit Score & Calculate HI
+                        </button>
+                    </div>
+                </form>
+                <div class="mt-8">
+                    <button id="toggleCalcLog" class="button button-secondary mb-2" aria-expanded="false" aria-controls="calculationLog">
+                        <i class="fas fa-calculator mr-2"></i>Show Calculation Log
+                    </button>
+                    <div id="calculationLog" class="hidden p-5 max-h-[30rem] overflow-y-auto text-xs shadow-inner border border-gray-200 rounded-lg">
+                        <h3 class="font-semibold text-base text-gray-700 mb-3 sticky top-0 bg-white py-2 -mt-5 -mx-5 px-5 border-b border-gray-200 z-10">Calculation Log:</h3>
+                        <pre class="whitespace-pre-wrap pt-2"></pre>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <div id="manageScoresModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="manageScoresModalTitle" class="modal-title">Manage Scores for [Golfer Name]</h3>
+                <button id="closeManageScoresModalBtn" class="modal-close-btn" title="Close">&times;</button>
+            </div>
+            <div id="manageScoresModalBody" class="scores-table-container">
+                <p class="italic text-gray-500 p-4">Loading scores...</p>
+                </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <p>&copy; <span id="currentYear"></span> WHS Simulator. Developed and maintained by SIRCH SOLUTIONS KE. For educational purposes only.</p>
+    </footer>
+
+    <script>
+        // Represents a hole where no score was entered or the player picked up.
+        const NO_SCORE_MARKER = null; 
+
+        // --- Constants ---
+        const LOCAL_STORAGE_COURSES_KEY_GS = 'whsSimulatorCourses_v3_predefined_shells';
+        const LOCAL_STORAGE_GOLFERS_KEY_GS = 'whsSimulatorGolfers_v8_whs_compliance'; 
+        const MIN_SCORES_FOR_LHI_CAPS = 20; 
+        const MIN_HOLES_FOR_HI_ESTABLISHMENT = 54;
+        const MIN_ELIGIBLE_SCORES_FOR_PCC_GS = 8; 
+        const PLACEHOLDER_EXPECTED_STD_DEV_PCC_GS = 3.0; 
+
+        // --- Global Data Arrays ---
+        let userCourses_GS = [];
+        let golfers_GS = [];
+        let currentEditingScoreId = null; 
+        let currentManagingScoresGolferId = null; 
+
+        // --- DOM Element References ---
+        let addGolferFormEl, golferNameInputEl, initialHiInputEl, initialLhiInputEl, savedGolfersListContainerEl;
+        let scoreEntryFormEl, scoreGolferSelectEl, scoreCourseSelectEl, scoreTeeSelectEl, scoreDateInputEl,
+            scorePccAdjustmentEl, scoreDescriptionSelectEl,
+            scoreHoleEntriesContainerEl, scoreHoleEntriesPromptEl, scoreFormTitleEl, scoreEntrySectionEl,
+            submitScoreButtonEl, cancelScoreEditButtonEl, calculationLogPreEl,
+            manageScoresModalEl, manageScoresModalTitleEl, manageScoresModalBodyEl, closeManageScoresModalBtnEl;
+        let frontNineScorecardContainerEl, backNineScorecardContainerEl, overallTotalsContainerEl, holeScoreHelpTextEl;
+        
+        // --- Utility Functions ---
+        function formatDate_GS(dateString) { 
+            if (!dateString) return 'N/A';
+            try { return new Date(dateString + 'T00:00:00').toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+            } catch (e) { console.warn(`Could not format date: ${dateString}`, e); return dateString; }
+        }
+        function calculateRawGross_GS(rawScores, numHoles) {
+            if (!rawScores) return 'N/A'; let total = 0;
+            const validNumHoles = (typeof numHoles === 'number' && numHoles > 0) ? numHoles : (rawScores['18'] !== undefined ? 18 : 9);
+            for (let i = 1; i <= validNumHoles; i++) { 
+                if (rawScores[i] !== NO_SCORE_MARKER && rawScores[i] !== undefined && !isNaN(parseInt(rawScores[i]))) {
+                    total += parseInt(rawScores[i]); 
+                }
+            }
+            return total;
+         }
+        function generateUniqueId_GS(prefix = '') { return `${prefix}${Date.now()}${Math.random().toString(36).substr(2, 9)}`; }
+        function saveDataToLocalStorage_GS(key, data) { 
+            try { localStorage.setItem(key, JSON.stringify(data)); } catch (e) {
+                console.error(`Error saving data for key "${key}": ${e.message}`, e);
+                if (e.name === 'QuotaExceededError') alert(`Could not save data for "${key}". Local storage is full.`);
+                else alert(`Could not save data for "${key}". An unexpected error occurred.`);
+            }
+        }
+        function loadDataFromLocalStorage_GS(key, defaultValue = []) {
+            try {
+                const storedData = localStorage.getItem(key);
+                if (storedData) {
+                    const parsedData = JSON.parse(storedData);
+                    if (!Array.isArray(parsedData)) { return defaultValue; } 
+                    if (key === LOCAL_STORAGE_GOLFERS_KEY_GS && parsedData.length > 0) {
+                        parsedData.forEach(golfer => {
+                            if (typeof golfer.hiEstablished === 'undefined') golfer.hiEstablished = (golfer.scores && golfer.scores.length > 0 && golfer.hi !== null); 
+                            if (typeof golfer.totalHolesPlayedForEstablishment === 'undefined') {
+                                golfer.totalHolesPlayedForEstablishment = golfer.scores ? golfer.scores.reduce((sum, s) => sum + (s.playedHoles || s.numHolesPlayed || (s.teeId && userCourses_GS.find(t=>t.id===s.teeId) ? userCourses_GS.find(t=>t.id===s.teeId).numHoles : 0)), 0) : 0;
+                            }
+                            if (golfer.scores && Array.isArray(golfer.scores)) {
+                                golfer.scores.forEach(score => {
+                                    if (typeof score.originalNineHoleSD === 'undefined') score.originalNineHoleSD = null;
+                                    if (typeof score.esrAppliedValue === 'undefined') score.esrAppliedValue = 0;
+                                    if (typeof score.intendedHoles === 'undefined') score.intendedHoles = score.numHolesPlayed; 
+                                    if (typeof score.playedHoles === 'undefined') score.playedHoles = score.numHolesPlayed; 
+                                    if (typeof score.pccApplied === 'undefined') score.pccApplied = 0;
+                                });
+                            }
+                            if (typeof golfer.hiHistory === 'undefined') golfer.hiHistory = [];
+                            if (typeof golfer.initialHi === 'undefined') golfer.initialHi = null; 
+                            if (typeof golfer.initialLhi === 'undefined') golfer.initialLhi = null;
+                        });
+                    }
+                    return parsedData;
+                }
+            } catch (e) { console.error(`Error loading data for key "${key}": ${e.message}`, e); }
+            return defaultValue;
+         }
+        function setActiveNavLink_GS() { 
+            document.querySelectorAll('nav a.nav-link').forEach(link => {
+                link.classList.remove('active');
+                if (window.location.pathname.endsWith(link.getAttribute('href'))) link.classList.add('active');
+            });
+        }
+        function cacheGolfersPageElements() { 
+            addGolferFormEl = document.getElementById('addGolferForm');
+            golferNameInputEl = document.getElementById('golferNameInput');
+            initialHiInputEl = document.getElementById('initialHiInput');
+            initialLhiInputEl = document.getElementById('initialLhiInput');
+            savedGolfersListContainerEl = document.getElementById('savedGolfersListContainer');
+            scoreEntrySectionEl = document.getElementById('scoreEntrySection');
+            scoreEntryFormEl = document.getElementById('scoreEntryForm');
+            scoreGolferSelectEl = document.getElementById('scoreGolferSelect');
+            scoreCourseSelectEl = document.getElementById('scoreCourseSelect');
+            scoreTeeSelectEl = document.getElementById('scoreTeeSelect');
+            scoreDateInputEl = document.getElementById('scoreDateInput');
+            scorePccAdjustmentEl = document.getElementById('scorePccAdjustment');
+            scoreDescriptionSelectEl = document.getElementById('scoreDescriptionSelect');
+            actualHolesPlayedInputEl = document.getElementById('actualHolesPlayed_GS');
+            actualHolesPlayedHelperEl = document.getElementById('actualHolesPlayedHelper_GS');
+            scoreHoleEntriesContainerEl = document.getElementById('scoreHoleEntriesContainer');
+            scoreHoleEntriesPromptEl = document.getElementById('scoreHoleEntriesPrompt');
+            scoreFormTitleEl = document.getElementById('scoreFormTitle');
+            submitScoreButtonEl = document.getElementById('submitScoreButton');
+            cancelScoreEditButtonEl = document.getElementById('cancelScoreEditButton');
+            calculationLogPreEl = document.querySelector('#calculationLog pre');
+            manageScoresModalEl = document.getElementById('manageScoresModal');
+            manageScoresModalTitleEl = document.getElementById('manageScoresModalTitle');
+            manageScoresModalBodyEl = document.getElementById('manageScoresModalBody');
+            closeManageScoresModalBtnEl = document.getElementById('closeManageScoresModalBtn');
+            calculatePccButtonEl = document.getElementById('calculatePccButton'); 
+            automatedPccDisplayEl = document.getElementById('automatedPccDisplay'); 
+            holeScoreHelpTextEl = document.getElementById('holeScoreHelpText'); // Cache the new help text element
+            frontNineScorecardContainerEl = document.getElementById('frontNineScorecardContainer');
+            backNineScorecardContainerEl = document.getElementById('backNineScorecardContainer');
+            overallTotalsContainerEl = document.getElementById('overallTotalsContainer');
+        }
+
+        // --- Golfer Management Functions ---
+        function handleAddGolferSubmit_GS(event) { /* ... (same as before) ... */ 
+            event.preventDefault();
+            const golferName = golferNameInputEl.value.trim();
+            const initialHiStr = initialHiInputEl.value.trim();
+            const initialLhiStr = initialLhiInputEl.value.trim();
+            if (!golferName) { alert("Please enter the golfer's name."); return; }
+            let initialHi = null, initialLhi = null;
+            if (initialHiStr) {
+                initialHi = parseFloat(initialHiStr);
+                if (isNaN(initialHi) || initialHi < -5.0 || initialHi > 54.0) { alert("Invalid Initial HI."); return; }
+                initialHi = parseFloat(initialHi.toFixed(1));
+            }
+            if (initialLhiStr) {
+                initialLhi = parseFloat(initialLhiStr);
+                 if (isNaN(initialLhi) || initialLhi < -5.0 || initialLhi > 54.0) { alert("Invalid Initial LHI."); return; }
+                initialLhi = parseFloat(initialLhi.toFixed(1));
+            }
+            if (initialHi !== null && initialLhi === null) initialLhi = initialHi;
+            else if (initialHi !== null && initialLhi !== null && initialLhi > initialHi) initialLhi = initialHi;
+
+            const newGolfer = {
+                id: generateUniqueId_GS('G'), name: golferName, scores: [], 
+                initialHi: initialHi, initialLhi: initialLhi,
+                hi: initialHi, lhi: initialLhi, 
+                hiEstablished: initialHi !== null, 
+                totalHolesPlayedForEstablishment: initialHi !== null ? MIN_HOLES_FOR_HI_ESTABLISHMENT : 0, 
+                lastHiReason: initialHi !== null ? "Initial Value (Manual)" : null, 
+                hiHistory: initialHi !== null ? [{ date: new Date().toISOString().slice(0,10), hi: initialHi, reason: "Initial Value (Manual)" }] : []
+            };
+            golfers_GS.push(newGolfer);
+            saveDataToLocalStorage_GS(LOCAL_STORAGE_GOLFERS_KEY_GS, golfers_GS);
+            renderSavedGolfers_GS(); populateGolferSelect_GS(); addGolferFormEl.reset();
+            alert(`Golfer "${golferName}" added successfully.`);
+        }
+        function renderSavedGolfers_GS() { /* ... (same as before, including edit name button) ... */ 
+            if (!savedGolfersListContainerEl) return;
+            savedGolfersListContainerEl.innerHTML = '';
+            if (golfers_GS.length === 0) {
+                savedGolfersListContainerEl.innerHTML = '<p class="italic text-gray-500 p-4">No golfers added.</p>'; return;
+            }
+            const table = document.createElement('table'); table.className = 'golfer-table';
+            table.innerHTML = `<thead><tr><th>Name</th><th>HI</th><th>LHI</th><th>Scores</th><th class="action-cell">Actions</th></tr></thead><tbody></tbody>`;
+            const tbody = table.querySelector('tbody');
+            golfers_GS.sort((a,b) => a.name.localeCompare(b.name)).forEach(golfer => {
+                const tr = tbody.insertRow(); tr.insertCell().textContent = golfer.name;
+                const hiCell = tr.insertCell();
+                hiCell.textContent = golfer.hiEstablished && golfer.hi !== null ? golfer.hi.toFixed(1) : (golfer.initialHi !== null ? golfer.initialHi.toFixed(1) + " (Initial)" : 'Pending');
+                hiCell.className = 'hi-value ' + (golfer.hiEstablished && golfer.hi !== null ? (golfer.hi <= 10 ? 'text-green-600' : golfer.hi <= 20 ? 'text-orange-500' : 'text-red-600') : 'text-gray-500');
+                tr.insertCell().textContent = golfer.lhi !== null ? golfer.lhi.toFixed(1) : 'N/A';
+                tr.insertCell().textContent = golfer.scores ? golfer.scores.length : 0;
+                const actionCell = tr.insertCell(); actionCell.className = 'action-cell';
+                
+                const editNameButton = document.createElement('button');
+                editNameButton.className = 'button button-edit-name edit-golfer-name-btn'; 
+                editNameButton.dataset.golferId = golfer.id;
+                editNameButton.innerHTML = `<i class="fas fa-user-edit"></i> Name`;
+                editNameButton.title = `Edit ${golfer.name}'s Name`;
+                editNameButton.addEventListener('click', (e) => handleEditGolferName_GS(e.target.closest('button').dataset.golferId));
+                actionCell.appendChild(editNameButton);
+
+                const manageScoresButton = document.createElement('button');
+                manageScoresButton.className = 'button button-secondary text-xs !py-1 !px-2'; 
+                manageScoresButton.dataset.golferId = golfer.id;
+                manageScoresButton.innerHTML = `<i class="fas fa-list-ol mr-1"></i>Scores`;
+                manageScoresButton.title = `Manage Scores for ${golfer.name}`;
+                manageScoresButton.addEventListener('click', () => openManageScoresModal_GS(golfer.id));
+                actionCell.appendChild(manageScoresButton);
+                
+                const deleteButton = document.createElement('button');
+                deleteButton.className = 'button button-danger delete-golfer-btn';
+                deleteButton.dataset.golferId = golfer.id;
+                deleteButton.innerHTML = `<i class="fas fa-trash-alt"></i>`;
+                deleteButton.title = `Delete ${golfer.name}`;
+                deleteButton.addEventListener('click', (e) => deleteGolfer_GS(e.target.closest('button').dataset.golferId));
+                actionCell.appendChild(deleteButton);
+            });
+            savedGolfersListContainerEl.appendChild(table);
+        }
+        function handleEditGolferName_GS(golferId) { /* ... (same as before) ... */ 
+            const golferIndex = golfers_GS.findIndex(g => g.id === golferId);
+            if (golferIndex === -1) { alert("Error: Golfer not found."); return; }
+            const currentName = golfers_GS[golferIndex].name;
+            const newName = prompt(`Enter new name for ${currentName}:`, currentName);
+            if (newName === null) return; 
+            const trimmedNewName = newName.trim();
+            if (!trimmedNewName) { alert("Golfer name cannot be empty."); return; }
+            if (trimmedNewName === currentName) { return; }
+            golfers_GS[golferIndex].name = trimmedNewName;
+            saveDataToLocalStorage_GS(LOCAL_STORAGE_GOLFERS_KEY_GS, golfers_GS);
+            renderSavedGolfers_GS(); 
+            populateGolferSelect_GS(); 
+            if (currentManagingScoresGolferId === golferId) {
+                 manageScoresModalTitleEl.textContent = `Manage Scores for ${trimmedNewName}`;
+            }
+            if (scoreGolferSelectEl.value === golferId && currentEditingScoreId) {
+                scoreFormTitleEl.textContent = `Edit Score for ${trimmedNewName}`;
+            }
+            alert(`Golfer name updated to "${trimmedNewName}".`);
+        }
+        function deleteGolfer_GS(golferId) { /* ... (same as before) ... */ 
+             if (confirm('Are you sure you want to delete this golfer and all their scores?')) {
+                golfers_GS = golfers_GS.filter(g => g.id !== golferId);
+                saveDataToLocalStorage_GS(LOCAL_STORAGE_GOLFERS_KEY_GS, golfers_GS);
+                renderSavedGolfers_GS(); populateGolferSelect_GS();
+                if (scoreGolferSelectEl.value === golferId) { scoreGolferSelectEl.value = ""; handleGolferSelectionChange_GS(); }
+                alert('Golfer deleted.');
+            }
+        }
+
+        // --- Score Management Modal Functions ---
+        function openManageScoresModal_GS(golferId) { /* ... (same as before) ... */ 
+            currentManagingScoresGolferId = golferId;
+            const golfer = golfers_GS.find(g => g.id === golferId);
+            if (!golfer) { alert("Error: Golfer not found."); return; }
+            manageScoresModalTitleEl.textContent = `Manage Scores for ${golfer.name}`;
+            renderScoresInModal_GS(golfer.id, golfer.scores); 
+            manageScoresModalEl.classList.add('active');
+        }
+        function closeManageScoresModal_GS() { /* ... (same as before) ... */ 
+            manageScoresModalEl.classList.remove('active');
+            currentManagingScoresGolferId = null;
+            manageScoresModalBodyEl.innerHTML = '<p class="italic text-gray-500 p-4">Loading scores...</p>';
+        }
+        function renderScoresInModal_GS(golferId, scores) { /* ... (same as before - PCC column already present) ... */ 
+            manageScoresModalBodyEl.innerHTML = '';
+            if (!scores || scores.length === 0) {
+                manageScoresModalBodyEl.innerHTML = '<p class="italic text-gray-500 p-4">No scores recorded.</p>'; return;
+            }
+            const table = document.createElement('table'); table.className = 'scores-table';
+            table.innerHTML = `<thead><tr><th>Date</th><th>Course & Tee</th><th>Gross</th><th>AGS</th><th>SD (18h Eq.)</th><th>PCC</th><th class="action-cell">Actions</th></tr></thead><tbody></tbody>`;
+            const tbody = table.querySelector('tbody');
+            const displayScores = [...scores].sort((a,b) => new Date(b.date) - new Date(a.date));
+
+            displayScores.forEach(score => { 
+                const tr = tbody.insertRow();
+                tr.insertCell().textContent = formatDate_GS(score.date);
+                const teeData = userCourses_GS.find(c => c.id === score.teeId);
+                let courseText = `${score.courseName || 'Unknown'} - ${score.teeName || 'Unknown'}`;
+                if (score.intendedHoles === 18 && score.playedHoles < 18 && score.playedHoles >=10) {
+                     courseText += ` (${score.playedHoles} of 18h)`;
+                } else if (score.numHolesPlayed === 9) { 
+                     courseText += " (9h)";
+                }
+                tr.insertCell().textContent = courseText;
+                tr.insertCell().textContent = calculateRawGross_GS(score.rawScores, score.playedHoles || score.numHolesPlayed);
+                tr.insertCell().textContent = score.ags;
+                let sdText = score.sd !== null ? score.sd.toFixed(1) : "N/A";
+                if (score.esrAppliedValue && score.esrAppliedValue !== 0) {
+                    sdText += ` <span class="text-xs text-orange-600">(ESR ${score.esrAppliedValue > 0 ? '+' : ''}${score.esrAppliedValue.toFixed(1)})</span>`;
+                }
+                tr.insertCell().innerHTML = sdText;
+                tr.insertCell().textContent = score.pccApplied !== undefined ? score.pccApplied : '0'; 
+                const actionCell = tr.insertCell(); actionCell.className = 'action-cell';
+                const editButton = document.createElement('button');
+                editButton.className = 'button button-edit edit-score-btn';
+                editButton.dataset.scoreId = score.id;
+                editButton.dataset.golferId = golferId; 
+                editButton.innerHTML = '<i class="fas fa-edit"></i> Edit';
+                editButton.title = 'Edit this score';
+                editButton.addEventListener('click', (e) => {
+                    const sId = e.target.closest('button').dataset.scoreId;
+                    const gId = e.target.closest('button').dataset.golferId;
+                    populateScoreFormForEdit_GS(sId, gId);
+                });
+                actionCell.appendChild(editButton);
+                const deleteButton = document.createElement('button');
+                deleteButton.className = 'button button-danger delete-score-btn';
+                deleteButton.dataset.scoreId = score.id;
+                deleteButton.dataset.golferId = golferId; 
+                deleteButton.innerHTML = '<i class="fas fa-trash-alt"></i> Delete';
+                deleteButton.title = 'Delete this score';
+                deleteButton.addEventListener('click', (e) => {
+                    const sId = e.target.closest('button').dataset.scoreId;
+                    const gId = e.target.closest('button').dataset.golferId;
+                    handleDeleteScore_GS(sId, gId);
+                });
+                actionCell.appendChild(deleteButton);
+            });
+            manageScoresModalBodyEl.appendChild(table);
+        }
+
+
+        // --- Score Entry & Edit Functions ---
+        function populateScoreFormForEdit_GS(scoreId, golferId) { /* ... (same as before) ... */ 
+            const golfer = golfers_GS.find(g => g.id === golferId);
+            if (!golfer) { alert("Error: Golfer not found for editing score."); return; }
+            const scoreToEdit = golfer.scores.find(s => s.id === scoreId);
+            if (!scoreToEdit) { alert("Error: Score not found for editing."); return; }
+
+            currentEditingScoreId = scoreId; 
+
+            scoreGolferSelectEl.value = golferId;
+            scoreGolferSelectEl.disabled = true;
+            scoreCourseSelectEl.value = scoreToEdit.courseName;
+            const courseChangeEvent = new Event('change');
+            scoreCourseSelectEl.dispatchEvent(courseChangeEvent);
+            
+            setTimeout(() => {
+                scoreTeeSelectEl.value = scoreToEdit.teeId;
+                const teeChangeEvent = new Event('change');
+                scoreTeeSelectEl.dispatchEvent(teeChangeEvent); 
+                
+                const selectedTeeData = userCourses_GS.find(t => t.id === scoreToEdit.teeId);
+                if (selectedTeeData) {
+                    const holesToDisplayInputs = scoreToEdit.playedHoles || selectedTeeData.numHoles;
+                    // For rawScores, if a value was NO_SCORE_MARKER (null), display blank or "No Score"
+                    const displayScores = {};
+                    for (const hole in scoreToEdit.rawScores) {
+                        displayScores[hole] = scoreToEdit.rawScores[hole] === NO_SCORE_MARKER ? "" : scoreToEdit.rawScores[hole];
+                    }
+                    let roundTypeEdit = '18hole';
+                    if (selectedTeeData.teeType === 'Front 9') {
+                        roundTypeEdit = '9holeFront';
+                    } else if (selectedTeeData.teeType === 'Back 9') {
+                        roundTypeEdit = '9holeBack';
+                    }
+                    console.log('[handleTeeSelectionChange_GS] Determined roundType:', roundTypeEdit, 'for teeType:', selectedTeeData.teeType);
+                    renderScorecardLayout_GS(roundTypeEdit, selectedTeeData.holeDetails, displayScores);
+                }
+            }, 150); 
+
+            scoreDateInputEl.value = scoreToEdit.date;
+            scorePccAdjustmentEl.value = scoreToEdit.pccApplied !== undefined ? scoreToEdit.pccApplied.toString() : "0"; 
+            scoreDescriptionSelectEl.value = scoreToEdit.scoreDescription;
+            updateAutomatedPccDisplay_GS(); 
+
+            scoreFormTitleEl.textContent = `Edit Score for ${golfer.name}`;
+            submitScoreButtonEl.innerHTML = `<i class="fas fa-sync-alt mr-2"></i>Update Score & Recalculate HI`;
+            submitScoreButtonEl.disabled = false; 
+            cancelScoreEditButtonEl.classList.remove('hidden');
+
+            closeManageScoresModal_GS();
+            scoreEntrySectionEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+        function resetScoreForm_GS() { /* ... (same as before) ... */ 
+            currentEditingScoreId = null;
+            scoreEntryFormEl.reset();
+            scoreFormTitleEl.textContent = "Enter New Score";
+            submitScoreButtonEl.innerHTML = `<i class="fas fa-calculator mr-2"></i>Submit Score & Calculate HI`;
+            submitScoreButtonEl.disabled = true;
+            cancelScoreEditButtonEl.classList.add('hidden');
+            scoreGolferSelectEl.disabled = false; 
+
+            if(scorePccAdjustmentEl) scorePccAdjustmentEl.value = "0";
+            if(scoreDescriptionSelectEl) scoreDescriptionSelectEl.value = "General Play";
+            scoreHoleEntriesContainerEl.innerHTML = '';
+            scoreHoleEntriesPromptEl.textContent = 'Select golfer, course, and tee to enter scores.';
+            scoreHoleEntriesPromptEl.classList.remove('hidden');
+            if (actualHolesPlayedInputEl) {
+                actualHolesPlayedInputEl.value = '';
+                actualHolesPlayedInputEl.disabled = true;
+                actualHolesPlayedInputEl.min = '9'; // Reset to default min
+                actualHolesPlayedInputEl.max = '18'; // Reset to default max
+            }
+            if (actualHolesPlayedHelperEl) {
+                actualHolesPlayedHelperEl.textContent = '';
+                actualHolesPlayedHelperEl.classList.add('hidden');
+            }
+            if(holeScoreHelpTextEl) holeScoreHelpTextEl.classList.add('hidden'); // Hide help text
+            
+            if (scoreCourseSelectEl) scoreCourseSelectEl.value = "";
+            if (scoreTeeSelectEl) {
+                scoreTeeSelectEl.innerHTML = '<option value="">Select Tee...</option>';
+                scoreTeeSelectEl.disabled = true;
+            }
+            if (scoreGolferSelectEl) scoreGolferSelectEl.value = "";
+            if(scoreDateInputEl) scoreDateInputEl.valueAsDate = new Date();
+            updateAutomatedPccDisplay_GS(); 
+        }
+
+        function populateGolferSelect_GS() { 
+            const currentVal = scoreGolferSelectEl.value;
+            scoreGolferSelectEl.innerHTML = '<option value="">Select Golfer...</option>';
+            golfers_GS.forEach(golfer => {
+                const option = document.createElement('option');
+                option.value = golfer.id; 
+                option.textContent = golfer.name + (golfer.hiEstablished && golfer.hi !== null ? ` (HI: ${golfer.hi.toFixed(1)})` : (golfer.initialHi !== null ? ` (Initial HI: ${golfer.initialHi.toFixed(1)})` : ' (HI: Pending)'));
+                if(golfer.id === currentVal) option.selected = true;
+                scoreGolferSelectEl.appendChild(option);
+            });
+        }
+
+        function populateCourseSelect_GS() { 
+            scoreCourseSelectEl.innerHTML = '<option value="">Select Course...</option>';
+            const uniqueCourseNames = [...new Set(userCourses_GS.map(course => course.courseName))];
+            uniqueCourseNames.sort().forEach(courseName => {
+                const option = document.createElement('option');
+                option.value = courseName; option.textContent = courseName;
+                scoreCourseSelectEl.appendChild(option);
+            });
+            scoreTeeSelectEl.innerHTML = '<option value="">Select Tee...</option>';
+            scoreTeeSelectEl.disabled = true;
+            updateAutomatedPccDisplay_GS();
+        }
+        function handleCourseSelectionChange_GS() { /* ... (same as before) ... */ 
+            const selectedCourseName = scoreCourseSelectEl.value;
+            scoreTeeSelectEl.innerHTML = '<option value="">Select Tee...</option>';
+            if (!currentEditingScoreId) scoreHoleEntriesContainerEl.innerHTML = ''; 
+            scoreHoleEntriesPromptEl.textContent = 'Select a course and tee to enter scores.';
+            scoreHoleEntriesPromptEl.classList.remove('hidden');
+            if(holeScoreHelpTextEl) holeScoreHelpTextEl.classList.add('hidden');
+            submitScoreButtonEl.disabled = true;
+
+            if (selectedCourseName) {
+                const teesForCourse = userCourses_GS.filter(course => course.courseName === selectedCourseName)
+                                                 .sort((a,b) => a.teeName.localeCompare(b.teeName));
+                teesForCourse.forEach(tee => {
+                    const option = document.createElement('option');
+                    option.value = tee.id;
+                    option.textContent = `${tee.teeName} (${tee.numHoles}h, CR:${tee.courseRating}, SR:${tee.slopeRating}, P:${tee.totalPar})`;
+                    scoreTeeSelectEl.appendChild(option);
+                });
+                scoreTeeSelectEl.disabled = false;
+            } else {
+                scoreTeeSelectEl.disabled = true;
+            }
+            if (!currentEditingScoreId) handleTeeSelectionChange_GS(); 
+            updateAutomatedPccDisplay_GS();
+        }
+        function handleTeeSelectionChange_GS() { /* ... (same as before, but shows help text) ... */ 
+            const selectedTeeId = scoreTeeSelectEl.value;
+            if (!currentEditingScoreId) scoreHoleEntriesContainerEl.innerHTML = '';
+            submitScoreButtonEl.disabled = true;
+            if(holeScoreHelpTextEl) holeScoreHelpTextEl.classList.add('hidden');
+
+
+            if (!selectedTeeId) {
+                if (!currentEditingScoreId) {
+                    scoreHoleEntriesPromptEl.textContent = 'Select a tee to proceed.';
+                    scoreHoleEntriesPromptEl.classList.remove('hidden');
+                    setInitialCalcDisplayMessage_GS("Select a tee to proceed. Detailed calculations will appear after score submission.");
+                }
+                    actualHolesPlayedInputEl.disabled = true;
+                    actualHolesPlayedInputEl.value = '';
+                    actualHolesPlayedHelperEl.classList.add('hidden');
+                    actualHolesPlayedHelperEl.textContent = '';
+                    updateAutomatedPccDisplay_GS();
+                return;
+            }
+            const selectedTee = userCourses_GS.find(tee => tee.id === selectedTeeId);
+            if (!selectedTee) { alert('Error: Selected tee configuration not found.'); return; }
+
+                actualHolesPlayedInputEl.disabled = false;
+                actualHolesPlayedHelperEl.classList.remove('hidden');
+                if (selectedTee.numHoles === 9) {
+                    actualHolesPlayedInputEl.value = 9;
+                    actualHolesPlayedInputEl.min = 9;
+                    actualHolesPlayedInputEl.max = 9;
+                    actualHolesPlayedHelperEl.textContent = 'Must be 9 for a 9-hole round.';
+                } else { // Assuming 18 holes
+                    actualHolesPlayedInputEl.value = 18;
+                    actualHolesPlayedInputEl.min = 10; // WHS Rule 2.2: Min 10 holes for an 18-hole round to be acceptable
+                    actualHolesPlayedInputEl.max = 18;
+                    actualHolesPlayedHelperEl.textContent = 'Enter 10-18 holes. (WHS Rule 2.2)';
+                }
+                scoreHoleEntriesPromptEl.classList.add('hidden');
+            if(holeScoreHelpTextEl) holeScoreHelpTextEl.classList.remove('hidden'); // Show help text
+            if (!currentEditingScoreId) {
+                let determinedTeeType = selectedTee.teeType;
+
+                // Infer teeType if it's undefined or not specific for a 9-hole tee
+                if (selectedTee.numHoles === 9 && (!determinedTeeType || (determinedTeeType !== 'Front 9' && determinedTeeType !== 'Back 9'))) {
+                    const teeIdLower = selectedTee.id.toLowerCase();
+                    if (teeIdLower.includes('_f9') || teeIdLower.includes('front')) {
+                        determinedTeeType = 'Front 9';
+                    } else if (teeIdLower.includes('_b9') || teeIdLower.includes('back')) {
+                        determinedTeeType = 'Back 9';
+                    } else {
+                        // Fallback for 9-hole tees if ID doesn't give a clue.
+                        console.warn(`[handleTeeSelectionChange_GS] Ambiguous 9-hole teeType for ${selectedTee.id}. Defaulting to 'Front 9'. Ensure course data has teeType.`);
+                        determinedTeeType = 'Front 9'; 
+                    }
+                }
+
+                let roundType = '18hole'; // Default
+                if (selectedTee.numHoles === 9) {
+                    if (determinedTeeType === 'Front 9') {
+                        roundType = '9holeFront';
+                    } else if (determinedTeeType === 'Back 9') {
+                        roundType = '9holeBack';
+                    } else { // Should not happen if inference above is robust or data is good
+                        roundType = '9holeFront'; // Fallback for 9-hole if determinedTeeType is still off
+                        console.warn(`[handleTeeSelectionChange_GS] 9-hole tee with unexpected determinedTeeType '${determinedTeeType}'. Defaulting roundType to '9holeFront'.`);
+                    }
+                } else if (selectedTee.numHoles === 18) { // Explicitly check for 18 holes
+                    roundType = '18hole';
+                }
+                // If numHoles is not 9 or 18, roundType remains '18hole' by default. Consider logging a warning.
+
+                console.log('[handleTeeSelectionChange_GS] About to call renderScorecardLayout_GS. Current state:', {
+                    selectedTeeId: selectedTeeId,
+                    selectedTeeNumHoles: selectedTee.numHoles,
+                    originalTeeType: selectedTee.teeType, // Log original
+                    determinedTeeType: determinedTeeType, // Log inferred/used
+                    calculatedRoundType: roundType,
+                    currentEditingScoreId: currentEditingScoreId,
+                    holeDetailsPreview: selectedTee.holeDetails ? Object.keys(selectedTee.holeDetails).length + ' holes in details' : 'No holeDetails'
+                });
+                console.log('[handleTeeSelectionChange_GS] Determined roundType:', roundType, 'based on determinedTeeType:', determinedTeeType, 'and numHoles:', selectedTee.numHoles);
+
+                let processedHoleDetails = {};
+                if (roundType === '9holeFront') {
+                    for (let i = 1; i <= 9; i++) {
+                        if (selectedTee.holeDetails && selectedTee.holeDetails[i.toString()]) {
+                            processedHoleDetails[i.toString()] = { ...selectedTee.holeDetails[i.toString()] };
+                        } else {
+                            processedHoleDetails[i.toString()] = { par: '-', si: '-' }; // Placeholder
+                            if(selectedTee.holeDetails) console.warn(`[handleTeeSelectionChange_GS] Missing hole detail for Front 9, hole ${i}`);
+                        }
+                    }
+                } else if (roundType === '9holeBack') {
+                    // For Back 9, holeDetails for the tee might be indexed 1-9 (relative) or 10-18 (absolute).
+                    // This logic assumes relative 1-9 indexing in selectedTee.holeDetails for its 9 holes.
+                    for (let i = 1; i <= 9; i++) { // These are relative hole numbers 1-9 for the back nine
+                        const absoluteHoleNum = i + 9;
+                        if (selectedTee.holeDetails && selectedTee.holeDetails[i.toString()]) { // Check original data using relative key
+                            processedHoleDetails[absoluteHoleNum.toString()] = { ...selectedTee.holeDetails[i.toString()] };
+                        } else {
+                            processedHoleDetails[absoluteHoleNum.toString()] = { par: '-', si: '-' }; // Placeholder
+                            if(selectedTee.holeDetails) console.warn(`[handleTeeSelectionChange_GS] Missing hole detail for Back 9, relative hole ${i} (absolute ${absoluteHoleNum})`);
+                        }
+                    }
+                } else { // 18-hole round (default)
+                    if (selectedTee.holeDetails) {
+                        for (let i = 1; i <= 18; i++) {
+                             if (selectedTee.holeDetails[i.toString()]) {
+                                processedHoleDetails[i.toString()] = { ...selectedTee.holeDetails[i.toString()] };
+                            } else {
+                                processedHoleDetails[i.toString()] = { par: '-', si: '-' }; // Placeholder
+                                console.warn(`[handleTeeSelectionChange_GS] Missing hole detail for 18-hole round, hole ${i}`);
+                            }
+                        }
+                    } else {
+                         console.warn(`[handleTeeSelectionChange_GS] No holeDetails found for 18-hole round tee: ${selectedTee.id}`);
+                         for (let i = 1; i <= 18; i++) { // Populate with placeholders if no details at all
+                            processedHoleDetails[i.toString()] = { par: '-', si: '-' };
+                         }
+                    }
+                }
+                console.log('[handleTeeSelectionChange_GS] Processed hole details for layout:', JSON.stringify(processedHoleDetails));
+                renderScorecardLayout_GS(roundType, processedHoleDetails);
+            }
+            if (scoreGolferSelectEl.value) submitScoreButtonEl.disabled = false;
+            updateAutomatedPccDisplay_GS();
+            setInitialCalcDisplayMessage_GS("Enter scores for each hole. Detailed calculations will appear after score submission.");
+        }
+        function handleGolferSelectionChange_GS() { /* ... (same as before) ... */ 
+             if (scoreGolferSelectEl.value && scoreTeeSelectEl.value && !scoreTeeSelectEl.disabled) {
+                submitScoreButtonEl.disabled = false;
+            } else {
+                submitScoreButtonEl.disabled = true;
+            }
+        }
+
+        // --- New Scorecard UI Rendering Functions ---
+        function renderScorecardLayout_GS(roundType, fullHoleDetails, existingScores = {}) {
+    console.log('[renderScorecardLayout_GS] Received roundType:', roundType);
+    console.log('[renderScorecardLayout_GS] Top of function. Round type:', roundType);
+            console.log('[renderScorecardLayout_GS] Entered. Received:', {
+                roundType: roundType,
+                hasFullHoleDetails: !!fullHoleDetails,
+                fullHoleDetailsKeys: fullHoleDetails ? Object.keys(fullHoleDetails) : 'N/A',
+                hasExistingScores: !!existingScores,
+                existingScoresKeys: existingScores ? Object.keys(existingScores) : 'N/A'
+            });
+            // Clear existing content
+            const mainScorecardContainer = document.getElementById('scoreHoleEntriesContainer');
+    if (!mainScorecardContainer) {
+        console.error('CRITICAL ERROR: scoreHoleEntriesContainer not found in DOM!');
+        return;
+    }
+    mainScorecardContainer.innerHTML = ''; // Clear the main container
+
+    // Manage help/prompt text visibility
+    if (holeScoreHelpTextEl) holeScoreHelpTextEl.classList.remove('hidden');
+    if (scoreHoleEntriesPromptEl) scoreHoleEntriesPromptEl.classList.add('hidden');
+    console.log('[renderScorecardLayout_GS] Help/prompt text visibility updated.');
+
+    // Conditionally create, append, and populate scorecard sections
+    if (roundType === '18hole' || roundType === '9holeFront') {
+        const frontNineDiv = document.createElement('div');
+        frontNineDiv.id = 'frontNineScorecardContainer';
+        mainScorecardContainer.appendChild(frontNineDiv);
+        console.log('[renderScorecardLayout_GS] Created and appended frontNineScorecardContainer.');
+        _createScorecardTable_GS(
+            frontNineDiv,
+            fullHoleDetails,
+            1, // startHole
+            'OUT',
+            existingScores
+        );
+    }
+
+    if (roundType === '18hole' || roundType === '9holeBack') {
+        const backNineDiv = document.createElement('div');
+        backNineDiv.id = 'backNineScorecardContainer';
+        mainScorecardContainer.appendChild(backNineDiv);
+        console.log('[renderScorecardLayout_GS] Created and appended backNineScorecardContainer.');
+        _createScorecardTable_GS(
+            backNineDiv,
+            fullHoleDetails,
+            10, // startHole
+            'IN',
+            existingScores
+        );
+    }
+
+    if (roundType === '18hole') {
+        const overallTotalsDiv = document.createElement('div');
+        overallTotalsDiv.id = 'overallTotalsContainer';
+        mainScorecardContainer.appendChild(overallTotalsDiv);
+        console.log('[renderScorecardLayout_GS] Created and appended overallTotalsContainer.');
+        _createOverallTotalsTable_GS(overallTotalsDiv, fullHoleDetails);
+    }
+            
+            updateDynamicScorecardTotals_GS(); // Call once to initialize totals
+        }
+
+        function _createScorecardTable_GS(containerEl, fullHoleDetails, startHole, nineLabel, existingScores = {}) {
+            if (startHole === 10) {
+        console.log('[_createScorecardTable_GS] BACK NINE (startHole=10) fullHoleDetails RECEIVED:', JSON.stringify(fullHoleDetails));
+    }
+    console.log('[_createScorecardTable_GS] Entered. Creating table for:', {
+                containerId: containerEl ? containerEl.id : 'null containerEl!',
+                startHole: startHole,
+                nineLabel: nineLabel,
+                hasFullHoleDetails: !!fullHoleDetails,
+                fullHoleDetailsKeys: fullHoleDetails ? Object.keys(fullHoleDetails) : 'N/A',
+                hasExistingScores: !!existingScores,
+                existingScoresKeys: existingScores ? Object.keys(existingScores) : 'N/A'
+            });
+            console.log('[_createScorecardTable_GS] fullHoleDetails sample for hole 1:', fullHoleDetails ? fullHoleDetails['1'] : 'fullHoleDetails is null/undefined', 'fullHoleDetails itself:', fullHoleDetails);
+            const table = document.createElement('table');
+            table.className = 'w-full border-collapse text-sm shadow-sm rounded-lg score-entry-table'; // Removed overflow-hidden // Added score-entry-table for potential specific styling
+
+            const thead = table.createTHead();
+            const headerRow = thead.insertRow();
+            headerRow.className = 'bg-gray-200 text-gray-700 uppercase text-xs';
+            
+            const thLabel = document.createElement('th');
+            thLabel.textContent = 'HOLE';
+            thLabel.className = 'px-1 py-1.5 border border-gray-300 text-left sticky left-0 bg-gray-200 z-10 w-12'; // Added width
+            headerRow.appendChild(thLabel);
+
+            for (let i = 0; i < 9; i++) {
+                const th = document.createElement('th');
+                th.textContent = startHole + i;
+                th.className = 'p-1 border border-gray-300 text-center w-10'; // Added width
+                headerRow.appendChild(th);
+            }
+            const thTotalLabel = document.createElement('th');
+            thTotalLabel.textContent = nineLabel;
+            thTotalLabel.className = 'p-1 border border-gray-300 text-center font-semibold bg-gray-300 w-16'; // Added width and darker bg
+            headerRow.appendChild(thTotalLabel);
+            console.log('[_createScorecardTable_GS] Header row fully constructed.');
+            // table.appendChild(thead); // thead is implicitly part of the table once rows are added to it via createTHead().
+            console.log('[_createScorecardTable_GS] Thead populated. Table object after thead construction:', table);
+
+            const tbody = table.createTBody();
+
+            // PAR Row
+            const parRow = tbody.insertRow();
+            parRow.className = 'bg-white';
+            let nineParTotal = 0;
+            const parLabelCell = parRow.insertCell();
+            parLabelCell.textContent = 'PAR';
+            parLabelCell.className = 'px-1 py-1.5 border border-gray-300 font-semibold text-left sticky left-0 bg-white z-10';
+            for (let i = 0; i < 9; i++) {
+                const holeKey = (startHole + i).toString(); // Hole keys in holeDetails are strings '1', '2', etc.
+                const holeDetail = fullHoleDetails[holeKey];
+                console.log(`[_createScorecardTable_GS] PAR row loop, i=${i}, holeKey=${holeKey}, holeDetail:`, holeDetail);
+                const par = holeDetail ? holeDetail.par : '-';
+                if (fullHoleDetails[holeKey] && typeof fullHoleDetails[holeKey].par === 'number') {
+                    nineParTotal += fullHoleDetails[holeKey].par;
+                }
+                const cell = parRow.insertCell();
+                cell.textContent = par;
+                cell.className = 'p-1 border border-gray-300 text-center';
+            }
+            const parTotalCell = parRow.insertCell();
+            parTotalCell.textContent = nineParTotal > 0 ? nineParTotal : '-';
+            parTotalCell.className = 'p-1 border border-gray-300 text-center font-semibold bg-gray-100';
+            parTotalCell.id = `${nineLabel.toLowerCase()}-par-total`;
+
+            // SI Row
+            const siRow = tbody.insertRow();
+            siRow.className = 'bg-gray-50';
+            const siLabelCell = siRow.insertCell();
+            siLabelCell.textContent = 'SI';
+            siLabelCell.className = 'px-1 py-1.5 border border-gray-300 font-semibold text-left sticky left-0 bg-gray-50 z-10';
+            for (let i = 0; i < 9; i++) {
+                const holeKey = (startHole + i).toString();
+                const holeDetail = fullHoleDetails[holeKey];
+                console.log(`[_createScorecardTable_GS] SI row loop, i=${i}, holeKey=${holeKey}, holeDetail:`, holeDetail);
+                const si = holeDetail ? holeDetail.si : '-';
+                const cell = siRow.insertCell();
+                cell.textContent = si;
+                cell.className = 'p-1 border border-gray-300 text-center';
+            }
+            const siTotalCell = siRow.insertCell();
+            siTotalCell.textContent = '-';
+            siTotalCell.className = 'p-1 border border-gray-300 text-center bg-gray-100';
+
+            // SCORE Row
+            const scoreRow = tbody.insertRow();
+            scoreRow.className = 'bg-white';
+            const scoreLabelCell = scoreRow.insertCell();
+            scoreLabelCell.textContent = 'SCORE';
+            scoreLabelCell.className = 'px-1 py-1.5 border border-gray-300 font-semibold text-left sticky left-0 bg-white z-10';
+
+            for (let i = 0; i < 9; i++) {
+                const holeIndexForArray = (startHole - 1) + i;
+                const holeKeyForDetails = (startHole + i).toString();
+                const holeDetail = fullHoleDetails[holeKeyForDetails];
+                const cell = scoreRow.insertCell();
+                cell.className = 'p-1 border border-gray-300';
+                
+                const input = document.createElement('input');
+                input.type = 'number';
+                input.id = `score-input-${holeIndexForArray}`;
+                input.name = `scoreHole${holeKeyForDetails}`;
+                input.className = 'w-full p-1 text-center border-gray-300 rounded focus:ring-blue-500 focus:border-blue-500 text-sm';
+                input.min = '1';
+                input.placeholder = '';
+                
+                const existingScoreForHole = existingScores && existingScores[holeKeyForDetails] !== undefined && existingScores[holeKeyForDetails] !== NO_SCORE_MARKER 
+                    ? existingScores[holeKeyForDetails] 
+                    : '';
+                input.value = existingScoreForHole;
+                
+                // Add color coding based on score relative to par
+                if (existingScoreForHole && holeDetail && holeDetail.par) {
+                    const score = parseInt(existingScoreForHole);
+                    // Only apply color if score is not 0 and is a valid number
+                    if (score !== 0 && !isNaN(score)) { 
+                        const par = holeDetail.par;
+                        const scoreDiff = score - par;
+                        
+                        if (score === 1) {
+                            input.className += ' score-hole-in-one';
+                        } else if (scoreDiff <= -3) {
+                            input.className += ' score-albatross';
+                        } else if (scoreDiff === -2) {
+                            input.className += ' score-eagle';
+                        } else if (scoreDiff === -1) {
+                            input.className += ' score-birdie';
+                        } else if (scoreDiff === 0) { // Par; score cannot be 0 here due to the outer 'score !== 0' check
+                            input.className += ' score-par';
+                        } else if (scoreDiff === 1) {
+                            input.className += ' score-bogey';
+                        } else if (scoreDiff === 2) {
+                            input.className += ' score-double-bogey';
+                        } else if (scoreDiff >= 3) {
+                            input.className += ' score-triple-bogey';
+                        }
+                    }
+                }
+                
+                input.addEventListener('input', (e) => {
+                    updateDynamicScorecardTotals_GS();
+
+                    // Always remove all score-related classes first
+                    e.target.classList.remove(
+                        'score-hole-in-one', 'score-albatross', 'score-eagle',
+                        'score-birdie', 'score-par', 'score-bogey',
+                        'score-double-bogey', 'score-triple-bogey'
+                    );
+
+                    // Then, try to apply a new class if the score is valid and not 0
+                    if (e.target.value && holeDetail && holeDetail.par) {
+                        const score = parseInt(e.target.value);
+                        // Only apply color if score is not 0 and is a valid number
+                        if (score !== 0 && !isNaN(score)) {
+                            const par = holeDetail.par;
+                            const scoreDiff = score - par;
+                            
+                            // Add appropriate class
+                            if (score === 1) {
+                                e.target.classList.add('score-hole-in-one');
+                            } else if (scoreDiff <= -3) {
+                                e.target.classList.add('score-albatross');
+                            } else if (scoreDiff === -2) {
+                                e.target.classList.add('score-eagle');
+                            } else if (scoreDiff === -1) {
+                                e.target.classList.add('score-birdie');
+                            } else if (scoreDiff === 0) { // Par; score cannot be 0 here due to the outer 'score !== 0' check
+                                e.target.classList.add('score-par');
+                            } else if (scoreDiff === 1) {
+                                e.target.classList.add('score-bogey');
+                            } else if (scoreDiff === 2) {
+                                e.target.classList.add('score-double-bogey');
+                            } else if (scoreDiff >= 3) {
+                                e.target.classList.add('score-triple-bogey');
+                            }
+                        }
+                        // If score is 0, NaN, or input is empty, no color class is added (classes already cleared).
+                    }
+                });
+                
+                input.onfocus = function() { this.select(); };
+                cell.appendChild(input);
+            }
+            
+            const scoreTotalCell = scoreRow.insertCell();
+            scoreTotalCell.textContent = '0';
+            scoreTotalCell.className = 'p-1 border border-gray-300 text-center font-semibold bg-gray-100';
+            scoreTotalCell.id = `${nineLabel.toLowerCase()}-score-total`;
+
+            // table.appendChild(tbody); // This is done implicitly by createTBody or by appending rows to tbody.
+            console.log('[_createScorecardTable_GS] Tbody fully populated with PAR, SI, SCORE, and Total rows. Table object:', table);
+            
+            console.log('[_createScorecardTable_GS] Attempting to append table to container:', containerEl.id);
+            containerEl.appendChild(table);
+            
+            // Add score legend
+            const legend = document.createElement('div');
+            legend.className = 'score-legend';
+            
+            const legendItems = [
+                { class: 'score-hole-in-one', text: 'Hole in One' },
+                { class: 'score-albatross', text: 'Albatross' },
+                { class: 'score-eagle', text: 'Eagle' },
+                { class: 'score-birdie', text: 'Birdie' },
+                { class: 'score-par', text: 'Par' },
+                { class: 'score-bogey', text: 'Bogey' },
+                { class: 'score-double-bogey', text: 'Double Bogey' },
+                { class: 'score-triple-bogey', text: 'Triple Bogey+' }
+            ];
+            
+            legendItems.forEach(item => {
+                const legendItem = document.createElement('div');
+                legendItem.className = `score-legend-item ${item.class}`;
+                legendItem.textContent = item.text;
+                legend.appendChild(legendItem);
+            });
+            
+            containerEl.appendChild(legend);
+            console.log('[_createScorecardTable_GS] Table and legend successfully appended to container:', containerEl.id);
+        }
+
+        function _createOverallTotalsTable_GS(containerEl, fullHoleDetails) {
+            console.log('[_createOverallTotalsTable_GS] Entered. Container ID:', containerEl ? containerEl.id : 'null container', 'Has fullHoleDetails:', !!fullHoleDetails);
+            containerEl.innerHTML = ''; // Clear previous content
+            console.log('[_createOverallTotalsTable_GS] Container cleared. Full hole details:', fullHoleDetails);
+
+            const title = document.createElement('h3');
+            title.className = 'text-lg font-semibold mb-3 text-gray-700';
+            title.textContent = 'Round Totals (18 Holes)';
+            containerEl.appendChild(title);
+
+            const grid = document.createElement('div');
+            grid.className = 'grid grid-cols-1 md:grid-cols-3 gap-4 text-sm';
+
+            // Total Par
+            const parDiv = document.createElement('div');
+            parDiv.className = 'p-3 bg-gray-100 rounded-md shadow-sm';
+            let totalPar18 = 0;
+            for (let i = 1; i <= 18; i++) {
+                totalPar18 += fullHoleDetails[i.toString()] ? parseInt(fullHoleDetails[i.toString()].par) : 0;
+            }
+            parDiv.innerHTML = `<span class="font-medium text-gray-600">Total Par:</span> <strong id="total-18-par" class="text-lg">${totalPar18}</strong>`;
+            console.log('[_createOverallTotalsTable_GS] Total Par calculated:', totalPar18);
+            grid.appendChild(parDiv);
+            console.log('[_createOverallTotalsTable_GS] Total Par appended to grid.');
+
+            // Raw Gross Score
+            const rawGrossDiv = document.createElement('div');
+            rawGrossDiv.className = 'p-3 bg-gray-100 rounded-md shadow-sm';
+            rawGrossDiv.innerHTML = `<span class="font-medium text-gray-600">Raw Gross Score:</span> <strong id="total-18-raw-gross" class="text-lg">0</strong>`;
+            console.log('[_createOverallTotalsTable_GS] Raw Gross Score initialized.');
+            grid.appendChild(rawGrossDiv);
+            console.log('[_createOverallTotalsTable_GS] Raw Gross Score appended to grid.');
+
+            // Adjusted Gross Score
+            const agsDiv = document.createElement('div');
+            agsDiv.className = 'p-3 bg-gray-100 rounded-md shadow-sm';
+            agsDiv.innerHTML = `<span class="font-medium text-gray-600">Adjusted Gross (AGS):</span> <strong id="total-18-ags" class="text-lg">0</strong>`;
+            console.log('[_createOverallTotalsTable_GS] Adjusted Gross Score initialized.');
+            grid.appendChild(agsDiv);
+            console.log('[_createOverallTotalsTable_GS] Adjusted Gross Score appended to grid.');
+            
+            containerEl.appendChild(grid);
+            console.log('[_createOverallTotalsTable_GS] Grid appended to container:', containerEl.id);
+        }
+        function updateDynamicScorecardTotals_GS() {
+            const golferId = scoreGolferSelectEl ? scoreGolferSelectEl.value : null;
+            console.log('[updateDynamicScorecardTotals_GS] Entered. Golfer ID:', golferId);
+            let outScoreTotal = 0;
+            let inScoreTotal = 0;
+            const rawScoresForAGS = {}; // For calculateAGS_WHS, 1-indexed hole numbers as keys
+
+            // Calculate OUT scores (Holes 1-9, inputs score-input-0 to score-input-8)
+            for (let i = 0; i < 9; i++) { 
+                const inputEl = document.getElementById(`score-input-${i}`);
+                if (inputEl) {
+                    const score = inputEl.value.trim() === '' ? NO_SCORE_MARKER : parseInt(inputEl.value);
+                    rawScoresForAGS[(i + 1).toString()] = score; 
+                    if (score !== NO_SCORE_MARKER && !isNaN(score)) {
+                        outScoreTotal += score;
+                    }
+                }
+            }
+            const outScoreTotalEl = document.getElementById('out-score-total');
+            if (outScoreTotalEl) outScoreTotalEl.textContent = outScoreTotal;
+
+            // Calculate IN scores (Holes 10-18, inputs score-input-9 to score-input-17)
+            for (let i = 9; i < 18; i++) { 
+                const inputEl = document.getElementById(`score-input-${i}`);
+                if (inputEl) {
+                    const score = inputEl.value.trim() === '' ? NO_SCORE_MARKER : parseInt(inputEl.value);
+                    rawScoresForAGS[(i + 1).toString()] = score; 
+                    if (score !== NO_SCORE_MARKER && !isNaN(score)) {
+                        inScoreTotal += score;
+                    }
+                }
+            }
+            const inScoreTotalEl = document.getElementById('in-score-total');
+            if (inScoreTotalEl) inScoreTotalEl.textContent = inScoreTotal;
+
+            const total18RawGrossEl = document.getElementById('total-18-raw-gross');
+            if (total18RawGrossEl) {
+                total18RawGrossEl.textContent = outScoreTotal + inScoreTotal;
+            }
+
+            const selectedGolferId = scoreGolferSelectEl.value;
+            const selectedTeeId = scoreTeeSelectEl.value;
+            const golfer = golfers_GS.find(g => g.id === selectedGolferId);
+            const selectedTee = userCourses_GS.find(t => t.id === selectedTeeId); // Original full tee data
+
+            const agsDisplayEl = document.getElementById('total-18-ags'); // Assuming this element is used for AGS display
+            const agsLabelEl = agsDisplayEl ? agsDisplayEl.closest('div').querySelector('span.font-medium') : null;
+
+            if (!golfer || !selectedTee) {
+                if (agsDisplayEl) agsDisplayEl.textContent = 'N/A';
+                if (agsLabelEl) agsLabelEl.textContent = 'Adjusted Gross (AGS):';
+                console.warn("[updateDynamicScorecardTotals_GS] Golfer or Tee not selected for AGS calculation.");
+                return;
+            }
+
+            // Determine currentRoundType and currentProcessedHoleDetails (mimicking handleTeeSelectionChange_GS)
+            let determinedTeeType = selectedTee.teeType;
+            if (selectedTee.numHoles === 9 && (!determinedTeeType || (determinedTeeType !== 'Front 9' && determinedTeeType !== 'Back 9'))) {
+                const teeIdLower = selectedTee.id.toLowerCase();
+                if (teeIdLower.includes('_f9') || teeIdLower.includes('front')) determinedTeeType = 'Front 9';
+                else if (teeIdLower.includes('_b9') || teeIdLower.includes('back')) determinedTeeType = 'Back 9';
+                else determinedTeeType = 'Front 9'; // Default for ambiguous 9-hole
+            }
+
+            let currentRoundType = '18hole';
+            if (selectedTee.numHoles === 9) {
+                currentRoundType = determinedTeeType === 'Back 9' ? '9holeBack' : '9holeFront';
+            } else if (selectedTee.numHoles === 18) {
+                currentRoundType = '18hole';
+            }
+
+            let currentProcessedHoleDetails = {};
+            if (currentRoundType === '9holeFront') {
+                for (let i = 1; i <= 9; i++) currentProcessedHoleDetails[i.toString()] = selectedTee.holeDetails[i.toString()] || { par: '-', si: '-' };
+            } else if (currentRoundType === '9holeBack') {
+                for (let i = 1; i <= 9; i++) currentProcessedHoleDetails[(i + 9).toString()] = selectedTee.holeDetails[i.toString()] || { par: '-', si: '-' };
+            } else { // 18hole
+                for (let i = 1; i <= 18; i++) currentProcessedHoleDetails[i.toString()] = selectedTee.holeDetails[i.toString()] || { par: '-', si: '-' };
+            }
+
+            const intendedRoundLengthForAGS = (currentRoundType === '9holeFront' || currentRoundType === '9holeBack') ? 9 : 18;
+            const actualPlayedHolesForAGS = intendedRoundLengthForAGS; // For dynamic totals, assume all intended holes considered
+
+            const rawScoresForAGS_scoped = {};
+            let startInputIndex = 0, endInputIndex = 8; // Default for 9holeFront
+            if (currentRoundType === '9holeBack') { startInputIndex = 9; endInputIndex = 17; }
+            else if (currentRoundType === '18hole') { endInputIndex = 17; }
+
+            for (let i = startInputIndex; i <= endInputIndex; i++) {
+                const inputEl = document.getElementById(`score-input-${i}`);
+                if (inputEl) {
+                    const score = inputEl.value.trim() === '' ? NO_SCORE_MARKER : parseInt(inputEl.value);
+                    const holeKey = (currentRoundType === '9holeBack' ? (i - 9 + 10) : (i + 1)).toString();
+                    rawScoresForAGS_scoped[holeKey] = score;
+                }
+            }
+            
+            const golferHI = golfer.hiEstablished ? golfer.hi : (golfer.initialHi !== null ? golfer.initialHi : undefined);
+            if (golferHI === undefined) {
+                console.warn("Golfer HI not available for AGS calculation.");
+                if (agsDisplayEl) agsDisplayEl.textContent = 'N/A (No HI)';
+                if (agsLabelEl) agsLabelEl.textContent = `Adjusted Gross (${intendedRoundLengthForAGS} Holes):`;
+                return;
+            }
+
+            let courseHandicapForNDB;
+            // IMPORTANT: This assumes 'selectedTee' has appropriate SR/CR/Par for the 'intendedRoundLengthForAGS'.
+            // If selectedTee is always 18-hole data, this needs adjustment for 9-hole rounds (e.g. using frontNineSlope etc.)
+            if (intendedRoundLengthForAGS === 9) {
+                // Attempt to use 9-hole specific ratings if available on the selectedTee object, 
+                // or if selectedTee itself represents a 9-hole course.
+                let nineHSR = selectedTee.slopeRating, nineHCR = selectedTee.courseRating, nineHPar = selectedTee.par;
+                if (selectedTee.numHoles === 18) { // If it's an 18-hole tee but we're playing 9
+                    if (currentRoundType === '9holeFront') {
+                        nineHSR = selectedTee.frontNineSlope || selectedTee.slopeRating / 2; // Fallback if specific not present
+                        nineHCR = selectedTee.frontNineCourseRating || selectedTee.courseRating / 2;
+                        nineHPar = selectedTee.frontNinePar || selectedTee.par / 2;
+                    } else { // 9holeBack
+                        nineHSR = selectedTee.backNineSlope || selectedTee.slopeRating / 2;
+                        nineHCR = selectedTee.backNineCourseRating || selectedTee.courseRating / 2;
+                        nineHPar = selectedTee.backNinePar || selectedTee.par / 2;
+                    }
+                }
+                console.log('[updateDynamicScorecardTotals_GS] Inputs for 9-hole CH: HI:', golferHI, 'SR:', nineHSR, 'CR:', nineHCR, 'Par:', nineHPar);
+                courseHandicapForNDB = calculate9HoleCourseHandicap_WHS(golferHI, nineHSR, nineHCR, nineHPar);
+            } else {
+                courseHandicapForNDB = calculate18HoleCourseHandicap_WHS(golferHI, selectedTee.slopeRating, selectedTee.courseRating, selectedTee.par);
+            }
+
+            console.log('[updateDynamicScorecardTotals_GS] --- DIAGNOSTICS ---');
+            console.log('[updateDynamicScorecardTotals_GS] currentRoundType:', currentRoundType);
+            console.log('[updateDynamicScorecardTotals_GS] rawScoresForAGS_scoped keys:', Object.keys(rawScoresForAGS_scoped));
+            // console.log('[updateDynamicScorecardTotals_GS] rawScoresForAGS_scoped content:', JSON.stringify(rawScoresForAGS_scoped)); // Uncomment for more detail if needed
+            console.log('[updateDynamicScorecardTotals_GS] currentProcessedHoleDetails keys:', Object.keys(currentProcessedHoleDetails));
+            console.log('[updateDynamicScorecardTotals_GS] actualPlayedHolesForAGS:', actualPlayedHolesForAGS);
+            console.log('[updateDynamicScorecardTotals_GS] intendedRoundLengthForAGS:', intendedRoundLengthForAGS);
+            console.log('[updateDynamicScorecardTotals_GS] --- END DIAGNOSTICS ---');
+
+            const { ags } = calculateAGS_WHS(
+                rawScoresForAGS_scoped,
+                currentProcessedHoleDetails, // This is now correctly scoped for the round
+                actualPlayedHolesForAGS,    // 9 or 18
+                intendedRoundLengthForAGS,  // 9 or 18
+                courseHandicapForNDB,
+                golfer.hiEstablished,
+                false // Disable logging for dynamic updates
+            );
+
+            if (agsDisplayEl) agsDisplayEl.textContent = ags;
+            if (agsLabelEl) agsLabelEl.textContent = `Adjusted Gross (${intendedRoundLengthForAGS} Holes):`;
+        }
+
+        function generateScoreHoleInputs_GS(numHoles, holeDetails, existingScores = null) { 
+            scoreHoleEntriesContainerEl.innerHTML = ''; 
+            const header = document.createElement('h3');
+            header.className = 'text-lg font-medium text-gray-700 mb-4';
+            header.textContent = `Enter Scores for ${numHoles} Holes:`;
+            scoreHoleEntriesContainerEl.appendChild(header);
+            const scrollWrapper = document.createElement('div');
+            scrollWrapper.className = 'max-h-[28rem] overflow-y-auto hole-details-container pr-3';
+            const grid = document.createElement('div');
+            grid.className = 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-x-4 gap-y-4';
+            for (let i = 1; i <= numHoles; i++) {
+                const holeData = holeDetails[i]; 
+                if (!holeData && numHoles <=18) { 
+                    const fullCourseTee = userCourses_GS.find(t => t.id === scoreTeeSelectEl.value);
+                } else if (!holeData) {
+                    console.warn(`No hole detail for hole ${i} (numHoles: ${numHoles})`);
+                    continue;
+                }
+                const holeDiv = document.createElement('div');
+                holeDiv.className = 'hole-input-item flex flex-col space-y-1.5 p-3 rounded-lg';
+                const prefillScore = existingScores && existingScores[i] !== undefined ? existingScores[i] : '';
+                // Removed 'required' attribute, updated placeholder
+                holeDiv.innerHTML = `<label for="scoreHole${i}" class="font-semibold text-center">H${i} <span class="font-normal text-gray-500">(P${holeData.par}, SI${holeData.si})</span></label>
+                    <input type="text" id="scoreHole${i}" name="scoreHole${i}" placeholder="Score / No Score" min="1" max="99" class="form-input p-2 text-sm text-center" value="${prefillScore}">`;
+                grid.appendChild(holeDiv);
+            }
+            scrollWrapper.appendChild(grid); 
+            scoreHoleEntriesContainerEl.appendChild(scrollWrapper);
+            // Show help text if it was hidden and inputs are generated
+            if(holeScoreHelpTextEl && holeScoreHelpTextEl.classList.contains('hidden') && numHoles > 0) {
+                holeScoreHelpTextEl.classList.remove('hidden');
+            }
+        }
+
+        // --- WHS Calculation Logic Functions ---
+        function logToCalcDisplay(message) { if (calculationLogPreEl) { calculationLogPreEl.textContent += message + "\n"; calculationLogPreEl.scrollTop = calculationLogPreEl.scrollHeight; } else { console.log(message); } }
+
+        function clearCalcDisplay_GS() {
+            if (calculationLogPreEl) {
+                calculationLogPreEl.textContent = '';
+            }
+        }
+
+        function setInitialCalcDisplayMessage_GS(message) {
+            clearCalcDisplay_GS();
+            if (calculationLogPreEl && message) {
+                calculationLogPreEl.textContent = message + "\n";
+            } else if (message) {
+                console.log(message);
+            }
+        }
+        function calculate18HoleCourseHandicap_WHS(hi, sr, cr, par) { /* ... (same as before) ... */ if (hi === null) return 0; return Math.round((hi * sr / 113) + (cr - par)); }
+        function calculate9HoleCourseHandicap_WHS(hi, nineHoleSR, nineHoleCR, nineHolePar) { /* ... (same as before) ... */ if (hi === null) return 0; return Math.round((hi / 2) * (nineHoleSR / 113) + (nineHoleCR - nineHolePar)); }
+        function getStrokesReceived_WHS(courseHandicap, strokeIndexHole, numHolesPlayed) { /* ... (same as before) ... */  let strokes = 0; const chRounded = Math.round(courseHandicap); if (chRounded <= 0) return 0; const baseStrokesPerHole = Math.floor(chRounded / numHolesPlayed); const remainingStrokes = chRounded % numHolesPlayed; strokes = baseStrokesPerHole; if (strokeIndexHole <= remainingStrokes) strokes++; return Math.max(0, strokes); }
+        function calculateNetDoubleBogey_WHS(parHole, strokeIndexHole, courseHandicapForNDB, numHolesPlayed, golferHiEstablished) {
+            if (!golferHiEstablished) {
+                // WHS Rule 3.1b: For a player with no Handicap Index, the net double bogey limit is Par + 5 strokes.
+                // The rule implies these 5 strokes are fixed and don't depend on course handicap calculations yet.
+                return parHole + 5;
+            } else {
+                // For players with an established HI, NDB is Par + 2 + any strokes received on that hole.
+                const strokesRec = getStrokesReceived_WHS(courseHandicapForNDB, strokeIndexHole, numHolesPlayed);
+                return parHole + 2 + strokesRec;
+            }
+        }
+        
+        function calculateAGS_WHS(rawScores, holeDetails, actualPlayedHoles, intendedRoundLength, courseHandicapForNDB, golferHiEstablished, enableLogOutput = true) {
+    let ags = 0;
+    const adjustedScoresOutput = {}; // Renamed for clarity
+    if (enableLogOutput) logToCalcDisplay(`[calculateAGS_WHS] Start. ActualPlayed: ${actualPlayedHoles}, TargetHolesInAGS: ${intendedRoundLength}, CH for NDB/NetPar: ${courseHandicapForNDB}, HI Established: ${golferHiEstablished}`);
+
+    // holeDetails contains the definition for the holes that *should* make up the final AGS (e.g., 9 holes for a 9-hole score, 18 for an 18-hole score)
+    for (const holeKey of Object.keys(holeDetails)) {
+        const currentHoleDetail = holeDetails[holeKey];
+
+        if (!currentHoleDetail || currentHoleDetail.par === undefined || currentHoleDetail.par === '-' || String(currentHoleDetail.par).trim() === '' ||
+            currentHoleDetail.si === undefined || currentHoleDetail.si === '-' || String(currentHoleDetail.si).trim() === '') {
+            if (enableLogOutput) logToCalcDisplay(`  Hole ${holeKey}: Invalid/Missing Par/SI in holeDetails. Cannot calculate score for this hole. Skipping its contribution to AGS.`);
+            // This hole will not contribute to AGS. This implies an issue with course data setup.
+            continue;
+        }
+
+        const par = parseInt(currentHoleDetail.par);
+        const si = parseInt(currentHoleDetail.si);
+        let scoreForHole;
+
+        // Check if a score was actually entered for this hole in rawScores
+        if (rawScores.hasOwnProperty(holeKey) && rawScores[holeKey] !== NO_SCORE_MARKER && rawScores[holeKey] !== null && rawScores[holeKey] !== undefined && String(rawScores[holeKey]).trim() !== "") {
+            // Hole was played and a score was entered
+            const enteredScore = parseInt(rawScores[holeKey]);
+            const ndbCap = calculateNetDoubleBogey_WHS(par, si, courseHandicapForNDB, intendedRoundLength, golferHiEstablished);
+            scoreForHole = Math.min(enteredScore, ndbCap);
+            adjustedScoresOutput[holeKey] = scoreForHole;
+            if (enableLogOutput) {
+                if (enteredScore > ndbCap) logToCalcDisplay(`  Hole ${holeKey} (Par ${par}, SI ${si}): Played. Entered ${enteredScore}, NDB Cap ${ndbCap}. Using: ${scoreForHole}`);
+                else logToCalcDisplay(`  Hole ${holeKey} (Par ${par}, SI ${si}): Played. Entered ${enteredScore}. Using: ${scoreForHole}`);
+            }
+        } else {
+            // Hole was NOT played (no entry in rawScores for this holeKey) OR was explicitly marked NO_SCORE_MARKER / blank.
+            // This means the system needs to provide a score for this hole to complete the intendedRoundLength.
+            if (intendedRoundLength === 18 && actualPlayedHoles >= 10 && actualPlayedHoles < 18) {
+                // Scenario: Submitting an 18-hole score, but only 10-17 holes were actually played.
+                // For any hole in holeDetails (1-18) that wasn't in rawScores (or was NO_SCORE_MARKER/blank),
+                // use "Expected Score" (Net Par) as per 2024 WHS Rule 3.2.
+                const strokesRec = getStrokesReceived_WHS(courseHandicapForNDB, si, 18); // CH is 18-hole CH, SI is hole's SI, for an 18-hole round context
+                scoreForHole = par + strokesRec;
+                adjustedScoresOutput[holeKey] = scoreForHole;
+                if (enableLogOutput) logToCalcDisplay(`  Hole ${holeKey} (Par ${par}, SI ${si}): Unplayed in 10-17 hole round. Applying Net Par (Expected Score): ${scoreForHole} (StrokesRec: ${strokesRec})`);
+            } else {
+                // All other cases for unplayed/NO_SCORE_MARKER:
+                //  - 9-hole round, hole not in rawScores / NO_SCORE_MARKER (system fills to complete 9-hole AGS).
+                //  - 18-hole round with <10 holes played (score will be invalid for HI calc later, but AGS still calculated with NDB for played/unplayed holes).
+                //  - Full 18-hole round (actualPlayedHoles === 18), but a hole was NO_SCORE_MARKER (e.g. player picked up - Rule 3.3).
+                //  In these scenarios, NDB is appropriate.
+                const ndbCap = calculateNetDoubleBogey_WHS(par, si, courseHandicapForNDB, intendedRoundLength, golferHiEstablished);
+                scoreForHole = ndbCap;
+                adjustedScoresOutput[holeKey] = scoreForHole;
+                if (enableLogOutput) logToCalcDisplay(`  Hole ${holeKey} (Par ${par}, SI ${si}): Unplayed/NoScoreMarker (default). Applying NDB: ${scoreForHole}`);
+            }
+        }
+        ags += scoreForHole;
+    }
+
+    if (enableLogOutput) logToCalcDisplay(`[calculateAGS_WHS] Calculated Final AGS for ${Object.keys(holeDetails).length} defined holes: ${ags}. Target holes in AGS: ${intendedRoundLength}.`);
+    return { ags, adjustedScores: adjustedScoresOutput };
+}
+        
+        function calculateScoreDifferential_WHS(ags, cr, sr, pccAdjustment = 0, numHolesPlayed) {
+            if (sr === 0) {
+                logToCalcDisplay("ERROR: Slope Rating 0 in calculateScoreDifferential_WHS");
+                return null;
+            }
+            const validPcc = typeof pccAdjustment === 'number' ? pccAdjustment : 0;
+            let pccToApplyForThisCalc = validPcc;
+
+            if (numHolesPlayed === 9) {
+                pccToApplyForThisCalc = 0.5 * validPcc;
+                // logToCalcDisplay(`  calculateScoreDifferential_WHS (9-hole): Applying 0.5 * PCC (${validPcc}) = ${pccToApplyForThisCalc.toFixed(1)} to calc 9-hole portion SD.`);
+            } else {
+                // logToCalcDisplay(`  calculateScoreDifferential_WHS (18-hole): Applying full PCC: ${validPcc} to calc 18-hole SD.`);
+            }
+            
+            let sd = (113 / sr) * (ags - cr - pccToApplyForThisCalc);
+
+            if (numHolesPlayed === 9) {
+                // For 9-hole SD, WHS rule 5.1b says: "The 9-hole Score Differential remains unrounded until after it has been combined with the player’s expected score."
+                // So, we return the raw 'sd' here. The combination and rounding happens in recalculateGolferHandicapHistory_GS.
+                return sd; 
+            }
+            
+            // For 18-hole SD, it's rounded to the nearest tenth.
+            return parseFloat(sd.toFixed(1));
+        }
+        function getExpected9HoleSDBasedOnHI(handicapIndex) {
+    // For players without an established HI, WHS may require combining two 9-hole scores or other specific calculations.
+    // For this simulation, if HI is not established, we use a fixed placeholder SD for the "other nine".
+    // This value (7.5) represents an approximate expected 9-hole SD for a mid-to-high handicapper on a standard course.
+    if (handicapIndex === null) {
+        logToCalcDisplay(`  getExpected9HoleSDBasedOnHI: HI not established. Using placeholder expected 9-hole SD: 7.5 for the other nine.`);
+        return 7.5; 
+    }
+
+    // For established players, the expected Score Differential for the other 9 holes (on a course of standard difficulty)
+    // is generally taken as half of their Handicap Index.
+    const expectedSD = parseFloat((handicapIndex / 2).toFixed(1));
+    logToCalcDisplay(`  getExpected9HoleSDBasedOnHI: HI is ${handicapIndex.toFixed(1)}. Expected 9-hole SD for other nine: ${expectedSD}`);
+    return expectedSD;
+}
+        function getExpectedSDForUnplayedHoles(handicapIndex, numHolesNotPlayed) { /* ... (same as before) ... */ logToCalcDisplay(`  DEV_NOTE: Using placeholder for Expected SD for ${numHolesNotPlayed} unplayed holes. Official WHS table/formula required for HI: ${handicapIndex === null ? 'N/A' : handicapIndex.toFixed(1)}`); if (numHolesNotPlayed <= 0) return 0; let baseExpectedPerHole = 1.5; if (handicapIndex !== null) { if (handicapIndex < 0) baseExpectedPerHole = 0.2; else if (handicapIndex < 5.0) baseExpectedPerHole = 0.4; else if (handicapIndex < 10.0) baseExpectedPerHole = 0.7; else if (handicapIndex < 15.0) baseExpectedPerHole = 1.0; else if (handicapIndex < 20.0) baseExpectedPerHole = 1.3; } return parseFloat((baseExpectedPerHole * numHolesNotPlayed).toFixed(1)); }
+        function calculateHI_WHS(scoreDifferentials) { /* ... (same as before) ... */ const sdsForCalc = [...scoreDifferentials].filter(sd => sd !== null).sort((a, b) => a - b); const numScores = sdsForCalc.length; if (numScores === 0) return null; let hi; let adjustment = 0; let bestScoresToAverage = []; if (numScores <= 2) { bestScoresToAverage = sdsForCalc.slice(0, 1); adjustment = -2.0; } else if (numScores === 3) { bestScoresToAverage = sdsForCalc.slice(0, 1); adjustment = -2.0; } else if (numScores === 4) { bestScoresToAverage = sdsForCalc.slice(0, 1); adjustment = -1.0; } else if (numScores === 5) { bestScoresToAverage = sdsForCalc.slice(0, 1); adjustment = 0; } else if (numScores === 6) { bestScoresToAverage = sdsForCalc.slice(0, 2); adjustment = -1.0; } else if (numScores >= 7 && numScores <= 8) { bestScoresToAverage = sdsForCalc.slice(0, 2); adjustment = 0; } else if (numScores >= 9 && numScores <= 11) { bestScoresToAverage = sdsForCalc.slice(0, 3); adjustment = 0; } else if (numScores >= 12 && numScores <= 14) { bestScoresToAverage = sdsForCalc.slice(0, 4); adjustment = 0; } else if (numScores >= 15 && numScores <= 16) { bestScoresToAverage = sdsForCalc.slice(0, 5); adjustment = 0; } else if (numScores >= 17 && numScores <= 18) { bestScoresToAverage = sdsForCalc.slice(0, 6); adjustment = 0; } else if (numScores === 19) { bestScoresToAverage = sdsForCalc.slice(0, 7); adjustment = 0; } else { bestScoresToAverage = sdsForCalc.slice(0, 8); adjustment = 0; } if (bestScoresToAverage.length === 0) return null; const sumOfBestScores = bestScoresToAverage.reduce((sum, val) => sum + val, 0); hi = (sumOfBestScores / bestScoresToAverage.length) + adjustment; return parseFloat(hi.toFixed(1));}
+        function getRollingLHI_GS(golferHiHistory, referenceDateStr, totalScoresInRecord) { /* ... (same as before) ... */ if (totalScoresInRecord < MIN_SCORES_FOR_LHI_CAPS) { logToCalcDisplay(`  LHI: Not formally established for caps (< ${MIN_SCORES_FOR_LHI_CAPS} scores). Using lowest historical HI as LHI for now.`); if (!golferHiHistory || golferHiHistory.length === 0) return null; let lowestEver = null; const refDate = new Date(referenceDateStr + 'T00:00:00'); for (const record of golferHiHistory) { if (record.date === "Initial") { if (record.hi !== null && (lowestEver === null || record.hi < lowestEver)) { lowestEver = record.hi; } continue; } if (new Date(record.date + 'T00:00:00') <= refDate) { if (record.hi !== null && (lowestEver === null || record.hi < lowestEver)) { lowestEver = record.hi; } } } return lowestEver; } const referenceDate = new Date(referenceDateStr + 'T00:00:00'); const oneYearAgo = new Date(referenceDate); oneYearAgo.setFullYear(referenceDate.getFullYear() - 1); let lowestHIInPeriod = null; for (const record of golferHiHistory) { if (record.hi === null || record.date === "Initial") continue; const recordDate = new Date(record.date + 'T00:00:00'); if (recordDate >= oneYearAgo && recordDate <= referenceDate) { if (lowestHIInPeriod === null || record.hi < lowestHIInPeriod) { lowestHIInPeriod = record.hi; } } } logToCalcDisplay(`  Rolling LHI for date ${referenceDateStr} (from ${oneYearAgo.toISOString().slice(0,10)}): ${lowestHIInPeriod !== null ? lowestHIInPeriod.toFixed(1) : 'N/A'}`); return lowestHIInPeriod; }
+        function applySafeguards_WHS(calculatedHi, lhiForCaps, esrReason) { /* ... (same as before) ... */ if (calculatedHi === null) return { finalHi: null, reason: "N/A (HI not calculable)" }; let finalHi = calculatedHi; let capReason = ""; if (lhiForCaps !== null) { const increaseFromLHI = finalHi - lhiForCaps; if (increaseFromLHI > 3.0) { const reductionAmount = (increaseFromLHI - 3.0) * 0.5; finalHi -= reductionAmount; capReason += `SoftCap(vs LHI ${lhiForCaps.toFixed(1)}, reduced by ${reductionAmount.toFixed(1)}) `; } if (finalHi > lhiForCaps + 5.0) { finalHi = lhiForCaps + 5.0; capReason += `HardCap(to LHI ${lhiForCaps.toFixed(1)} + 5.0 = ${(lhiForCaps + 5.0).toFixed(1)}) `; } } const originalHiBeforeMinMax = finalHi; finalHi = Math.min(54.0, Math.max(-5.0, finalHi)); if (finalHi.toFixed(1) !== originalHiBeforeMinMax.toFixed(1) && capReason === "" && esrReason === "") { if (finalHi === 54.0 && originalHiBeforeMinMax > 54.0) capReason += "MaxHI(54.0) "; if (finalHi === -5.0 && originalHiBeforeMinMax < -5.0) capReason += "MinHI(-5.0) ";} let fullReason = esrReason; if (capReason) { fullReason = fullReason ? `${fullReason}; ${capReason.trim()}` : capReason.trim(); } return { finalHi: parseFloat(finalHi.toFixed(1)), reason: fullReason.trim() || "None" }; }
+        function recalculateGolferHandicapHistory_GS(golferId) {
+            const golferIndex = golfers_GS.findIndex(g => g.id === golferId);
+            if (golferIndex === -1) {
+                console.error("Golfer not found for recalculation:", golferId);
+                return;
+            }
+            const golfer = golfers_GS[golferIndex];
+            logToCalcDisplay(`--- Starting Full Handicap History Recalculation for ${golfer.name} ---`);
+
+            golfer.scores.sort((a, b) => {
+                const dateA = new Date(a.date + 'T00:00:00');
+                const dateB = new Date(b.date + 'T00:00:00');
+                if (dateA < dateB) return -1;
+                if (dateA > dateB) return 1;
+                return (a.id < b.id) ? -1 : 1;
+            });
+
+            let initialHiFromForm = golfer.initialHi;
+            let initialLhiFromForm = golfer.initialLhi;
+
+            golfer.hi = initialHiFromForm;
+            golfer.hiHistory = initialHiFromForm !== null ? [{ date: "Initial", hi: initialHiFromForm, reason: "Initial Value (Manual)" }] : [];
+            golfer.totalHolesPlayedForEstablishment = 0;
+            golfer.hiEstablished = initialHiFromForm !== null;
+            let currentHIForNextScore = golfer.hi;
+            let processedSDsForWindow = [];
+
+            for (let i = 0; i < golfer.scores.length; i++) {
+                const score = golfer.scores[i];
+                const scoreTeeData = userCourses_GS.find(t => t.id === score.teeId);
+
+                if (!scoreTeeData) {
+                    logToCalcDisplay(`ERROR: Tee data for score ID ${score.id} missing.`);
+                    continue;
+                }
+
+                logToCalcDisplay(`\nProcessing score ${i + 1}/${golfer.scores.length}: Date ${formatDate_GS(score.date)}, Course ${score.courseName}`);
+
+                if (!golfer.hiEstablished) {
+                    golfer.totalHolesPlayedForEstablishment += (score.playedHoles || score.numHolesPlayed);
+                }
+
+                score.hiAtTimeOfPosting = currentHIForNextScore;
+                logToCalcDisplay(`  HI at time of posting: ${score.hiAtTimeOfPosting !== null ? score.hiAtTimeOfPosting.toFixed(1) : 'Pending Establishment'}`);
+
+                let courseHandicapForNDB;
+                if (score.hiAtTimeOfPosting !== null) {
+                    courseHandicapForNDB = score.intendedHoles === 9 ?
+                        calculate9HoleCourseHandicap_WHS(score.hiAtTimeOfPosting, scoreTeeData.slopeRating, scoreTeeData.courseRating, scoreTeeData.totalPar) :
+                        calculate18HoleCourseHandicap_WHS(score.hiAtTimeOfPosting, scoreTeeData.slopeRating, scoreTeeData.courseRating, scoreTeeData.totalPar);
+                } else {
+                    courseHandicapForNDB = 0;
+                    logToCalcDisplay(`  NDB CH based on pending HI (using 0).`);
+                }
+
+                let holeDetailsForAGS = scoreTeeData.holeDetails;
+                logToCalcDisplay(`  DEBUG: score.teeId: ${score.teeId}`);
+                logToCalcDisplay(`  DEBUG: scoreTeeData.numHoles: ${scoreTeeData.numHoles}`);
+                logToCalcDisplay(`  DEBUG: Initial holeDetailsForAGS (full 18h tee) keys: ${Object.keys(holeDetailsForAGS).join(', ')}`);
+                logToCalcDisplay(`  DEBUG: scoreTeeData.holeDetails keys: ${scoreTeeData.holeDetails ? Object.keys(scoreTeeData.holeDetails).join(', ') : 'null or undefined'}`);
+
+                if (score.intendedHoles === 9 && scoreTeeData.numHoles === 18) {
+                    let ninePlayedFromCourseName = null;
+                    let startHoleNum = 0; // Initialize to avoid undefined if ninePlayedFromCourseName is null
+                    let endHoleNum = 0;   // Initialize
+
+                    // For 9-hole scores on 18-hole tees, determine if Front or Back 9 was played from score.courseName
+                    if (score.courseName) {
+                        const courseNameLower = score.courseName.toLowerCase();
+                        if (courseNameLower.includes('front 9')) {
+                            ninePlayedFromCourseName = 'Front';
+                        } else if (courseNameLower.includes('back 9')) {
+                            ninePlayedFromCourseName = 'Back';
+                        }
+                    }
+
+                    if (ninePlayedFromCourseName) {
+                        startHoleNum = (ninePlayedFromCourseName === 'Front') ? 1 : 10;
+                        endHoleNum = (ninePlayedFromCourseName === 'Front') ? 9 : 18;
+                        logToCalcDisplay(`  DEBUG: Determined ninePlayed: ${ninePlayedFromCourseName}, startHole: ${startHoleNum}, endHole: ${endHoleNum}`);
+
+                        const tempFilteredHoleDetails = {};
+                        for (let k = startHoleNum; k <= endHoleNum; k++) {
+                            const holeKey = String(k);
+                            if (scoreTeeData.holeDetails[holeKey]) {
+                                tempFilteredHoleDetails[holeKey] = scoreTeeData.holeDetails[holeKey];
+                            }
+                        }
+
+                        const missingHoleKeysInSourceTee = [];
+                        // Re-check which keys were expected vs found in the source 18-hole tee data for this nine
+                        for (let k_check = startHoleNum; k_check <= endHoleNum; k_check++) {
+                            if (!scoreTeeData.holeDetails[String(k_check)]) {
+                                missingHoleKeysInSourceTee.push(String(k_check));
+                            }
+                        }
+
+                        if (Object.keys(tempFilteredHoleDetails).length === 9) {
+                            holeDetailsForAGS = tempFilteredHoleDetails;
+                            logToCalcDisplay(`  AGS Calc: Using refined hole details for ${ninePlayedFromCourseName} 9 (Holes ${startHoleNum}-${endHoleNum}) from 18-hole tee data.`);
+                        } else {
+                            let warningMsg = `  WARN: AGS Calc: Could not reliably extract details for ${ninePlayedFromCourseName} 9. Expected 9 holes, but extracted ${Object.keys(tempFilteredHoleDetails).length} from the 18-hole tee data for '${score.courseName}' (Tee: '${score.teeName || 'N/A'}').`;
+                            if (missingHoleKeysInSourceTee.length > 0) {
+                                warningMsg += ` Problem: The selected 18-hole tee definition appears to be missing details for hole(s): ${missingHoleKeysInSourceTee.join(', ')} (for the ${ninePlayedFromCourseName}).`;
+                            }
+                            warningMsg += ` Using original full 18-hole tee details for AGS calculation. This will likely lead to incorrect processing for this 9-hole round. Please verify the 18-hole tee data in Course Management.`;
+                            logToCalcDisplay(warningMsg);
+                        }
+                        logToCalcDisplay(`  DEBUG: tempFilteredHoleDetails keys after population: ${Object.keys(tempFilteredHoleDetails).join(', ')}, length: ${Object.keys(tempFilteredHoleDetails).length}`);
+
+                    } else {
+                        logToCalcDisplay(`  WARN: AGS Calc: 9-hole score on an 18-hole tee, but 'Front 9' or 'Back 9' not found in courseName ('${score.courseName || 'not available'}'). Using original tee details. This may lead to incorrect AGS if the tee isn't dedicated 9-hole tee.`);
+                    }
+
+
+                } // Closes: if (score.intendedHoles === 9 && scoreTeeData.numHoles === 18)
+
+                logToCalcDisplay(`  DEBUG: Final holeDetailsForAGS keys before calling calculateAGS_WHS: ${Object.keys(holeDetailsForAGS).join(', ')}`);
+                const { ags, adjustedScores } = calculateAGS_WHS(score.rawScores, holeDetailsForAGS, score.playedHoles, score.intendedHoles, courseHandicapForNDB, golfer.hiEstablished, true);
+                score.ags = ags;
+                score.adjustedScores = adjustedScores;
+                logToCalcDisplay(`  AGS: ${score.ags} (CH for NDB: ${courseHandicapForNDB}, HI Estab: ${golfer.hiEstablished})`);
+
+        let baseSD;
+        const actualHolesPlayedForScore = score.playedHoles || score.numHolesPlayed;
+        const intendedHolesForScore = score.intendedHoles || actualHolesPlayedForScore;
+        const pccForScore = score.pccApplied !== undefined ? score.pccApplied : 0;
+
+
+                if (actualHolesPlayedForScore === 9 && intendedHolesForScore === 9) {
+                    const pccEffectFor9HoleSD = parseFloat((0.5 * pccForScore).toFixed(1));
+                    const unroundedNineHoleSD = calculateScoreDifferential_WHS(score.ags, scoreTeeData.courseRating, scoreTeeData.slopeRating, pccEffectFor9HoleSD, 9);
+                    score.originalNineHoleSD = unroundedNineHoleSD !== null ? parseFloat(unroundedNineHoleSD.toFixed(1)) : null;
+                    let expectedNineHoleSD;
+                    if (golfer.hiEstablished && score.hiAtTimeOfPosting !== null) {
+                        expectedNineHoleSD = getExpected9HoleSDBasedOnHI(score.hiAtTimeOfPosting);
+                    } else {
+                        expectedNineHoleSD = getExpected9HoleSDBasedOnHI(null);
+                        logToCalcDisplay(`  Using placeholder expected 9h SD as HI not yet established.`);
+                    }
+                    baseSD = parseFloat(((unroundedNineHoleSD || 0) + (expectedNineHoleSD || 0)).toFixed(1));
+                    logToCalcDisplay(`  9-hole. Unrounded 9h SD: ${(unroundedNineHoleSD || 0).toFixed(4)}. Exp 9h: ${expectedNineHoleSD}. Combined 18h SD: ${baseSD}. PCC Applied (overall): ${pccForScore}`);
+                } else if (intendedHolesForScore === 18) { // This covers both full 18-hole rounds and 10-17 holes played (where score.ags is already 18-hole NDB adjusted)
+                    if (actualHolesPlayedForScore < 10) {
+                        logToCalcDisplay(`  ERROR: Score does not meet minimum 10 holes for an 18-hole differential. Actual holes played: ${actualHolesPlayedForScore}. Skipping SD calculation.`);
+                        score.sd = null; // Or handle as invalid score
+                        processedScores.push(score);
+                        updateProgressBar(i + 1, scoresToProcess.length);
+                        continue; // Skip to next score
+                    }
+                    // score.ags from calculateAGS_WHS is already the 18-hole NDB-adjusted score,
+                    // accounting for specific unplayed holes with their NDB values (Rule 3.2b/2).
+                    baseSD = calculateScoreDifferential_WHS(score.ags, scoreTeeData.courseRating, scoreTeeData.slopeRating, pccForScore, 18);
+                    logToCalcDisplay(`  18-hole round (actual played: ${actualHolesPlayedForScore}). Using AGS (${score.ags}), which includes NDB for any unplayed holes, for SD. SD (pre-ESR): ${baseSD !== null ? baseSD.toFixed(1) : 'N/A'}. PCC Applied: ${pccForScore}`);
+                } else {
+                    baseSD = calculateScoreDifferential_WHS(score.ags, scoreTeeData.courseRating, scoreTeeData.slopeRating, pccForScore, 18);
+                    logToCalcDisplay(`  18-hole SD (pre-ESR): ${baseSD !== null ? baseSD.toFixed(1) : 'N/A'}. PCC Applied: ${pccForScore}`);
+                }
+
+                if (baseSD === null) {
+                    logToCalcDisplay(`  ERROR: Base SD is null. Score ID ${score.id}`);
+                    score.sd = null;
+                    continue;
+                }
+
+                score.esrAppliedValue = 0;
+                let esrReasonForThisScoreHI = "";
+
+                if (golfer.hiEstablished && score.hiAtTimeOfPosting !== null) {
+                    const diffFromHi = baseSD - score.hiAtTimeOfPosting;
+                    let esrAdjustment = 0;
+                    if (diffFromHi <= -10.0) esrAdjustment = -2.0;
+                    else if (diffFromHi <= -7.0) esrAdjustment = -1.0;
+
+                    if (esrAdjustment !== 0) {
+                        esrReasonForThisScoreHI = `ESR(${esrAdjustment.toFixed(1)})`;
+                        logToCalcDisplay(`  ESR Triggered: ${esrReasonForThisScoreHI}. SD ${baseSD.toFixed(1)} vs HI ${score.hiAtTimeOfPosting.toFixed(1)}`);
+                        baseSD = parseFloat((baseSD + esrAdjustment).toFixed(1));
+                        score.esrAppliedValue = esrAdjustment;
+                    }
+                }
+
+                score.sd = baseSD;
+
+                if (score.sd !== null) {
+                    processedSDsForWindow = processedSDsForWindow.filter(s => s.id !== score.id);
+                    processedSDsForWindow.push({ id: score.id, sd: score.sd, date: score.date });
+                }
+
+                processedSDsForWindow.sort((a,b) => new Date(b.date + 'T00:00:00') - new Date(a.date + 'T00:00:00') || (a.id < b.id ? -1 : 1));
+                const currentScoringRecordForHICalc = processedSDsForWindow.slice(0, 20);
+
+                let newOverallHI = null;
+                let newOverallHIReason = esrReasonForThisScoreHI;
+
+                if (!golfer.hiEstablished && golfer.totalHolesPlayedForEstablishment >= MIN_HOLES_FOR_HI_ESTABLISHMENT) {
+                    golfer.hiEstablished = true;
+                    logToCalcDisplay(`  HI Establishment Threshold Met (${golfer.totalHolesPlayedForEstablishment} holes). Calculating Initial HI.`);
+                    const initialSDs = golfer.scores.slice(0, i + 1).map(s => s.sd).filter(sd => sd !== null);
+                    newOverallHI = calculateHI_WHS(initialSDs);
+                    newOverallHIReason = "Initial HI Established";
+                    if (newOverallHI !== null) currentHIForNextScore = newOverallHI;
+                    logToCalcDisplay(`  Initial HI: ${newOverallHI !== null ? newOverallHI.toFixed(1) : 'N/A'}`);
+                } else if (golfer.hiEstablished) {
+                    const sdsEligibleForHICalc = currentScoringRecordForHICalc.map(s => s.sd);
+                    if (sdsEligibleForHICalc.length > 0) {
+                        logToCalcDisplay(`  Calculating HI using ${sdsEligibleForHICalc.length} SDs from window.`);
+                        const hiFromCurrentWindow = calculateHI_WHS(sdsEligibleForHICalc);
+                        const lhiForCaps = getRollingLHI_GS(golfer.hiHistory, score.date, golfer.scores.slice(0, i + 1).length);
+                        const cappedResult = applySafeguards_WHS(hiFromCurrentWindow, lhiForCaps, esrReasonForThisScoreHI);
+                        newOverallHI = cappedResult.finalHi;
+                        newOverallHIReason = cappedResult.reason;
+                        logToCalcDisplay(`  New overall HI: ${newOverallHI !== null ? newOverallHI.toFixed(1) : 'N/A'}. Reason: ${newOverallHIReason}`);
+                    } else {
+                        newOverallHI = currentHIForNextScore;
+                        newOverallHIReason = "No change (no eligible SDs for HI calc)";
+                    }
+                } else {
+                    newOverallHI = null;
+                    newOverallHIReason = `Awaiting ${MIN_HOLES_FOR_HI_ESTABLISHMENT} holes (Current: ${golfer.totalHolesPlayedForEstablishment})`;
+                }
+
+                currentHIForNextScore = newOverallHI;
+
+                if (newOverallHI !== null && golfer.hiEstablished) {
+                    golfer.hiHistory.push({ date: score.date, hi: newOverallHI, reason: newOverallHIReason });
+                }
+                score.calculatedHiAfterThisScore = newOverallHI;
+                score.reasonForHiAfterThisScore = newOverallHIReason;
+            }
+
+            golfer.hi = currentHIForNextScore;
+
+            if (golfer.hiHistory.length > 0) {
+                const lastHistoryEntry = golfer.hiHistory[golfer.hiHistory.length - 1];
+                golfer.lastHiReason = lastHistoryEntry.date === "Initial" ? lastHistoryEntry.reason : (lastHistoryEntry.reason || "Recalculated");
+            } else {
+                golfer.lastHiReason = golfer.initialHi !== null ? "Initial Value (Manual)" : (golfer.hiEstablished ? "Recalculated" : `Awaiting ${MIN_HOLES_FOR_HI_ESTABLISHMENT} holes`);
+            }
+
+            if (golfer.scores.length > 0 && golfer.hiEstablished) {
+                const dateOfLastProcessedScore = golfer.scores[golfer.scores.length - 1].date;
+                golfer.lhi = getRollingLHI_GS(golfer.hiHistory, dateOfLastProcessedScore, golfer.scores.length);
+            } else {
+                golfer.lhi = initialLhiFromForm !== null ? initialLhiFromForm : (initialHiFromForm !== null ? initialHiFromForm : null);
+            }
+
+            logToCalcDisplay(`--- Full Recalculation Complete for ${golfer.name} ---`);
+            logToCalcDisplay(`Final HI: ${golfer.hi !== null && golfer.hiEstablished ? golfer.hi.toFixed(1) : (golfer.initialHi !== null ? golfer.initialHi.toFixed(1) + ' (Initial)' : 'Pending')}, LHI: ${golfer.lhi !== null ? golfer.lhi.toFixed(1) : 'N/A'}`);
+            logToCalcDisplay(`Reason for last HI: ${golfer.lastHiReason}`);
+        }
+        function handleDeleteScore_GS(scoreId, golferId) { /* ... (same as before) ... */ if (!confirm('Are you sure you want to delete this score? This will trigger a full handicap history recalculation.')) return; const golferIndex = golfers_GS.findIndex(g => g.id === golferId); if (golferIndex === -1) { alert("Error: Golfer not found."); return; } const golferToUpdate = golfers_GS[golferIndex]; const scoreIndex = golferToUpdate.scores.findIndex(s => s.id === scoreId); if (scoreIndex === -1) { alert("Error: Score not found for deletion."); return; } golferToUpdate.scores.splice(scoreIndex, 1); logToCalcDisplay(`--- Score ID ${scoreId} deleted for ${golferToUpdate.name} ---`); recalculateGolferHandicapHistory_GS(golferId); saveDataToLocalStorage_GS(LOCAL_STORAGE_GOLFERS_KEY_GS, golfers_GS); renderSavedGolfers_GS(); if (currentManagingScoresGolferId === golferId) renderScoresInModal_GS(golferId, golferToUpdate.scores); alert('Score deleted and handicap history fully recalculated.'); updateAutomatedPccDisplay_GS(); }
+
+        // --- Score Submission & Update Main Logic ---
+        function handleScoreSubmit_GS(event) {
+            event.preventDefault();
+            clearCalcDisplay_GS(); // Clear log at the beginning of submission 
+
+            const golferId = scoreGolferSelectEl.value; 
+            const selectedTeeId = scoreTeeSelectEl.value;
+            const date = scoreDateInputEl.value;
+            const pccAdjustment = parseInt(scorePccAdjustmentEl.value); 
+            const scoreDescription = scoreDescriptionSelectEl.value;
+
+            let actualPlayedHoles; // Declare here, will be assigned after validation
+            let isRoundIncomplete; // Declare here, will be assigned after actualPlayedHoles is set
+
+            if (!golferId || !selectedTeeId || !date) { alert("Golfer, Tee, and Date are required."); return; }
+            const selectedTee = userCourses_GS.find(t => t.id === selectedTeeId);
+            if (!selectedTee) { alert("Error: Selected Tee data not found."); return; }
+
+            // --- Retrieve and Validate Actual Holes Played ---
+            const actualHolesPlayedStr = actualHolesPlayedInputEl.value;
+            const parsedActualHoles = parseInt(actualHolesPlayedStr);
+
+            if (isNaN(parsedActualHoles)) {
+                alert("Invalid input for 'Actual Holes Played'. Please enter a number.");
+                actualHolesPlayedInputEl.focus();
+                return;
+            }
+
+            // WHS Rule 2.2 Validation (Referencing memory: WHS Rule 2.2 Minimum Holes Played)
+            if (selectedTee.numHoles === 9) {
+                if (parsedActualHoles !== 9) {
+                    alert("For a 9-hole round, 'Actual Holes Played' must be 9.");
+                    actualHolesPlayedInputEl.focus();
+                    return;
+                }
+            } else if (selectedTee.numHoles === 18) {
+                if (parsedActualHoles < 10 || parsedActualHoles > 18) {
+                    alert("For an 18-hole round, 'Actual Holes Played' must be between 10 and 18 (inclusive), as per WHS Rule 2.2.");
+                    actualHolesPlayedInputEl.focus();
+                    return;
+                }
+            } else {
+                // This case should ideally not be reached if tee setup is always 9 or 18
+                alert("Error: Unrecognized tee type (" + selectedTee.numHoles + " holes) for 'Actual Holes Played' validation.");
+                return;
+            }
+            // --- End Actual Holes Played Validation ---
+
+            actualPlayedHoles = parsedActualHoles; // Assign validated value
+            isRoundIncomplete = actualPlayedHoles < selectedTee.numHoles; // Determine if round is incomplete based on actual play
+
+            if (isRoundIncomplete && selectedTee.numHoles === 18) { /* ... (incomplete round logic placeholder) ... */ }
+            else if (isRoundIncomplete && selectedTee.numHoles === 9) { /* ... (incomplete round logic placeholder) ... */ }
+
+            const golferIndex = golfers_GS.findIndex(g => g.id === golferId);
+            if (golferIndex === -1) { alert("Error: Golfer data not found."); return; }
+            
+            const golferToUpdate = golfers_GS[golferIndex];
+            const rawScores = {}; 
+            let formIsValid = true;
+
+            // Iterate through all 18 potential scorecard input slots (0-17)
+            for (let holeInputIndex = 0; holeInputIndex < 18; holeInputIndex++) {
+                const holeKeyForRawScores = (holeInputIndex + 1).toString();
+                const scoreInputEl = document.getElementById(`score-input-${holeInputIndex}`);
+
+                if (scoreInputEl) { // If the input field exists for this hole on the scorecard
+                    const scoreValue = scoreInputEl.value.trim();
+                    if (scoreValue === "") {
+                        rawScores[holeKeyForRawScores] = NO_SCORE_MARKER;
+                    } else {
+                        const parsedScore = parseInt(scoreValue);
+                        if (isNaN(parsedScore)) {
+                            alert(`Invalid entry for Hole ${holeKeyForRawScores}. Score must be a number or blank.`);
+                            scoreInputEl.focus();
+                            formIsValid = false; 
+                            break;
+                        }
+                        if (parsedScore < 1) { 
+                            alert(`Invalid score for Hole ${holeKeyForRawScores}. Score must be 1 or greater, or blank.`);
+                            scoreInputEl.focus();
+                            formIsValid = false; 
+                            break;
+                        }
+                        rawScores[holeKeyForRawScores] = parsedScore;
+                    }
+                } else {
+                    // If the input field doesn't exist (e.g., holes 10-18 for a Front 9 round, or vice-versa),
+                    // mark as NO_SCORE_MARKER. This ensures rawScores has all 18 hole keys if the
+                    // underlying tee is 18 holes, simplifying downstream AGS calculation.
+                    rawScores[holeKeyForRawScores] = NO_SCORE_MARKER;
+                }
+            }
+            if (!formIsValid) { return; }
+
+            // --- BEGIN WHS Rule 2.1 / 3.1c: Validate Total Scores Entered vs Actual Holes Played ---
+            // `actualPlayedHoles` is already validated (e.g., 9 for 9-hole tee, 10-18 for 18-hole tee).
+            // `rawScores` object is populated. `NO_SCORE_MARKER` indicates a hole without a score.
+
+            let totalValidScoresEnteredOnCard = 0;
+            const intendedNumHoles = selectedTee.numHoles; // 9 or 18
+            let firstHoleToCheck = 1;
+            let lastHoleToCheck = intendedNumHoles; // Default to full range of the tee
+
+            // Determine the range of holes to iterate over on the scorecard based on tee type
+            if (intendedNumHoles === 9) {
+                let determinedTeeType = selectedTee.teeType;
+                if (!determinedTeeType || (determinedTeeType !== 'Front 9' && determinedTeeType !== 'Back 9' && determinedTeeType !== 'Complete 9')) {
+                    const teeIdLower = selectedTee.id.toLowerCase();
+                    if (teeIdLower.includes('_b9') || teeIdLower.includes('back')) determinedTeeType = 'Back 9';
+                    // Default to Front 9 or Complete 9 if not explicitly Back 9
+                }
+                if (determinedTeeType === 'Back 9') {
+                    firstHoleToCheck = 10;
+                    lastHoleToCheck = 18;
+                } else { // Front 9 or Complete 9
+                    firstHoleToCheck = 1;
+                    lastHoleToCheck = 9;
+                }
+            } // For 18-hole tees, default is 1-18
+
+            // Count total valid scores entered on the relevant part of the scorecard
+            for (let i = firstHoleToCheck; i <= lastHoleToCheck; i++) {
+                const score = rawScores[i.toString()];
+                if (typeof score === 'number' && !isNaN(score)) {
+                    totalValidScoresEnteredOnCard++;
+                }
+            }
+
+            // Now validate based on actualPlayedHoles vs totalValidScoresEnteredOnCard
+            if (actualPlayedHoles < intendedNumHoles) { // Player declared an incomplete round
+                if (totalValidScoresEnteredOnCard !== actualPlayedHoles) {
+                    alert(`WHS Compliance: You indicated ${actualPlayedHoles} holes were played, but you have entered ${totalValidScoresEnteredOnCard} scores on the scorecard. Please ensure the number of scores matches the actual holes played.`);
+                    return;
+                }
+            } else { // Player declared a full round (actualPlayedHoles === intendedNumHoles)
+                if (intendedNumHoles === 18) {
+                    if (totalValidScoresEnteredOnCard < 10) {
+                        alert("WHS Rule 2.1: For a full 18-hole round, at least 10 scores must be entered. You indicated 18 holes played but provided " + totalValidScoresEnteredOnCard + " scores.");
+                        return;
+                    }
+                } else if (intendedNumHoles === 9) {
+                    // actualPlayedHoles is 9, so totalValidScoresEnteredOnCard must also be 9
+                    if (totalValidScoresEnteredOnCard < 9) {
+                        alert("WHS Rule 2.1: For a 9-hole round, all 9 scores must be entered. You indicated 9 holes played but provided " + totalValidScoresEnteredOnCard + " scores.");
+                        return;
+                    }
+                }
+            }
+            // --- END WHS Rule 2.1 / 3.1c Validation ---
+
+            // --- Prepare rawScores for storage, re-keying for 9-hole rounds ---
+            const processedRawScoresForStorage = {};
+            if (selectedTee.numHoles === 9) {
+                let currentTeeTypeForRemapping = selectedTee.teeType;
+                // Fallback logic if selectedTee.teeType is not explicit for a 9-hole tee
+                if (!currentTeeTypeForRemapping || (currentTeeTypeForRemapping !== 'Front 9' && currentTeeTypeForRemapping !== 'Back 9' && currentTeeTypeForRemapping !== 'Complete 9')) {
+                    const teeIdLower = selectedTee.id.toLowerCase();
+                    if (teeIdLower.includes('_b9') || teeIdLower.includes('back')) {
+                        currentTeeTypeForRemapping = 'Back 9';
+                    } else {
+                        currentTeeTypeForRemapping = 'Front 9'; // Default if still ambiguous
+                    }
+                }
+
+                if (currentTeeTypeForRemapping === 'Back 9') {
+                    for (let i = 0; i < 9; i++) {
+                        const physicalHoleKey = (10 + i).toString(); // Physical holes 10-18
+                        const logicalHoleKey = (1 + i).toString();   // Logical holes 1-9
+                        processedRawScoresForStorage[logicalHoleKey] = rawScores[physicalHoleKey];
+                    }
+                } else { // Front 9 or Complete 9
+                    for (let i = 0; i < 9; i++) {
+                        const physicalHoleKey = (1 + i).toString(); // Physical holes 1-9
+                        const logicalHoleKey = (1 + i).toString();  // Logical holes 1-9
+                        processedRawScoresForStorage[logicalHoleKey] = rawScores[physicalHoleKey];
+                    }
+                }
+            } else { // 18-hole round
+                for (let i = 1; i <= 18; i++) {
+                    const physicalHoleKey = i.toString();
+                    processedRawScoresForStorage[physicalHoleKey] = rawScores[physicalHoleKey];
+                }
+            }
+            // --- END Prepare rawScores for storage ---
+
+            const scoreData = { 
+                date, teeId: selectedTeeId, courseName: selectedTee.courseName,
+                teeName: selectedTee.teeName, scoreDescription, rawScores: processedRawScoresForStorage, 
+                pccApplied: pccAdjustment, 
+                numHolesPlayed: actualPlayedHoles,    // This is the length of the round being submitted
+                intendedHoles: actualPlayedHoles,   // The round being submitted is intended to be this length 
+                playedHoles: actualPlayedHoles,   // Use the validated actual holes played
+            };
+
+            if (isRoundIncomplete && selectedTee.numHoles === 18) { /* ... (incomplete round logic placeholder) ... */ }
+
+            if (currentEditingScoreId) {
+                logToCalcDisplay(`--- Updating Score ID: ${currentEditingScoreId} for ${golferToUpdate.name} ---`);
+                const scoreIndexToUpdate = golferToUpdate.scores.findIndex(s => s.id === currentEditingScoreId);
+                if (scoreIndexToUpdate === -1) { alert("Error: Could not find score to update."); resetScoreForm_GS(); return; }
+                golfers_GS[golferIndex].scores[scoreIndexToUpdate] = { 
+                    ...golfers_GS[golferIndex].scores[scoreIndexToUpdate], 
+                    ...scoreData 
+                };
+                recalculateGolferHandicapHistory_GS(golferId);
+                alert('Score updated and handicap history fully recalculated.');
+            } else {
+                logToCalcDisplay(`--- Adding New Score for ${golferToUpdate.name} ---`);
+                const newScoreRecord = {
+                    id: generateUniqueId_GS('S'),
+                    ...scoreData,
+                    ags: null, sd: null, hiAtTimeOfPosting: null, adjustedScores: {},
+                    originalNineHoleSD: null, esrAppliedValue: 0 
+                };
+                golfers_GS[golferIndex].scores.push(newScoreRecord);
+                recalculateGolferHandicapHistory_GS(golferId);
+                alert(`Score added! New HI for ${golferToUpdate.name}: ${golferToUpdate.hi !== null && golferToUpdate.hiEstablished ? golferToUpdate.hi.toFixed(1) : 'Pending'}`);
+            }
+
+            saveDataToLocalStorage_GS(LOCAL_STORAGE_GOLFERS_KEY_GS, golfers_GS);
+            renderSavedGolfers_GS();
+            if (currentManagingScoresGolferId === golferId) { 
+                const updatedGolferForModal = golfers_GS.find(g => g.id === currentManagingScoresGolferId);
+                if (updatedGolferForModal) renderScoresInModal_GS(currentManagingScoresGolferId, updatedGolferForModal.scores);
+            }
+            resetScoreForm_GS();
+            updateAutomatedPccDisplay_GS(); 
+        }
+        
+        // --- Automated PCC Simulation Functions ---
+        function _PCC_GS_calculateSDnoPCC(ags, courseRating, slopeRating, numHolesPlayed) { /* ... (same as before) ... */ if (slopeRating === 0) return null; return calculateScoreDifferential_WHS(ags, courseRating, slopeRating, 0, numHolesPlayed); }
+        function _PCC_GS_calculateExpectedStandardDeviationOfSD(/* eligibleScores */) { /* ... (same as before) ... */ logToCalcDisplay(`    PCC_DEV: Using placeholder expected Standard Deviation of SDs: ${PLACEHOLDER_EXPECTED_STD_DEV_PCC_GS}`); return PLACEHOLDER_EXPECTED_STD_DEV_PCC_GS; }
+        function _PCC_GS_determinePlayerPerformance(eligibleScoresWithDetails, expectedStdDev) { /* ... (same as before) ... */ const performanceCounts = { significantlyBetter: 0, asExpected: 0, significantlyWorse: 0, totalValidForComparison: 0 }; eligibleScoresWithDetails.forEach(item => { if (item.sdNoPcc === null || item.hiAtTimeOfPosting === null) { logToCalcDisplay(`    PCC_INFO: Skipping score ID ${item.score.id} (Golfer: ${item.golferName}) from PCC performance check (missing SD or HI at posting).`); return; } performanceCounts.totalValidForComparison++; const performanceDiff = item.sdNoPcc - item.hiAtTimeOfPosting; if (performanceDiff < -expectedStdDev) { performanceCounts.significantlyBetter++; } else if (performanceDiff > expectedStdDev) { performanceCounts.significantlyWorse++; } else { performanceCounts.asExpected++; } }); return performanceCounts; }
+        function _PCC_GS_determinePCCAdjustment(performanceCounts, totalEligibleScores) { /* ... (same as before) ... */ if (totalEligibleScores === 0) return 0; const percentBetter = (performanceCounts.significantlyBetter / totalEligibleScores) * 100; const percentWorse = (performanceCounts.significantlyWorse / totalEligibleScores) * 100; logToCalcDisplay(`    PCC_DEV: % Better: ${percentBetter.toFixed(1)}%, % Worse: ${percentWorse.toFixed(1)}% (based on ${totalEligibleScores} scores)`); if (percentWorse > 85 && percentBetter < 5) return 3; /* Harder conditions */ if (percentWorse > 75 && percentBetter < 10) return 2; if (percentWorse > 60 && percentBetter < 20) return 1; if (percentBetter > 75 && percentWorse < 10) return -1; /* Easier conditions */ return 0; }
+        function _PCC_GS_runAutomatedPCC() { /* ... (same as before) ... */ if(calculationLogPreEl) calculationLogPreEl.textContent = ""; logToCalcDisplay("--- Starting Automated PCC Calculation (Simulated) ---"); const selectedTeeId = scoreTeeSelectEl.value; const selectedDate = scoreDateInputEl.value; if (!selectedTeeId || !selectedDate) { alert("Please select a Tee and Date to calculate PCC."); logToCalcDisplay("PCC Calculation Aborted: Tee or Date not selected."); return; } const selectedTee = userCourses_GS.find(t => t.id === selectedTeeId); if (!selectedTee) { alert("Selected Tee data not found."); logToCalcDisplay("PCC Calculation Aborted: Tee data not found."); return; } logToCalcDisplay(`Calculating PCC for: ${selectedTee.courseName} - ${selectedTee.teeName} on ${formatDate_GS(selectedDate)}`); const eligibleScoresDetails = []; let golfersToRecalculate = new Set(); golfers_GS.forEach(golfer => { golfer.scores.forEach(score => { if (score.teeId === selectedTeeId && score.date === selectedDate && score.ags !== null && score.hiAtTimeOfPosting !== null && score.hiAtTimeOfPosting <= 36.0 && score.playedHoles === score.intendedHoles) { const teeForScore = userCourses_GS.find(t => t.id === score.teeId);
+if (!teeForScore) {
+    logToCalcDisplay(`    PCC_ERR: Could not find tee data for score ID ${score.id}. Skipping.`);
+    return; // Skips this score if tee data is missing
+}
+
+// Eligibility check for minHolesForEligibility (already present, kept for clarity)
+let minHolesForEligibility = 0;
+if (score.intendedHoles === 18) minHolesForEligibility = 7; // WHS: 7-17 holes for 18H score
+else if (score.intendedHoles === 9) minHolesForEligibility = 9; // WHS: 9 holes for 9H score
+
+if (score.hiAtTimeOfPosting !== null && score.ags !== null && score.playedHoles >= minHolesForEligibility) {
+    let agsForPccCalc;
+    let crForPccCalc;
+    let srForPccCalc;
+    // For PCC data pool, all scores are converted to an 18-hole equivalent context for SD calculation.
+    const numHolesForPccSdCalc = 18;
+    let originalAgsForLog = score.ags;
+    let originalNumHolesForLog = score.numHolesPlayed; // or score.intendedHoles or teeForScore.numHoles
+
+    if (score.intendedHoles === 9) { // Check if the score itself was intended as a 9-hole round
+        // This score was a 9-hole round. Double its characteristics for PCC analysis.
+        agsForPccCalc = score.ags * 2; // score.ags here is the 9-hole AGS
+        crForPccCalc = teeForScore.courseRating * 2; // teeForScore.courseRating is the 9-hole CR
+        srForPccCalc = teeForScore.slopeRating; // Use original 9-hole slope rating
+        logToCalcDisplay(`    PCC_INFO: Doubling 9-hole score (ID ${score.id}, Golfer: ${golfer.name}) for PCC pool. Original 9H AGS: ${score.ags.toFixed(1)}. Using 18H equiv: AGS=${agsForPccCalc.toFixed(1)}, CR=${crForPccCalc.toFixed(1)}, SR=${srForPccCalc}`);
+    } else {
+        // This score was an 18-hole round.
+        agsForPccCalc = score.ags;
+        crForPccCalc = teeForScore.courseRating;
+        srForPccCalc = teeForScore.slopeRating;
+    }
+
+    // _PCC_GS_calculateSDnoPCC calls calculateScoreDifferential_WHS, which will round to 1 decimal if numHolesPlayed is 18.
+    const sdNoPcc = _PCC_GS_calculateSDnoPCC(agsForPccCalc, crForPccCalc, srForPccCalc, numHolesForPccSdCalc);
+    
+    if (sdNoPcc !== null) { // Only push if SD calculation was successful
+        eligibleScoresDetails.push({
+            score: score, // Keep original score for reference
+            golferId: golfer.id,
+            hiAtTimeOfPosting: score.hiAtTimeOfPosting,
+            sdNoPcc: sdNoPcc // This is now an 18-hole equivalent SD, rounded to one decimal.
+        });
+        golfersToRecalculate.add(golfer.id);
+        logToCalcDisplay(`    PCC_INFO: Added to PCC pool: Score ID ${score.id} (Golfer: ${golfer.name}), HI: ${score.hiAtTimeOfPosting.toFixed(1)}, Orig.AGS: ${originalAgsForLog.toFixed(1)} (${originalNumHolesForLog}H), 18H-Equiv.SD (no PCC): ${sdNoPcc.toFixed(1)}`);
+    } else {
+        logToCalcDisplay(`    PCC_WARN: Could not calculate 18H-Equiv.SD for score ID ${score.id} (Golfer: ${golfer.name}). Skipping from PCC pool.`);
+    }
+} } }); }); logToCalcDisplay(`  Found ${eligibleScoresDetails.length} potentially eligible scores for PCC analysis.`); if (eligibleScoresDetails.length < MIN_ELIGIBLE_SCORES_FOR_PCC_GS) { logToCalcDisplay(`  Insufficient eligible scores (${eligibleScoresDetails.length}) to perform PCC calculation (Minimum ${MIN_ELIGIBLE_SCORES_FOR_PCC_GS} required). PCC remains 0.`); updatePccForAllScoresOnDay(selectedTeeId, selectedDate, 0); golfersToRecalculate.forEach(id => recalculateGolferHandicapHistory_GS(id)); saveDataToLocalStorage_GS(LOCAL_STORAGE_GOLFERS_KEY_GS, golfers_GS); renderSavedGolfers_GS(); updateAutomatedPccDisplay_GS(); alert(`PCC Calculation: Not enough eligible scores (${eligibleScoresDetails.length}). Minimum ${MIN_ELIGIBLE_SCORES_FOR_PCC_GS} required. PCC set to 0.`); return; } const expectedStdDev = _PCC_GS_calculateExpectedStandardDeviationOfSD(eligibleScoresDetails); const performanceCounts = _PCC_GS_determinePlayerPerformance(eligibleScoresDetails, expectedStdDev); if (performanceCounts.totalValidForComparison < MIN_ELIGIBLE_SCORES_FOR_PCC_GS) { logToCalcDisplay(`  After filtering, insufficient scores with valid data (${performanceCounts.totalValidForComparison}) for PCC. PCC set to 0.`); updatePccForAllScoresOnDay(selectedTeeId, selectedDate, 0); golfersToRecalculate.forEach(id => recalculateGolferHandicapHistory_GS(id)); saveDataToLocalStorage_GS(LOCAL_STORAGE_GOLFERS_KEY_GS, golfers_GS); renderSavedGolfers_GS(); updateAutomatedPccDisplay_GS(); alert(`PCC Calculation: Not enough scores with comparable data (${performanceCounts.totalValidForComparison}). PCC set to 0.`); return; } const finalPCC = _PCC_GS_determinePCCAdjustment(performanceCounts, performanceCounts.totalValidForComparison); logToCalcDisplay(`  ==> SIMULATED PCC ADJUSTMENT: ${finalPCC} <==`); updatePccForAllScoresOnDay(selectedTeeId, selectedDate, finalPCC); logToCalcDisplay(`\n  Triggering HI recalculation for ${golfersToRecalculate.size} affected golfer(s)...`); golfersToRecalculate.forEach(id => recalculateGolferHandicapHistory_GS(id)); saveDataToLocalStorage_GS(LOCAL_STORAGE_GOLFERS_KEY_GS, golfers_GS); renderSavedGolfers_GS(); updateAutomatedPccDisplay_GS(); logToCalcDisplay("--- Automated PCC Calculation (Simulated) Complete & HIs Recalculated ---"); alert(`Simulated PCC of ${finalPCC} calculated and applied for ${selectedTee.courseName} - ${selectedTee.teeName} on ${formatDate_GS(selectedDate)}. Affected HIs recalculated.`);}
+        function updatePccForAllScoresOnDay(teeId, date, pccValue) { /* ... (same as before) ... */ let scoresUpdatedCount = 0; golfers_GS.forEach(golfer => { golfer.scores.forEach(score => { if (score.teeId === teeId && score.date === date) { score.pccApplied = pccValue; scoresUpdatedCount++; } }); }); logToCalcDisplay(`    PCC_APPLY: Updated pccApplied to ${pccValue} for ${scoresUpdatedCount} scores on ${date} for tee ID ${teeId}.`);}
+        function updateAutomatedPccDisplay_GS() {
+            const selectedTeeId = scoreTeeSelectEl.value;
+            const selectedDate = scoreDateInputEl.value;
+            automatedPccDisplayEl.textContent = '';
+            scorePccAdjustmentEl.disabled = false; // Allow manual override
+
+            if (selectedTeeId && selectedDate) {
+                let pccForDayAndTee = null;
+                let pccIsConsistent = true;
+                let firstPccFound = false;
+
+                for (const golfer of golfers_GS) {
+                    for (const score of golfer.scores) {
+                        if (score.teeId === selectedTeeId && score.date === selectedDate) { // Corrected condition
+                            if (!firstPccFound) {
+                                pccForDayAndTee = score.pccApplied;
+                                firstPccFound = true;
+                            } else if (score.pccApplied !== pccForDayAndTee) {
+                                pccIsConsistent = false;
+                                break; 
+                            }
+                        }
+                    }
+                    if (!pccIsConsistent) break; 
+                }
+
+                if (firstPccFound && pccIsConsistent && pccForDayAndTee !== undefined && pccForDayAndTee !== null) {
+                    automatedPccDisplayEl.textContent = `Simulated PCC for this day/tee: ${pccForDayAndTee}`;
+                    scorePccAdjustmentEl.value = pccForDayAndTee.toString();
+                } else if (firstPccFound && !pccIsConsistent) {
+                    automatedPccDisplayEl.textContent = `Inconsistent PCC values for this day/tee. Manual input active.`;
+                }
+            }
+        }
+
+        // --- Page Initialization ---
+        function initGolfersPage_GS() {
+            cacheGolfersPageElements();
+            userCourses_GS = loadDataFromLocalStorage_GS(LOCAL_STORAGE_COURSES_KEY_GS, []);
+            golfers_GS = loadDataFromLocalStorage_GS(LOCAL_STORAGE_GOLFERS_KEY_GS, []);
+
+            renderSavedGolfers_GS();
+            populateGolferSelect_GS();
+            populateCourseSelect_GS(); 
+
+            if(scoreDateInputEl) {
+                scoreDateInputEl.valueAsDate = new Date();
+                scoreDateInputEl.addEventListener('change', updateAutomatedPccDisplay_GS); 
+            }
+            if(scorePccAdjustmentEl) scorePccAdjustmentEl.value = "0";
+            if(scoreDescriptionSelectEl) scoreDescriptionSelectEl.value = "General Play";
+
+            addGolferFormEl.addEventListener('submit', handleAddGolferSubmit_GS);
+            scoreCourseSelectEl.addEventListener('change', handleCourseSelectionChange_GS); 
+            scoreTeeSelectEl.addEventListener('change', handleTeeSelectionChange_GS);       
+            scoreGolferSelectEl.addEventListener('change', handleGolferSelectionChange_GS);
+            scoreEntryFormEl.addEventListener('submit', handleScoreSubmit_GS);
+            
+            closeManageScoresModalBtnEl.addEventListener('click', closeManageScoresModal_GS);
+            manageScoresModalEl.addEventListener('click', (event) => {
+                if (event.target === manageScoresModalEl) closeManageScoresModal_GS();
+            });
+
+            // Toggle calculation log visibility
+            const toggleCalcLogBtn = document.getElementById('toggleCalcLog');
+            const calculationLog = document.getElementById('calculationLog');
+            
+            if (toggleCalcLogBtn && calculationLog) {
+                toggleCalcLogBtn.addEventListener('click', () => {
+                    const isExpanded = toggleCalcLogBtn.getAttribute('aria-expanded') === 'true';
+                    toggleCalcLogBtn.setAttribute('aria-expanded', !isExpanded);
+                    calculationLog.classList.toggle('hidden');
+                    
+                    // Update button text and icon
+                    const icon = toggleCalcLogBtn.querySelector('i');
+                    if (isExpanded) {
+                        toggleCalcLogBtn.innerHTML = '<i class="fas fa-calculator mr-2"></i>Show Calculation Log';
+                    } else {
+                        toggleCalcLogBtn.innerHTML = '<i class="fas fa-times mr-2"></i>Hide Calculation Log';
+                    }
+                });
+            }
+            cancelScoreEditButtonEl.addEventListener('click', resetScoreForm_GS);
+            calculatePccButtonEl.addEventListener('click', _PCC_GS_runAutomatedPCC); 
+            updateAutomatedPccDisplay_GS(); 
+            setInitialCalcDisplayMessage_GS("Welcome! Select golfer, course, and tee to enter scores. Detailed calculations will appear after score submission.");
+        }
+
+        // --- DOMContentLoaded Event Listener ---
+        document.addEventListener('DOMContentLoaded', () => {
+            const currentYearSpan = document.getElementById('currentYear');
+            if (currentYearSpan) currentYearSpan.textContent = new Date().getFullYear();
+            setActiveNavLink_GS();
+            initGolfersPage_GS();
+        });
+    </script>
+</body>
+</html>

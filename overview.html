@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Handicap Overview - GolfPal WHS calculator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* Shared base styles - Duplicated for self-containment */
+        body { font-family: 'Inter', sans-serif; background-color: #f0f2f5; color: #1a202c; line-height: 1.6; display: flex; flex-direction: column; min-height: 100vh; }
+        .main-container { flex-grow: 1; }
+        .card { background-color: white; border-radius: 0.75rem; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.07), 0 4px 6px -2px rgba(0, 0, 0, 0.05); overflow: hidden; transition: box-shadow 0.3s ease-in-out; }
+        .card:hover { box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04); }
+        .nav-link { transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out, border-color 0.2s ease-in-out, transform 0.1s ease-in-out; border-bottom: 4px solid transparent; text-decoration: none; color: #4a5568; padding-top: 1rem; padding-bottom: 1rem; }
+        .nav-link.active { background-color: transparent; color: #2c5282; border-bottom-color: #2c5282; font-weight: 600; }
+        .nav-link:not(.active):hover { background-color: #edf2f7; color: #2b6cb0; transform: translateY(-1px); }
+        .button-secondary { background-color: #e2e8f0; color: #2d3748; font-weight: 500; padding: 0.625rem 1.25rem; border-radius: 0.5rem; transition: background-color 0.2s ease-in-out; border: 1px solid #cbd5e0; }
+        .button-secondary:hover { background-color: #cbd5e0; }
+        h1.page-title { font-size: 2rem; line-height: 2.5rem; color: #1a365d; letter-spacing: -0.025em; }
+        h2.section-title { font-size: 1.5rem; line-height: 2rem; color: #2c5282; padding-bottom: 0.75rem; border-bottom-width: 2px; border-color: #e2e8f0; }
+        h3.detail-subtitle { font-size: 1.125rem; line-height: 1.75rem; color: #2d3748; font-weight: 600; margin-bottom: 0.75rem; }
+        @media (min-width: 768px) { h1.page-title { font-size: 2.5rem; line-height: 1; } h2.section-title { font-size: 1.75rem; line-height: 2.25rem; } }
+        .footer { text-align: center; margin-top: auto; padding: 2rem 1rem; border-top: 1px solid #e2e8f0; background-color: #ffffff; }
+        .footer p { color: #718096; }
+
+        /* Overview Table Styles */
+        .overview-table-container { max-height: calc(1.5rem + 2.5rem * 15 + 1px * 15); overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 0.5rem; }
+        .overview-table-wrapper { overflow-x: auto; }
+        .overview-table { width: 100%; min-width: 650px; border-collapse: separate; border-spacing: 0; }
+        .overview-table th, .overview-table td { padding: 0.875rem 1rem; text-align: left; font-size: 0.875rem; border-bottom: 1px solid #e2e8f0; vertical-align: middle; }
+        .overview-table th { background-color: #f8fafc; font-weight: 600; color: #334155; text-transform: uppercase; letter-spacing: 0.05em; cursor: default; user-select: none; position: sticky; top:0; z-index:5; }
+        .overview-table th[data-sort-key] { cursor: pointer; }
+        .overview-table th .sort-icon { font-size: 0.7em; margin-left: 0.3em; color: #a0aec0; }
+        .overview-table th.sort-asc .sort-icon::before { content: " \f0de"; font-family: "Font Awesome 6 Free"; font-weight: 900; color: #2c5282; }
+        .overview-table th.sort-desc .sort-icon::before { content: " \f0dd"; font-family: "Font Awesome 6 Free"; font-weight: 900; color: #2c5282; }
+        .overview-table thead th:first-child { border-top-left-radius: 0.5rem; }
+        .overview-table thead th:last-child { border-top-right-radius: 0.5rem; }
+        .overview-table tbody tr:last-child td { border-bottom: none; }
+        .overview-table tbody tr { transition: background-color 0.15s ease-in-out; }
+        .overview-table tbody tr.clickable-row { cursor: pointer; }
+        .overview-table tbody tr:nth-child(even) { background-color: #fdfdfe; }
+        .overview-table tbody tr:hover { background-color: #eff6ff; }
+        .hi-value { font-weight: 700; font-size: 1rem; }
+        .no-data-message { text-align: center; padding: 2.5rem; color: #718096; font-style: italic; font-size: 1rem; border: 2px dashed #cbd5e0; border-radius: 0.75rem; background-color: #f8fafc; }
+        .no-data-message i { font-size: 1.5rem; margin-bottom: 0.5rem; display: block; color: #94a3b8; }
+
+        /* Detail View Styles */
+        #individualGolferDetailCard { display: none; }
+        .detail-hi-info { margin-bottom: 1.5rem; font-size: 0.9rem; background-color: #eff6ff; padding: 1rem; border-radius: 0.5rem; border: 1px solid #bfdbfe;}
+        .detail-hi-info strong { font-size: 1.1rem; }
+        .detail-reason { font-style: italic; color: #4b5563; font-size: 0.85rem; margin-top: 0.25rem; }
+        .detail-score-table-container { max-height: 450px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 0.5rem;}
+        .detail-score-table { width: 100%; min-width: 950px; /* Adjusted min-width for new column */ border-collapse: collapse; font-size: 0.8rem; }
+        .detail-score-table th, .detail-score-table td { border-bottom: 1px solid #e2e8f0; padding: 0.5rem 0.6rem; text-align: center; white-space: nowrap; }
+        .detail-score-table th { background-color: #f8fafc; font-weight: 600; color: #475569; position: sticky; top: 0; z-index: 1;}
+        .detail-score-table tbody tr:last-child td { border-bottom: none; }
+        .detail-score-table tbody tr:nth-child(even) { background-color: #fdfdfe; }
+        .detail-score-table td:nth-child(3), .detail-score-table td:nth-child(4) { text-align: left; white-space: normal; }
+        
+        /* Expand button and hole score detail styles */
+        .expand-button { background: none; border: none; color: #4a5568; cursor: pointer; padding: 4px; transition: color 0.2s ease-in-out; }
+        .expand-button:hover { color: #2c5282; }
+        .expand-button i { font-size: 1.1rem; }
+        .hole-score-detail-row > td { padding: 0 !important; background-color: #f8fafc !important; } /* Ensure td takes full width for inner content */
+        .hole-score-detail-row { transition: all 0.3s ease-in-out; }
+        
+        .hole-score-detail-content { 
+            overflow-x: auto; 
+            max-width: 100%;
+            padding: 0.75rem 1rem; /* Inner padding for content */
+            border-top: 1px solid #e2e8f0; /* Separator line from main row */
+        }
+        .detail-score-table .expand-cell { width: 30px; text-align: center; }
+        
+        .detail-section-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #2c5282; /* Darker blue for section titles */
+            margin-top: 0.5rem;
+            margin-bottom: 0.25rem;
+            padding-bottom: 0.25rem;
+            border-bottom: 1px solid #cbd5e0;
+        }
+        .detail-section-title:first-child { margin-top: 0; }
+
+        .detail-list { list-style: disc; list-style-position: inside; padding-left: 0.5rem; margin-bottom: 0.75rem; font-size: 0.78rem; }
+        .detail-list li { margin-bottom: 0.1rem; }
+        .detail-list strong { font-weight: 600; }
+        
+        .nine-hole-indicator { font-size: 0.75em; color: #667eea; margin-left: 4px; font-style: italic; }
+        .highlighted-score { background-color: #dbeafe !important; }
+        .highlighted-score:hover { background-color: #bfdbfe !important; }
+        .detail-subtitle-note { font-size: 0.75rem; color: #4b5563; font-style: italic; margin-top: -0.5rem; margin-bottom: 0.75rem; }
+        .esr-indicator { font-size: 0.7em; color: #dd6b20; /* Tailwind orange-600 */ margin-left: 4px; font-style: italic; font-weight: 500; }
+        .pcc-indicator { font-size: 0.7em; color: #38a169; /* Tailwind green-600 */ margin-left: 0px; font-style: italic; }
+
+        /* --- NEW COMPACT Hole Score Table Styles --- */
+        .hole-score-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 0.75rem;
+            font-size: 0.7rem; /* Smaller font */
+            background-color: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .hole-score-table th,
+        .hole-score-table td {
+            border: 1px solid #e2e8f0;
+            padding: 0.25rem 0.15rem; /* Much smaller padding */
+            text-align: center;
+            line-height: 1.2;
+            min-width: 22px; /* Minimum width for readability */
+        }
+
+        .hole-score-table thead th {
+            background-color: #f1f5f9; /* Tailwind slate-100 */
+            font-weight: 600;
+            color: #1e293b; /* Tailwind slate-800 */
+            font-size: 0.65rem; /* Even smaller for headers */
+            text-transform: uppercase;
+            letter-spacing: 0.02em;
+            padding-top: 0.4rem; /* Slightly more top padding for title */
+            padding-bottom: 0.4rem; /* Slightly more bottom padding for title */
+        }
+
+        .hole-score-table tbody th { /* For row labels like HOLE, PAR, SI, SCORE */
+            background-color: #f8fafc; /* Tailwind slate-50 */
+            font-weight: 600;
+            text-align: left;
+            padding-left: 0.4rem;
+            font-size: 0.65rem;
+            width: 35px; /* Fixed narrow width for labels */
+        }
+
+        .hole-score-table tbody td {
+            font-weight: 500;
+            font-size: 0.7rem;
+        }
+
+        /* Hole number cells in the 'HOLE' row */
+        .hole-score-table .hole-number {
+            font-weight: 600;
+            background-color: #f8fafc; /* Tailwind slate-50, same as label column */
+            font-size: 0.65rem;
+        }
+
+        /* Total column styling (OUT/IN) */
+        .hole-score-table .total-col {
+            background-color: #f1f5f9; /* Tailwind slate-100, same as header */
+            font-weight: 700;
+            border-left: 2px solid #cbd5e0; /* Tailwind slate-300 */
+            min-width: 30px;
+        }
+
+        /* Score type colors (corrected based on user image and ensuring Bogey is Yellow-Olive) */
+        .score-ace { background-color: #FFD700 !important; color: #000000 !important; font-weight: bold; } /* Gold */
+        .score-albatross { background-color: #059669 !important; color: white !important; } /* Dark Green (Emerald 600) */
+        .score-eagle { background-color: #EA580C !important; color: white !important; } /* Orange (Orange 600) */
+        .score-birdie { background-color: #DC2626 !important; color: white !important; } /* Red (Red 600) */
+        .score-par { background-color: #16A34A !important; color: white !important; } /* Bright Green (Green 600) */
+        .score-bogey { background-color: #65A30D !important; color: white !important; } /* Dark Olive Green (Lime 600) - To match golfers.html image */
+        .score-double { background-color: #4B5563 !important; color: white !important; } /* Dark Slate Blue/Gray (Gray 600) */
+        .score-triple { background-color: #1F2937 !important; color: white !important; } /* Darker Slate Blue/Gray (Gray 800) */
+        .score-none { background-color: white !important; color: inherit !important; }
+
+        /* Mobile responsiveness for compact tables */
+        @media (max-width: 640px) {
+            .hole-score-table {
+                font-size: 0.6rem;
+            }
+            
+            .hole-score-table th,
+            .hole-score-table td {
+                padding: 0.2rem 0.1rem;
+                min-width: 18px;
+            }
+            
+            .hole-score-table tbody th { /* Row labels */
+                width: 30px;
+                font-size: 0.6rem;
+                padding-left: 0.2rem;
+            }
+            .hole-score-table .hole-number,
+            .hole-score-table thead th {
+                 font-size: 0.55rem;
+            }
+        }
+
+    </style>
+</head>
+<body>
+    <div class="main-container container mx-auto p-4 sm:p-6 md:p-8 max-w-7xl">
+        <header class="mb-8 md:mb-10 text-center">
+            <h1 class="page-title font-bold">GolfPal WHS calculator</h1>
+        </header>
+
+        <nav class="mb-8 md:mb-10 card !shadow-none border-b-2 border-gray-200 rounded-b-none">
+            <div class="flex">
+                <a href="index.html" class="nav-link flex-1 py-3 sm:py-4 px-2 sm:px-4 text-center font-medium text-xs sm:text-sm md:text-base focus:outline-none">
+                    <i class="fas fa-flag mr-1 sm:mr-2"></i>Course Management
+                </a>
+                <a href="golfers.html" class="nav-link flex-1 py-3 sm:py-4 px-2 sm:px-4 text-center font-medium text-xs sm:text-sm md:text-base focus:outline-none">
+                    <i class="fas fa-users mr-1 sm:mr-2"></i>Golfers &amp; Scores
+                </a>
+                <a href="overview.html" class="nav-link active flex-1 py-3 sm:py-4 px-2 sm:px-4 text-center font-medium text-xs sm:text-sm md:text-base focus:outline-none">
+                    <i class="fas fa-chart-line mr-1 sm:mr-2"></i>Handicap Overview
+                </a>
+                <a href="help.html" data-nav="help.html" class="nav-link flex-1 py-3 sm:py-4 px-2 sm:px-4 text-center font-medium text-xs sm:text-sm md:text-base focus:outline-none">
+                    <i class="fas fa-question-circle mr-1 sm:mr-2"></i>Help
+                </a>
+            </div>
+        </nav>
+
+        <main>
+            <section id="golferSummarySection" class="card p-6 sm:p-8">
+                <h2 class="section-title font-semibold mb-6">Golfer Handicap Summary</h2>
+                <div id="handicapOverviewContainer" class="overview-table-container text-gray-700">
+                    <p class="italic text-gray-500 p-4">Loading golfer handicap data...</p>
+                </div>
+            </section>
+
+            <section id="individualGolferDetailCard" class="card p-6 sm:p-8 mt-8" style="display: none;">
+                 <div class="flex justify-between items-center mb-6 border-b border-gray-200 pb-4">
+                    <h2 id="detailGolferName" class="section-title !border-b-0 !pb-0 text-2xl">Golfer Details</h2>
+                    <button id="closeDetailViewBtn" class="button-secondary text-sm !py-2 !px-4">
+                        <i class="fas fa-times mr-2"></i>Close Details
+                    </button>
+                 </div>
+                 <div id="detailContent" class="space-y-6">
+                    <div class="detail-hi-info"></div>
+                    <h3 class="detail-subtitle">Score History</h3>
+                    <p class="detail-subtitle-note">Highlighted rounds are used in the current Handicap Index calculation. Showing last 20 scores. SD values may reflect ESR adjustments.</p>
+                    <div id="detailScoreHistoryContainer" class="detail-score-table-container">
+                        </div>
+                 </div>
+            </section>
+        </main>
+    </div>
+
+    <footer class="footer">
+        <p>&copy; <span id="currentYear"></span> WHS Simulator. Developed and maintained by SIRCH SOLUTIONS KE. For educational purposes only.</p>
+    </footer>
+
+    <script>
+        // --- Constants ---
+        const LOCAL_STORAGE_GOLFERS_KEY_OV = 'whsSimulatorGolfers_v8_whs_compliance'; 
+        const LOCAL_STORAGE_COURSES_KEY_OV = 'whsSimulatorCourses_v3_predefined_shells';
+
+        // --- Global Variables ---
+        let golfers_OV = [];
+        let userCourses_OV = [];
+        let currentSortColumn = 'name';
+        let currentSortDirection = 'asc';
+        let currentlyExpandedScoreRow = null;
+
+        // --- DOM Element References (Cached on Initialization) ---
+        let handicapOverviewContainerEl, golferSummarySectionEl, individualGolferDetailCardEl,
+            detailGolferNameEl, detailContentEl, closeDetailViewBtnEl;
+
+        // --- Utility Functions ---
+        function loadDataFromLocalStorage_OV(key, defaultValue = []) { 
+            try {
+                const storedData = localStorage.getItem(key);
+                if (storedData) {
+                    const parsedData = JSON.parse(storedData); 
+                    if (!Array.isArray(parsedData)) { return defaultValue; }
+                    if (key === LOCAL_STORAGE_COURSES_KEY_OV && parsedData.length > 0) {
+                        // Basic validation for course data structure
+                        if (typeof parsedData[0].courseName === 'undefined' || typeof parsedData[0].teeName === 'undefined') { return defaultValue; }
+                         // Ensure holeDetails is an object if it exists
+                        parsedData.forEach(course => {
+                            if (course.holeDetails && Array.isArray(course.holeDetails)) {
+                                const newDetails = {};
+                                course.holeDetails.forEach(hd => {
+                                    if (hd && typeof hd.hole !== 'undefined') {
+                                        newDetails[hd.hole.toString()] = { par: hd.par, si: hd.si };
+                                    }
+                                });
+                                course.holeDetails = newDetails;
+                            }
+                        });
+                    } else if (key === LOCAL_STORAGE_GOLFERS_KEY_OV && parsedData.length > 0) {
+                         // Basic validation for golfer data structure
+                         if (typeof parsedData[0].name === 'undefined' || typeof parsedData[0].scores === 'undefined') { return defaultValue; }
+                        parsedData.forEach(golfer => {
+                            if (golfer.scores && Array.isArray(golfer.scores)) {
+                                golfer.scores.forEach(score => {
+                                    if (typeof score.originalNineHoleSD === 'undefined') score.originalNineHoleSD = null;
+                                    if (typeof score.esrAppliedValue === 'undefined') score.esrAppliedValue = 0;
+                                    // Ensure rawScores is an object
+                                    if (score.rawScores && Array.isArray(score.rawScores)) {
+                                        const newRawScores = {};
+                                        score.rawScores.forEach((val, idx) => {
+                                            newRawScores[(idx + 1).toString()] = val;
+                                        });
+                                        score.rawScores = newRawScores;
+                                    }
+                                });
+                            }
+                            if (typeof golfer.initialHi === 'undefined') golfer.initialHi = null; 
+                            if (typeof golfer.initialLhi === 'undefined') golfer.initialLhi = null;
+                        });
+                    }
+                    return parsedData;
+                }
+            } catch (e) { console.error(`Error loading data for key "${key}" on overview page: ${e.message}`, e); }
+            return defaultValue;
+        }
+        function setActiveNavLink_OV() { 
+            document.querySelectorAll('nav a.nav-link').forEach(link => {
+                link.classList.remove('active');
+                if (window.location.pathname.endsWith(link.getAttribute('href'))) { link.classList.add('active'); }
+            });
+        }
+        function formatDate_OV(dateString) { 
+            if (!dateString) return 'N/A';
+            try { return new Date(dateString + 'T00:00:00').toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+            } catch (e) { console.warn(`Could not format date: ${dateString}`, e); return dateString; }
+        }
+        function cacheOverviewPageElements() { 
+            handicapOverviewContainerEl = document.getElementById('handicapOverviewContainer');
+            golferSummarySectionEl = document.getElementById('golferSummarySection');
+            individualGolferDetailCardEl = document.getElementById('individualGolferDetailCard');
+            detailGolferNameEl = document.getElementById('detailGolferName');
+            detailContentEl = document.getElementById('detailContent');
+            closeDetailViewBtnEl = document.getElementById('closeDetailViewBtn');
+        }
+        function calculateRawGross_OV(rawScoresObj, numHoles) { 
+            if (!rawScoresObj || typeof rawScoresObj !== 'object') return 'N/A';
+            let total = 0;
+            const validNumHoles = (typeof numHoles === 'number' && numHoles > 0) ? numHoles : (rawScoresObj['18'] !== undefined ? 18 : 9);
+            for (let i = 1; i <= validNumHoles; i++) {
+                const scoreVal = rawScoresObj[i.toString()]; // Access by string key
+                if (scoreVal !== undefined && scoreVal !== null && !isNaN(parseInt(scoreVal))) {
+                     total += parseInt(scoreVal);
+                }
+            }
+            return total > 0 ? total : 'N/A';
+        }
+        function calculateCourseHandicapForRound_OV(hiAtPosting, courseRating, slopeRating, par, numHolesPlayed) { 
+            if (hiAtPosting === null || hiAtPosting === undefined) return 'N/A';
+            if (slopeRating === 0) return 'N/A (Invalid SR)';
+            // WHS Formula: Course Handicap = Handicap Index x (Slope Rating / 113) + (Course Rating - Par)
+            // For 9-hole CH: (HI / 2) x (9-hole SR / 113) + (9-hole CR - 9-hole Par)
+            if (numHolesPlayed === 9) { 
+                return Math.round((hiAtPosting / 2) * (slopeRating / 113) + (courseRating - par));
+            } else { // 18 holes
+                return Math.round(hiAtPosting * (slopeRating / 113) + (courseRating - par));
+            }
+        }
+        function getContributingScoreIDs_OV(golferScores) { 
+            if (!golferScores || golferScores.length === 0) return new Set();
+            const recentScoresForCalc = golferScores.slice(0, 20); 
+            const sdsForCalc = recentScoresForCalc.map(s => ({ id: s.id, sd: s.sd })).filter(s => s.sd !== null).sort((a, b) => a.sd - b.sd);
+            const numScores = sdsForCalc.length; if (numScores === 0) return new Set();
+            let numBestScoresToUse = 0;
+            // WHS Rules of Handicapping, Rule 5.2a
+            if (numScores <= 2)      { numBestScoresToUse = 1; } // Adjustment of -2.0 to the SD (handled in HI calc)
+            else if (numScores === 3) { numBestScoresToUse = 1; } // Adjustment of -2.0
+            else if (numScores === 4) { numBestScoresToUse = 1; } // Adjustment of -1.0
+            else if (numScores === 5) { numBestScoresToUse = 1; } // No adjustment
+            else if (numScores === 6) { numBestScoresToUse = 2; } // Average of lowest 2, then -1.0
+            else if (numScores <= 8)  { numBestScoresToUse = 2; } // Average of lowest 2
+            else if (numScores <= 11) { numBestScoresToUse = 3; } // Average of lowest 3
+            else if (numScores <= 14) { numBestScoresToUse = 4; } // Average of lowest 4
+            else if (numScores <= 16) { numBestScoresToUse = 5; } // Average of lowest 5
+            else if (numScores <= 18) { numBestScoresToUse = 6; } // Average of lowest 6
+            else if (numScores === 19){ numBestScoresToUse = 7; } // Average of lowest 7
+            else                      { numBestScoresToUse = 8; } // Average of lowest 8 (for 20 scores)
+            
+            const contributingIDs = new Set();
+            for (let i = 0; i < Math.min(numBestScoresToUse, sdsForCalc.length); i++) { contributingIDs.add(sdsForCalc[i].id); }
+            return contributingIDs;
+        }
+
+        // --- Sorting and Rendering Functions for Golfer Overview Table ---
+        function sortGolfers() { 
+             golfers_OV.sort((a, b) => {
+                let valA, valB;
+                switch (currentSortColumn) {
+                    case 'name': valA = (a.name || '').toLowerCase(); valB = (b.name || '').toLowerCase(); break;
+                    case 'hi': valA = a.hi === null ? (currentSortDirection === 'asc' ? Infinity : -Infinity) : a.hi; valB = b.hi === null ? (currentSortDirection === 'asc' ? Infinity : -Infinity) : b.hi; break;
+                    case 'lastPlayed': const dateA = a.scores && a.scores.length > 0 ? new Date(a.scores[0].date + 'T00:00:00') : new Date(0); const dateB = b.scores && b.scores.length > 0 ? new Date(b.scores[0].date + 'T00:00:00') : new Date(0); valA = dateA.getTime(); valB = dateB.getTime(); break;
+                    default: return 0;
+                }
+                if (valA < valB) return currentSortDirection === 'asc' ? -1 : 1;
+                if (valA > valB) return currentSortDirection === 'asc' ? 1 : -1;
+                return 0;
+            });
+        }
+        function handleSortClick(columnName) { 
+            if (currentSortColumn === columnName) { currentSortDirection = currentSortDirection === 'asc' ? 'desc' : 'asc';
+            } else { currentSortColumn = columnName; currentSortDirection = (columnName === 'lastPlayed') ? 'desc' : 'asc'; } // Default sort for lastPlayed is descending
+            sortGolfers(); renderHandicapOverviewTable();
+        }
+        function renderHandicapOverviewTable() { 
+            if (!handicapOverviewContainerEl) return;
+            handicapOverviewContainerEl.innerHTML = '';
+            if (golfers_OV.length === 0) {
+                handicapOverviewContainerEl.innerHTML = `<div class="no-data-message"><i class="fas fa-info-circle"></i>No golfers added. Go to "Golfers & Scores" to add them.</div>`; return;
+            }
+            const tableWrapper = document.createElement('div'); tableWrapper.className = 'overview-table-wrapper';
+            const table = document.createElement('table'); table.className = 'overview-table';
+            const thead = table.createTHead(); const headerRow = thead.insertRow();
+            const headers = [ { key: 'name', text: 'Golfer Name', sortable: true }, { key: 'hi', text: 'HI', sortable: true }, { key: 'lhi', text: 'LHI', sortable: false }, { key: 'scores', text: 'Scores Count', sortable: false }, { key: 'lastPlayed', text: 'Last Played', sortable: true }];
+            headers.forEach(header => { const th = document.createElement('th'); th.textContent = header.text; th.dataset.sortKey = header.key; const sortIcon = document.createElement('span'); sortIcon.className = 'sort-icon fas'; th.appendChild(sortIcon); if (header.key === currentSortColumn) { th.classList.add(currentSortDirection === 'asc' ? 'sort-asc' : 'sort-desc'); } if (header.sortable) { th.addEventListener('click', () => handleSortClick(header.key)); } headerRow.appendChild(th); });
+            const tbody = table.createTBody();
+            golfers_OV.forEach(golfer => { const tr = tbody.insertRow(); tr.dataset.golferId = golfer.id; tr.classList.add('clickable-row'); tr.title = `Click to view details for ${golfer.name}`; tr.insertCell().textContent = golfer.name || 'Unnamed Golfer'; const hiCell = tr.insertCell(); hiCell.textContent = golfer.hi !== null ? golfer.hi.toFixed(1) : 'N/A'; hiCell.className = 'hi-value ' + (golfer.hi !== null ? (golfer.hi <= 10 ? 'text-green-600' : golfer.hi <= 20 ? 'text-orange-500' : 'text-red-600') : 'text-gray-500'); tr.insertCell().textContent = golfer.lhi !== null ? golfer.lhi.toFixed(1) : 'N/A'; tr.insertCell().textContent = golfer.scores.length; const lastPlayedCell = tr.insertCell(); if (golfer.scores.length > 0) { const lastScoreDate = new Date(golfer.scores[0].date + 'T00:00:00'); lastPlayedCell.textContent = lastScoreDate.toLocaleDateString('en-CA'); } else { lastPlayedCell.textContent = 'N/A'; } tr.addEventListener('click', () => showGolferDetail_OV(golfer.id)); });
+            tableWrapper.appendChild(table); handicapOverviewContainerEl.appendChild(tableWrapper);
+        }
+
+        // --- Golfer Detail View Functions ---
+        function showGolferDetail_OV(golferId) { 
+            const golfer = golfers_OV.find(g => g.id === golferId);
+            if (!golfer) { console.error(`Golfer with ID ${golferId} not found.`); return; }
+            detailGolferNameEl.textContent = `${golfer.name || 'Unnamed Golfer'}'s Details`;
+            const hiInfoDiv = detailContentEl.querySelector('.detail-hi-info');
+            hiInfoDiv.innerHTML = `Current Handicap Index (HI): <strong class="text-xl ${golfer.hi !== null ? (golfer.hi <= 10 ? 'text-green-600' : golfer.hi <= 20 ? 'text-orange-500' : 'text-red-600') : 'text-gray-500'}">${golfer.hi !== null ? golfer.hi.toFixed(1) : 'N/A'}</strong><br> Low Handicap Index (LHI): <strong>${golfer.lhi !== null ? golfer.lhi.toFixed(1) : 'N/A'}</strong> (Note: Simulator LHI is lowest ever) ${golfer.lastHiReason ? `<div class="detail-reason">Note on last HI calculation: ${golfer.lastHiReason}</div>` : ''}`;
+            const scoreHistoryContainer = detailContentEl.querySelector('#detailScoreHistoryContainer');
+            scoreHistoryContainer.innerHTML = '';
+            if (golfer.scores.length === 0) { scoreHistoryContainer.innerHTML = '<p class="italic text-gray-500 p-4">No scores recorded.</p>';
+            } else {
+                const scoreTable = document.createElement('table'); scoreTable.className = 'detail-score-table';
+                scoreTable.innerHTML = `<thead><tr>
+                                            <th title="Expand for details"></th> 
+                                            <th title="Date of Round">Date</th>
+                                            <th title="Type of Round">Description</th>
+                                            <th title="Course and Tee Played">Course & Tee</th>
+                                            <th title="Course Rating"><a href="help.html#course-rating" class="text-blue-600 hover:underline">CR</a></th>
+                                            <th title="Slope Rating"><a href="help.html#slope-rating" class="text-blue-600 hover:underline">SR</a></th>
+                                            <th title="Handicap Index at Time of Posting"><a href="help.html#handicap-index-played" class="text-blue-600 hover:underline">HI Played</a></th>
+                                            <th title="Calculated Course Handicap"><a href="help.html#course-handicap" class="text-blue-600 hover:underline">CH</a></th>
+                                            <th title="Raw Gross Score"><a href="help.html#gross-score" class="text-blue-600 hover:underline">Gross</a></th>
+                                            <th title="Adjusted Gross Score (Net Double Bogey)"><a href="help.html#adjusted-gross-score" class="text-blue-600 hover:underline">AGS</a></th>
+                                            <th title="18-Hole Equivalent Score Differential (may include ESR)"><a href="help.html#score-differential" class="text-blue-600 hover:underline">SD</a></th>
+                                            <th title="Playing Conditions Calculation (18h equivalent)"><a href="help.html#pcc-specific-definition" class="text-blue-600 hover:text-blue-800 hover:underline">PCC</a></th>
+                                        </tr></thead><tbody></tbody>`;
+                const scoreTbody = scoreTable.querySelector('tbody');
+                const scoresToDisplay = golfer.scores.slice(0, 20); 
+                const contributingIDs = getContributingScoreIDs_OV(scoresToDisplay); 
+                scoresToDisplay.forEach((score) => { 
+                    const scoreRow = scoreTbody.insertRow();
+                    if (contributingIDs.has(score.id)) scoreRow.classList.add('highlighted-score');
+                    const expandCell = scoreRow.insertCell(); expandCell.className = 'expand-cell';
+                    const expandButton = document.createElement('button'); expandButton.className = 'expand-button'; expandButton.innerHTML = '<i class="fas fa-plus-circle"></i>'; expandButton.title = "View Hole Scores & 9-Hole Details"; expandButton.onclick = () => toggleHoleScores_OV(scoreRow, score); expandCell.appendChild(expandButton);
+                    scoreRow.insertCell().textContent = formatDate_OV(score.date);
+                    scoreRow.insertCell().textContent = score.scoreDescription || 'General Play';
+                    const courseCell = scoreRow.insertCell(); let courseText = `${score.courseName || 'Unknown'} - ${score.teeName || 'Unknown'}`; if (score.numHolesPlayed === 9) courseText += `<span class="nine-hole-indicator">(9h)</span>`; courseCell.innerHTML = courseText;
+                    const teeData = userCourses_OV.find(c => c.id === score.teeId);
+                    scoreRow.insertCell().textContent = teeData ? teeData.courseRating.toFixed(1) : 'N/A';
+                    scoreRow.insertCell().textContent = teeData ? teeData.slopeRating : 'N/A';
+                    scoreRow.insertCell().textContent = score.hiAtTimeOfPosting !== null ? score.hiAtTimeOfPosting.toFixed(1) : 'N/A';
+                    let courseHandicap = 'N/A'; if (teeData && score.hiAtTimeOfPosting !== null) courseHandicap = calculateCourseHandicapForRound_OV(score.hiAtTimeOfPosting, teeData.courseRating, teeData.slopeRating, teeData.totalPar, score.numHolesPlayed); scoreRow.insertCell().textContent = courseHandicap;
+                    scoreRow.insertCell().textContent = calculateRawGross_OV(score.rawScores, score.numHolesPlayed);
+                    scoreRow.insertCell().textContent = score.ags !== null ? score.ags : "N/A";
+                    let sdText = score.sd !== null ? score.sd.toFixed(1) : "N/A"; if (score.esrAppliedValue && score.esrAppliedValue !== 0) sdText += `<span class="esr-indicator">(ESR ${score.esrAppliedValue > 0 ? '+' : ''}${score.esrAppliedValue.toFixed(1)})</span>`; scoreRow.insertCell().innerHTML = sdText; 
+                    let pccText = score.pccApplied !== undefined ? score.pccApplied.toString() : '0';
+                    if (score.pccApplied !== 0 && score.pccApplied !== undefined) {
+                        pccText = `<span class="pcc-indicator" title="${score.pccApplied > 0 ? 'Harder' : 'Easier'} conditions">${score.pccApplied > 0 ? '+' : ''}${score.pccApplied}</span>`;
+                    }
+                    scoreRow.insertCell().innerHTML = pccText;
+                });
+                scoreHistoryContainer.appendChild(scoreTable);
+            }
+            individualGolferDetailCardEl.style.display = 'block';
+            individualGolferDetailCardEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+        
+        // Helper function to get score class for compact table
+        function getScoreClass_OV(raw, par) {
+            if (raw === null || raw === undefined || par === null || par === undefined || raw === '-' || par === '-') return '';
+            const rawNum = parseInt(raw);
+            const parNum = parseInt(par);
+            if (isNaN(rawNum) || isNaN(parNum)) return '';
+
+            if (rawNum === 1 && parNum > 1) return 'score-ace';
+            const diff = rawNum - parNum;
+            if (diff <= -3) return 'score-albatross'; // Albatross or better
+            if (diff === -2) return 'score-eagle';
+            if (diff === -1) return 'score-birdie';
+            if (diff === 0) return 'score-par';
+            if (diff === 1) return 'score-bogey';
+            if (diff === 2) return 'score-double';
+            if (diff >= 3) return 'score-triple'; // Triple bogey or worse
+            return '';
+        }
+
+        function toggleHoleScores_OV(scoreRow, score) {
+            const existingDetailRow = scoreRow.nextSibling;
+            const expandButtonIcon = scoreRow.querySelector('.expand-button i');
+
+            if (currentlyExpandedScoreRow && currentlyExpandedScoreRow !== scoreRow &&
+                currentlyExpandedScoreRow.nextSibling &&
+                currentlyExpandedScoreRow.nextSibling.classList.contains('hole-score-detail-row')) {
+                currentlyExpandedScoreRow.nextSibling.remove();
+                const prevExpandButtonIcon = currentlyExpandedScoreRow.querySelector('.expand-button i');
+                if(prevExpandButtonIcon) {
+                    prevExpandButtonIcon.classList.remove('fa-minus-circle');
+                    prevExpandButtonIcon.classList.add('fa-plus-circle');
+                }
+                currentlyExpandedScoreRow.classList.remove('bg-blue-100'); 
+            }
+
+            if (existingDetailRow && existingDetailRow.classList.contains('hole-score-detail-row')) {
+                existingDetailRow.remove();
+                if(expandButtonIcon) {
+                    expandButtonIcon.classList.remove('fa-minus-circle');
+                    expandButtonIcon.classList.add('fa-plus-circle');
+                }
+                scoreRow.classList.remove('bg-blue-100');
+                currentlyExpandedScoreRow = null;
+            } else {
+                let detailHtml = '<div class="hole-score-detail-content">';
+
+                if (score.numHolesPlayed === 9 && score.originalNineHoleSD !== null) {
+                    detailHtml += `<h4 class="detail-section-title">9-Hole Score Scaling Details</h4>`;
+                    detailHtml += `<ul class="detail-list">`;
+                    const pccForNineHoleSD = parseFloat((0.5 * (score.pccApplied || 0)).toFixed(1));
+                    detailHtml += `<li>Original 9-Hole SD (SD₉): <strong>${score.originalNineHoleSD.toFixed(1)}</strong> (using PCC for 9h: ${pccForNineHoleSD})</li>`;
+                    const hiForScaling = score.hiAtTimeOfPosting; 
+                    let scaledEquivSDDisplay;
+                    if (hiForScaling !== null) {
+                        const expectedFromHI = parseFloat((hiForScaling / 2).toFixed(1)); 
+                        scaledEquivSDDisplay = parseFloat((score.originalNineHoleSD + expectedFromHI).toFixed(1));
+                        detailHtml += `<li>Expected SD for other 9 (approx. HI/2 of ${hiForScaling.toFixed(1)}): <strong>${expectedFromHI.toFixed(1)}</strong></li>`;
+                        detailHtml += `<li>Calculated 18h Equiv. SD (before ESR): ${score.originalNineHoleSD.toFixed(1)} + ${expectedFromHI.toFixed(1)} = <strong>${scaledEquivSDDisplay.toFixed(1)}</strong></li>`;
+                    } else { 
+                        scaledEquivSDDisplay = parseFloat((score.originalNineHoleSD * 2).toFixed(1));
+                        detailHtml += `<li>Scaling (No HI at posting): Doubled 9-Hole SD</li>`;
+                        detailHtml += `<li>Calculated 18h Equiv. SD (before ESR): ${score.originalNineHoleSD.toFixed(1)} * 2 = <strong>${scaledEquivSDDisplay.toFixed(1)}</strong></li>`;
+                    }
+                    if (score.esrAppliedValue && score.esrAppliedValue !== 0) {
+                         detailHtml += `<li class="text-orange-600">ESR Adjustment: <strong>${score.esrAppliedValue > 0 ? '+' : ''}${score.esrAppliedValue.toFixed(1)}</strong></li>`;
+                         detailHtml += `<li class="text-orange-600">Final SD for Record: <strong>${score.sd !== null ? score.sd.toFixed(1) : "N/A"}</strong></li>`;
+                    } else {
+                        detailHtml += `<li>Final SD for Record: <strong>${score.sd !== null ? score.sd.toFixed(1) : "N/A"}</strong></li>`;
+                    }
+                    detailHtml += `</ul>`;
+                } else if (score.esrAppliedValue && score.esrAppliedValue !== 0) {
+                     detailHtml += `<h4 class="detail-section-title">Exceptional Score Reduction (ESR)</h4>`;
+                     detailHtml += `<ul class="detail-list">`;
+                     detailHtml += `<li class="text-orange-600">ESR Adjustment of <strong>${score.esrAppliedValue > 0 ? '+' : ''}${score.esrAppliedValue.toFixed(1)}</strong> was applied to this score's SD.</li>`;
+                     detailHtml += `<li class="text-orange-600">Final SD for Record: <strong>${score.sd !== null ? score.sd.toFixed(1) : "N/A"}</strong></li>`;
+                     detailHtml += `</ul>`;
+                }
+                
+                detailHtml += `<h4 class="detail-section-title">Hole-by-Hole Scores (Raw)</h4>`;
+                const teeData = userCourses_OV.find(c => c.id === score.teeId);
+
+                if (score.rawScores && teeData && teeData.holeDetails && score.numHolesPlayed > 0) {
+                    // makeTable_OV function to generate compact score table HTML
+                    const makeTable_OV = (holeData, tableTitle, totalLabel) => {
+                        const { holes, pars, strokeIndices, rawScores } = holeData;
+                        const parTotal = pars.reduce((sum, p) => sum + (isNaN(parseInt(p)) ? 0 : parseInt(p)), 0);
+                        const scoreTotal = rawScores.reduce((sum, s) => sum + (isNaN(parseInt(s)) || s === null || s === '-' ? 0 : parseInt(s)), 0);
+
+                        let tableHtml = `<table class='hole-score-table'><thead><tr>`;
+                        tableHtml += `<th colspan='${holes.length + 2}' style='text-align:center; font-weight: 700;'>${tableTitle}</th></tr></thead><tbody>`;
+                        
+                        tableHtml += `<tr><th>HOLE</th>`;
+                        holes.forEach(h => tableHtml += `<td class='hole-number'>${h}</td>`);
+                        tableHtml += `<th class='total-col'>${totalLabel}</th></tr>`;
+
+                        tableHtml += `<tr><th>PAR</th>`;
+                        pars.forEach(p => tableHtml += `<td>${p}</td>`);
+                        tableHtml += `<th class='total-col'>${parTotal > 0 ? parTotal : '-'}</th></tr>`;
+                        
+                        tableHtml += `<tr><th>SI</th>`;
+                        strokeIndices.forEach(si => tableHtml += `<td style='color: #64748b;'>${si}</td>`);
+                        tableHtml += `<th class='total-col'>-</th></tr>`;
+
+                        tableHtml += `<tr><th>SCORE</th>`;
+                        rawScores.forEach((s, i) => {
+                            const scoreClass = getScoreClass_OV(s, pars[i]);
+                            tableHtml += `<td class='${scoreClass}'>${s === null || s === undefined ? '-' : s}</td>`;
+                        });
+                        tableHtml += `<th class='total-col'>${scoreTotal > 0 ? scoreTotal : '-'}</th></tr>`;
+                        
+                        tableHtml += `</tbody></table>`;
+                        return tableHtml;
+                    };
+
+                    if (score.numHolesPlayed === 18) {
+                        const frontNineData = { holes: [], pars: [], strokeIndices: [], rawScores: [] };
+                        const backNineData = { holes: [], pars: [], strokeIndices: [], rawScores: [] };
+                        for (let i = 1; i <= 18; i++) {
+                            const holeDetail = teeData.holeDetails[i.toString()];
+                            const rawScoreForHole = score.rawScores[i.toString()];
+                            if (i <= 9) {
+                                frontNineData.holes.push(i);
+                                frontNineData.pars.push(holeDetail ? holeDetail.par : '-');
+                                frontNineData.strokeIndices.push(holeDetail ? holeDetail.si : '-');
+                                frontNineData.rawScores.push(rawScoreForHole);
+                            } else {
+                                backNineData.holes.push(i);
+                                backNineData.pars.push(holeDetail ? holeDetail.par : '-');
+                                backNineData.strokeIndices.push(holeDetail ? holeDetail.si : '-');
+                                backNineData.rawScores.push(rawScoreForHole);
+                            }
+                        }
+                        detailHtml += makeTable_OV(frontNineData, 'Front 9', 'OUT');
+                        detailHtml += makeTable_OV(backNineData, 'Back 9', 'IN');
+                    } else if (score.numHolesPlayed === 9) {
+                        const nineHoleData = { holes: [], pars: [], strokeIndices: [], rawScores: [] };
+                        // Determine if it's front or back based on teeData.nineHoleType or hole keys
+                        const isBackNine = teeData.nineHoleType === 'back' || (Object.keys(teeData.holeDetails)[0] === '10'); // Simplified check
+                        let tableTitle = 'Front 9';
+                        let startHoleLoop = 1;
+                        if (isBackNine) {
+                            tableTitle = 'Back 9';
+                            startHoleLoop = 10;
+                        }
+                        
+                        for (let i = 0; i < 9; i++) {
+                            const holeNumDisplay = startHoleLoop + i; // Actual hole number (1-9 or 10-18)
+                            const holeKeyInData = (teeData.nineHoleType === 'back' && teeData.holeDetails[(i+1).toString()] ) ? (i+1).toString() : holeNumDisplay.toString(); // Key in teeData.holeDetails might be 1-9 for back 9
+                            const holeDetail = teeData.holeDetails[holeKeyInData];
+                            const scoreAccessKey = isBackNine ? (i + 1).toString() : holeNumDisplay.toString();
+                            const rawScoreForHole = score.rawScores[scoreAccessKey];
+
+                            nineHoleData.holes.push(holeNumDisplay);
+                            nineHoleData.pars.push(holeDetail ? holeDetail.par : '-');
+                            nineHoleData.strokeIndices.push(holeDetail ? holeDetail.si : '-');
+                            nineHoleData.rawScores.push(rawScoreForHole);
+                        }
+                        detailHtml += makeTable_OV(nineHoleData, tableTitle, (isBackNine ? 'IN' : 'OUT'));
+                    }
+                } else if (!teeData || !teeData.holeDetails) {
+                    detailHtml += '<p class="text-red-500 italic text-sm">Hole details unavailable for this tee configuration.</p>';
+                } else {
+                    detailHtml += '<p class="text-gray-500 italic text-sm">Detailed hole scores not available for this round.</p>';
+                }
+
+                // Add Score Legend HTML (synced with golfers.html structure)
+                detailHtml += '<div class="mt-4 pt-3 border-t border-gray-200">';
+                detailHtml += '<div class="flex flex-wrap gap-x-2 gap-y-1.5 text-xs">'; 
+                detailHtml += '<span class="px-2 py-1 rounded-md font-medium score-ace">Hole in One</span>';
+                detailHtml += '<span class="px-2 py-1 rounded-md font-medium score-albatross">Albatross</span>';
+                detailHtml += '<span class="px-2 py-1 rounded-md font-medium score-eagle">Eagle</span>';
+                detailHtml += '<span class="px-2 py-1 rounded-md font-medium score-birdie">Birdie</span>';
+                detailHtml += '<span class="px-2 py-1 rounded-md font-medium score-par">Par</span>';
+                detailHtml += '<span class="px-2 py-1 rounded-md font-medium score-bogey">Bogey</span>';
+                detailHtml += '<span class="px-2 py-1 rounded-md font-medium score-double">Double Bogey</span>';
+                detailHtml += '<span class="px-2 py-1 rounded-md font-medium score-triple">Triple Bogey+</span>';
+                detailHtml += '</div></div>';
+
+                detailHtml += '</div>'; /* This closes .hole-score-detail-content */
+
+                const detailRow = document.createElement('tr');
+                detailRow.classList.add('hole-score-detail-row');
+                const detailCell = document.createElement('td');
+                detailCell.colSpan = 12; 
+                detailCell.innerHTML = detailHtml;
+                detailRow.appendChild(detailCell);
+                
+                if (scoreRow.nextSibling) {
+                    scoreRow.parentNode.insertBefore(detailRow, scoreRow.nextSibling);
+                } else {
+                    scoreRow.parentNode.appendChild(detailRow);
+                }
+                
+                if(expandButtonIcon) {
+                    expandButtonIcon.classList.remove('fa-plus-circle');
+                    expandButtonIcon.classList.add('fa-minus-circle');
+                }
+                scoreRow.classList.add('bg-blue-100');
+                currentlyExpandedScoreRow = scoreRow;
+            }
+        }
+
+        function hideGolferDetail_OV() {
+            individualGolferDetailCardEl.style.display = 'none';
+            golferSummarySectionEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            if(currentlyExpandedScoreRow && currentlyExpandedScoreRow.nextSibling && currentlyExpandedScoreRow.nextSibling.classList.contains('hole-score-detail-row')){
+                currentlyExpandedScoreRow.nextSibling.remove();
+                const prevExpandButtonIcon = currentlyExpandedScoreRow.querySelector('.expand-button i');
+                if(prevExpandButtonIcon) { prevExpandButtonIcon.classList.remove('fa-minus-circle'); prevExpandButtonIcon.classList.add('fa-plus-circle'); }
+                currentlyExpandedScoreRow.classList.remove('bg-blue-100');
+                currentlyExpandedScoreRow = null;
+            }
+        }
+
+        function initOverviewPage_OV() { 
+            cacheOverviewPageElements();
+            golfers_OV = loadDataFromLocalStorage_OV(LOCAL_STORAGE_GOLFERS_KEY_OV, []);
+            userCourses_OV = loadDataFromLocalStorage_OV(LOCAL_STORAGE_COURSES_KEY_OV, []);
+            
+            // Sort scores within each golfer object by date (most recent first)
+            golfers_OV.forEach(golfer => {
+                if (golfer.scores && Array.isArray(golfer.scores)) {
+                    golfer.scores.sort((a, b) => new Date(b.date) - new Date(a.date));
+                } else { golfer.scores = []; }
+            });
+
+            sortGolfers(); // Initial sort for the main table
+            renderHandicapOverviewTable();
+            closeDetailViewBtnEl.addEventListener('click', hideGolferDetail_OV);
+        }
+
+        // --- DOMContentLoaded Event Listener ---
+        document.addEventListener('DOMContentLoaded', () => {
+            const currentYearSpan = document.getElementById('currentYear');
+            if (currentYearSpan) currentYearSpan.textContent = new Date().getFullYear();
+            setActiveNavLink_OV();
+            initOverviewPage_OV();
+        });
+    </script>
+</body>
+</html>

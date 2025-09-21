@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Help - WHS Simulator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* Shared base styles - Duplicated for self-containment */
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: #f0f2f5; 
+            color: #1a202c; 
+            line-height: 1.6; 
+            display: flex; 
+            flex-direction: column; 
+            min-height: 100vh; 
+        }
+        .main-container { flex-grow: 1; }
+        .card { 
+            background-color: white; 
+            border-radius: 0.75rem; 
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.07), 0 4px 6px -2px rgba(0, 0, 0, 0.05); 
+            overflow: hidden; 
+            transition: box-shadow 0.3s ease-in-out; 
+        }
+        /* Navigation styles */
+        .nav-link { 
+            transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out, border-color 0.2s ease-in-out, transform 0.1s ease-in-out; 
+            border-bottom: 4px solid transparent; 
+            text-decoration: none; 
+            color: #4a5568; 
+            padding-top: 1rem; 
+            padding-bottom: 1rem; 
+        }
+        .nav-link.active { 
+            background-color: transparent; 
+            color: #2c5282; 
+            border-bottom-color: #2c5282; 
+            font-weight: 600; 
+        }
+        .nav-link:not(.active):hover { 
+            background-color: #edf2f7; 
+            color: #2b6cb0; 
+            transform: translateY(-1px); 
+        }
+        /* Typography for headings */
+        h1.page-title { 
+            font-size: 2rem; 
+            line-height: 2.5rem; 
+            color: #1a365d; 
+            letter-spacing: -0.025em; 
+        }
+        h2.section-title { 
+            font-size: 1.5rem; 
+            line-height: 2rem; 
+            color: #2c5282; 
+            padding-bottom: 0.75rem; 
+            border-bottom-width: 2px; 
+            border-color: #e2e8f0; 
+        }
+        @media (min-width: 768px) { 
+            h1.page-title { font-size: 2.5rem; line-height: 1; } 
+            h2.section-title { font-size: 1.75rem; line-height: 2.25rem; } 
+        }
+        /* Footer styles */
+        .footer { 
+            text-align: center; 
+            margin-top: auto; 
+            padding: 2rem 1rem; 
+            border-top: 1px solid #e2e8f0; 
+            background-color: #ffffff; 
+        }
+        .footer p { color: #718096; }
+
+        /* Accordion Styles */
+        .accordion-item {
+            border-bottom: 1px solid #e2e8f0; /* Tailwind gray-200 */
+        }
+        .accordion-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.25rem 1.5rem; /* Increased vertical padding slightly */
+            cursor: pointer;
+            background-color: #f9fafb; /* Tailwind gray-50 */
+            transition: background-color 0.2s ease-in-out;
+            border-top: 1px solid transparent; /* For symmetry with active state */
+        }
+        .accordion-header:hover {
+            background-color: #f3f4f6; /* Tailwind gray-100 */
+        }
+        /* Active/Expanded state for header */
+        .accordion-header[aria-expanded="true"] {
+            background-color: #eef2ff; /* Tailwind indigo-100 */
+            border-top-color: #dbeafe; /* Tailwind blue-200, subtle top border */
+        }
+        .accordion-header[aria-expanded="true"]:hover {
+            background-color: #e0e7ff; /* Tailwind indigo-200 */
+        }
+        .accordion-header h3 {
+            font-size: 1.125rem; /* text-lg */
+            font-weight: 600;
+            color: #374151; /* Tailwind gray-700, default */
+            transition: color 0.2s ease-in-out;
+        }
+        .accordion-header[aria-expanded="true"] h3 {
+            color: #3730a3; /* Tailwind indigo-700 for active header text */
+        }
+        .accordion-icon {
+            transition: transform 0.3s ease-in-out, color 0.2s ease-in-out;
+            color: #6b7280; /* Tailwind gray-500 */
+            font-size: 1rem; /* Slightly larger icon */
+        }
+        .accordion-header[aria-expanded="true"] .accordion-icon {
+            color: #4f46e5; /* Tailwind indigo-600 for active icon */
+            /* transform: rotate(180deg); is set by JS */
+        }
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out, padding 0.3s ease-out; /* Changed to ease-out */
+            padding: 0 1.5rem;
+            background-color: #ffffff; /* White background */
+        }
+        .accordion-content.active {
+            /* max-height is set by JS */
+            padding: 1.5rem 1.5rem 2rem 1.5rem; /* Added a bit more bottom padding */
+            border-top: 1px solid #e5e7eb; /* Tailwind gray-200, subtle separator */
+        }
+        .accordion-content p, 
+        .accordion-content ul, 
+        .accordion-content ol {
+            margin-bottom: 1.25rem; /* Increased bottom margin for paragraphs/lists */
+            color: #374151; /* Tailwind gray-700 */
+            line-height: 1.7; /* Increased line-height for readability */
+        }
+        .accordion-content ul, 
+        .accordion-content ol {
+            list-style-position: outside; /* More standard list appearance */
+            padding-left: 1.25rem; /* Standard indent for lists */
+        }
+        .accordion-content ul { list-style-type: disc; }
+        .accordion-content ol { list-style-type: decimal; }
+        .accordion-content strong { 
+            color: #1e3a8a; /* Tailwind blue-800 */
+            font-weight: 600; 
+        }
+        .accordion-content code {
+            background-color: #eef2ff; /* Tailwind indigo-100 */
+            color: #4338ca; /* Tailwind indigo-700 */
+            padding: 0.2rem 0.4rem; /* Slightly more padding */
+            border-radius: 0.25rem;
+            font-family: 'Menlo', 'Monaco', 'Consolas', "Liberation Mono", "Courier New", monospace;
+            font-size: 0.875em; /* Slightly larger code font */
+            border: 1px solid #c7d2fe; /* Tailwind indigo-200 border */
+        }
+        .accordion-content a {
+            color: #2563eb; /* Tailwind blue-600 */
+            text-decoration: underline;
+        }
+        .accordion-content a:hover {
+            color: #1d4ed8; /* Tailwind blue-700 */
+        }
+        .accordion-item:last-child {
+            border-bottom: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container container mx-auto p-4 sm:p-6 md:p-8 max-w-6xl">
+        <header class="mb-8 md:mb-10 text-center">
+            <h1 class="page-title font-bold">GolfPal WHS calculator</h1>
+        </header>
+
+        <nav class="mb-8 md:mb-10 card !shadow-none border-b-2 border-gray-200 rounded-b-none">
+            <div class="flex">
+                <a href="index.html" class="nav-link flex-1 py-3 sm:py-4 px-2 sm:px-4 text-center font-medium text-xs sm:text-sm md:text-base focus:outline-none">
+                    <i class="fas fa-flag mr-1 sm:mr-2"></i>Course Management
+                </a>
+                <a href="golfers.html" class="nav-link flex-1 py-3 sm:py-4 px-2 sm:px-4 text-center font-medium text-xs sm:text-sm md:text-base focus:outline-none">
+                    <i class="fas fa-users mr-1 sm:mr-2"></i>Golfers &amp; Scores
+                </a>
+                <a href="overview.html" class="nav-link flex-1 py-3 sm:py-4 px-2 sm:px-4 text-center font-medium text-xs sm:text-sm md:text-base focus:outline-none">
+                    <i class="fas fa-chart-line mr-1 sm:mr-2"></i>Handicap Overview
+                </a>
+                <a href="help.html" class="nav-link active flex-1 py-3 sm:py-4 px-2 sm:px-4 text-center font-medium text-xs sm:text-sm md:text-base focus:outline-none">
+                    <i class="fas fa-question-circle mr-1 sm:mr-2"></i>Help
+                </a>
+            </div>
+        </nav>
+
+        <main>
+            <section class="card p-6 sm:p-8">
+                <h2 class="section-title font-semibold mb-6">Help & FAQ</h2>
+                <div id="helpAccordion" class="rounded-lg overflow-hidden border border-gray-200">
+                    <div class="accordion-item">
+                        <div class="accordion-header">
+                            <h3><i class="fas fa-info-circle mr-2 text-blue-500"></i>About This Simulator</h3>
+                            <i class="fas fa-chevron-down accordion-icon"></i>
+                        </div>
+                        <div class="accordion-content">
+                            <p>This World Handicap System (WHS) Simulator is an <strong>educational tool</strong> designed to help users understand the basic principles and calculations involved in the WHS. It allows you to manage courses, add golfers, enter scores, and see how Handicap Indexes are calculated and updated.</p>
+                            <p><strong>Disclaimer:</strong> This simulator is for educational and illustrative purposes only. It is <strong>not an official WHS tool</strong> and should not be used for maintaining an official Handicap Index. Always refer to your authorized handicapping body for official handicap management.</p>
+                            <p>The calculations are based on generally understood WHS rules. For precise and official rules, please consult resources from the USGA or The R&A.</p>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item">
+                        <div class="accordion-header">
+                            <h3><i class="fas fa-mouse-pointer mr-2 text-green-500"></i>How to Use the Simulator</h3>
+                            <i class="fas fa-chevron-down accordion-icon"></i>
+                        </div>
+                        <div class="accordion-content">
+                            <p>The simulator is divided into a few main sections accessible via the top navigation bar:</p>
+                            <ol>
+                                <li><strong>Course Management:</strong>
+                                    <ul>
+                                        <li>Add new golf courses and specific tees (9-hole or 18-hole).</li>
+                                        <li>You must provide the Course Name, Tee Name, Number of Holes, Course Rating (CR), Slope Rating (SR), and Total Par for the selected number of holes.</li>
+                                        <li>Enter hole-by-hole Par and Stroke Index (SI) accurately.</li>
+                                        <li>You can edit or delete existing course/tee configurations from the list.</li>
+                                    </ul>
+                                </li>
+                                <li><strong>Golfers & Scores:</strong>
+                                    <ul>
+                                        <li>Add new golfers. You can optionally provide an Initial Handicap Index (HI) and Initial Low Handicap Index (LHI).</li>
+                                        <li>Enter new scores for registered golfers. Select the golfer, course, tee, and date.</li>
+                                        <li>Choose a "Score Type" (e.g., General Play, Competition) from the dropdown.</li>
+                                        <li>Input a "PCC Adjustment" (Playing Conditions Calculation). In this simulator, this is a manual input (-1 to +3). In the real WHS, this is an automated daily calculation. Use '0' for normal conditions.</li>
+                                        <li>Enter the raw gross score for each hole played.</li>
+                                        <li>The "Calculation Log" at the bottom of this page shows a detailed breakdown of how the Handicap Index was derived for the submitted score.</li>
+                                    </ul>
+                                </li>
+                                <li><strong>Handicap Overview:</strong>
+                                    <ul>
+                                        <li>View a summary table of all registered golfers, their current HI, LHI, number of scores, and last played date.</li>
+                                        <li>Click on a golfer to see their detailed score history. Highlighted scores in the history indicate those used in the calculation of their current Handicap Index.</li>
+                                        <li>Click the `[+]` icon next to a score in the detail view to see hole-by-hole scores (Raw vs. NDB Adjusted) and how 9-hole scores were scaled (if applicable).</li>
+                                    </ul>
+                                </li>
+                            </ol>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item">
+                        <div class="accordion-header" id="whs-terms-header">
+                            <h3><i class="fas fa-book-open mr-2 text-purple-500"></i>Understanding Key WHS Terms</h3>
+                            <i class="fas fa-chevron-down accordion-icon"></i>
+                        </div>
+                        <div class="accordion-content">
+                            <ul>
+                                <li><strong id="handicap-index-played">Handicap Index (HI):</strong> A measure of a golfer's demonstrated ability on a course of standard playing difficulty. It is portable from course to course.</li>
+                                <li><strong>Low Handicap Index (LHI):</strong> The lowest Handicap Index a player has held during the last 365 days. It's used for applying caps to prevent an HI from rising too quickly.</li>
+                                <li><strong id="course-rating">Course Rating (CR):</strong> The evaluation of the playing difficulty of a course for scratch golfers under normal course and weather conditions.</li>
+                                <li><strong id="slope-rating">Slope Rating (SR):</strong> Measures the relative playing difficulty of a course for bogey golfers compared to scratch golfers. It ranges from 55 to 155. A course of "standard" difficulty has an SR of 113.</li>
+                                <li><strong id="adjusted-gross-score">Adjusted Gross Score (AGS):</strong> A player's gross score adjusted under WHS procedures for unfinished holes, conceded strokes, or when a hole score exceeds a maximum (Net Double Bogey). This is the score used for handicap calculations.</li>
+                                <li><strong>Net Double Bogey (NDB):</strong> The maximum score for any hole for handicap purposes. It is Par + 2 + any handicap strokes received on that hole. This prevents one or two bad holes from having an excessive impact on a player's handicap.</li>
+                                <li><strong id="score-differential">Score Differential (SD):</strong> Measures the performance on a round in relation to the difficulty of the course played. Formula: <code>(113 / SR) * (AGS - CR - PCC)</code>. For 9-hole scores, an 18-hole equivalent SD is calculated.</li>
+                                <li><strong id="playing-conditions-calculation">Playing Conditions Calculation (PCC):</strong> An adjustment that accounts for abnormal course or weather conditions on a given day. It can adjust Score Differentials by -1, 0, +1, +2, or +3. (Manually entered in this simulator).</li>
+                                <li><strong id="course-handicap">Course Handicap (CH):</strong> The number of strokes a player receives to play down to the Par of the tees being played. The Course Handicap is calculated using a player's Handicap Index® and is specific to the particular set of tees on the course they are playing. It is a crucial number for several reasons: Determining Strokes Received: It indicates the number of strokes a player receives for a round of 18 or 9 holes. Maximum Hole Score: The Course Handicap is used to determine a player's maximum score on a hole for handicap purposes, which is a Net Double Bogey. This is calculated as Par + 2 + any handicap strokes the player receives on that hole based on their Course Handicap.</li>
+                                <li><strong id="gross-score">Gross Score:</strong> The total number of strokes taken by a player during a round, including any penalty strokes. Essentially, the Gross Score is a player's raw, unadjusted score for a round. It is the fundamental measure of a player's performance before any handicap allowances are applied. It is important to distinguish the Gross Score from the Adjusted Gross Score. While the Gross Score is the actual number of strokes played, the Adjusted Gross Score is the score used for handicap purposes. The Adjusted Gross Score is the Gross Score modified for any holes where a player exceeded their maximum hole score (Net Double Bogey). This adjustment prevents a single disastrous hole from having an excessive impact on a player's handicap calculation, ensuring the handicap remains a true reflection of their demonstrated ability.</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="accordion-item">
+                        <div class="accordion-header">
+                            <h3><i class="fas fa-calculator mr-2 text-yellow-500"></i>Core WHS Calculations Explained</h3>
+                            <i class="fas fa-chevron-down accordion-icon"></i>
+                        </div>
+                        <div class="accordion-content">
+                            <p><strong>9-Hole Scores:</strong></p>
+                            <ul>
+                                <li>9-hole scores are acceptable if played on a rated 9-hole course.</li>
+                                <li>A 9-hole Score Differential is calculated using the 9-hole CR, SR, and 0.5 * PCC adjustment.</li>
+                                <li>This 9-hole SD is then scaled to an 18-hole equivalent SD.
+                                    <ul>
+                                        <li>If the player has an existing HI: 18h SD = 9h SD + (HI / 2).</li>
+                                        <li>If the player is new (no HI): In this simulator, 18h SD = 9h SD * 2 (a simplification).</li>
+                                    </ul>
+                                </li>
+                            </ul>
+                            <p><strong>Initial Handicap Index:</strong></p>
+                            <ul>
+                                <li>A Handicap Index is calculated once a minimum of 54 holes worth of scores are submitted (e.g., three 18-hole scores, or six 9-hole scores, or a combination).</li>
+                                <li>The calculation uses a specific WHS table based on the number of initial scores (1 to 5 18-hole equivalent SDs). For example, with 3 scores, the lowest SD minus an adjustment is used.</li>
+                            </ul>
+                            <p><strong>Handicap Index Updates:</strong></p>
+                            <ul>
+                                <li>Based on the average of the best 8 Score Differentials from the most recent 20 acceptable scores.</li>
+                                <li>If fewer than 20 scores are available, a WHS table determines how many SDs are used and if any adjustment applies.</li>
+                            </ul>
+                             <p><strong>Safeguards:</strong></p>
+                            <ul>
+                                <li><strong>Exceptional Score Reduction (ESR):</strong> If a Score Differential is 7.0 or more strokes better than the player's HI at the time, the HI is further reduced.</li>
+                                <li><strong>Caps (Soft & Hard):</strong> Limit the upward movement of an HI based on the player's Low Handicap Index (LHI) to ensure it remains reflective of demonstrated ability.</li>
+                            </ul>
+                            <p><em>For detailed calculations for any score you enter, always refer to the "Calculation Log" on the "Golfers & Scores" page.</em></p>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item">
+                        <div class="accordion-header">
+                            <h3><i class="fas fa-laptop-code mr-2 text-teal-500"></i>Simulator Specifics & Limitations</h3>
+                            <i class="fas fa-chevron-down accordion-icon"></i>
+                        </div>
+                        <div class="accordion-content">
+                            <ul>
+                                <li><strong>PCC is Manual:</strong> The Playing Conditions Calculation (PCC) is a manual input in this simulator. In a real WHS, this is an automated daily calculation based on all scores submitted on a course by eligible players.</li>
+                                <li><strong>Low Handicap Index (LHI):</strong> For simplicity, the LHI used for cap calculations is the golfer's lowest HI recorded within this simulator. A full WHS implementation uses a rolling 365-day window from the date of the score being processed.</li>
+                                <li><strong>Initial 9-Hole Scaling (No HI):</strong> When a new golfer (with no HI) submits a 9-hole score, this simulator scales the 9-hole SD by doubling it to get an 18-hole equivalent. Official WHS procedures for initial handicap allocation can be more nuanced.</li>
+                                <li><strong>Combining Two 9-Hole Scores:</strong> This simulator currently processes each 9-hole score individually by scaling it up. It does not support combining two separate 9-hole scores to form one 18-hole score directly.</li>
+                                <li><strong>Data Storage:</strong> All data (courses, golfers, scores) is stored in your web browser's local storage. This means it is specific to the browser you are using and will not be available on other devices or different browsers unless manually transferred. Clearing your browser's cache/data for this site will erase all simulator data.</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="accordion-item">
+                        <div class="accordion-header" id="pcc-accordion-header" aria-expanded="false" aria-controls="accordion-content-pcc">
+                            <h3><i class="fas fa-cloud-sun-rain mr-2 text-sky-500"></i>Playing Conditions Calculation (PCC)</h3>
+                            <i class="fas fa-chevron-down accordion-icon"></i>
+                        </div>
+                        <div id="accordion-content-pcc" class="accordion-content" role="region" aria-labelledby="accordion-header-pcc">
+                            <p id="pcc-specific-definition">The <strong>Playing Conditions Calculation (PCC)</strong> is a statistical adjustment that accounts for abnormal course or weather conditions on a given day. It compares actual scores submitted against expected scores to determine if conditions were significantly harder or easier than normal.</p>
+                            <p>Under the World Handicap System (WHS):</p>
+                            <ul>
+                                <li>PCC is an <strong>automatic, daily calculation</strong> performed by authorized handicapping bodies.</li>
+                                <li>It requires a minimum number of acceptable scores (usually 8) from players with a Handicap Index of 36.0 or below.</li>
+                                <li>The result can be an adjustment of -1 (easier), 0 (normal), or +1, +2, +3 (harder).</li>
+                                <li>This adjustment is then applied to the calculation of Score Differentials for all eligible scores on that day.</li>
+                            </ul>
+                            <p><strong>PCC in GolfPal Simulator:</strong></p>
+                            <ul>
+                                <li>GolfPal <strong>does not automatically calculate PCC</strong>. This is because a standalone simulator does not have access to the large volume of daily scores from various players required for the official WHS statistical calculation.</li>
+                                <li>You can <strong>manually enter a PCC adjustment</strong> when submitting a score if you know the official PCC that was in effect for your round (e.g., obtained from your club or the official handicapping authority).</li>
+                                <li>If no official PCC was calculated for your round, or if you are unsure, you should leave the PCC input as <strong>0 (zero)</strong>.</li>
+                                <li>The simulator will correctly apply any manually entered PCC value when calculating your Score Differentials. For 9-hole scores that are combined to form an 18-hole Score Differential, 50% of the entered PCC is applied to the 9-hole portion, as per WHS guidelines.</li>
+                            </ul>
+                            <p>For more detailed information on PCC, please refer to WHS Rule 5.6.</p>
+                        </div>
+                    </div>
+                     <div class="accordion-item">
+                        <div class="accordion-header">
+                            <h3><i class="fas fa-question mr-2 text-orange-500"></i>FAQ / Troubleshooting</h3>
+                            <i class="fas fa-chevron-down accordion-icon"></i>
+                        </div>
+                        <div class="accordion-content">
+                            <p><strong>Q: Why isn't my newly registered golfer showing on the Overview page?</strong><br>
+                               A: This can sometimes happen if there's an issue with how data is saved or loaded. Try refreshing the Overview page. If the problem persists, ensure you haven't manually edited the HTML files in a way that might cause inconsistencies in local storage keys. As a last resort for developers, clearing local storage for this site (via browser developer tools) and starting fresh can help, but this will erase all data.
+                            </p>
+                            <p><strong>Q: My Handicap Index changed significantly after one round. Why?</strong><br>
+                               A: Several WHS mechanisms can cause this:
+                               <ul>
+                                   <li>An **Exceptional Score Reduction (ESR)** might have been applied if your score was much lower than your previous Handicap Index.</li>
+                                   <li>The new score might be one of your best, replacing an older, higher score in the "best 8 of 20" calculation.</li>
+                                   <li>Conversely, if a very good old score dropped out of your most recent 20, your HI might increase.</li>
+                                   <li>Check the "Calculation Log" on the "Golfers & Scores" page for details on the specific round.</li>
+                               </ul>
+                            </p>
+                             <p><strong>Q: How do I clear all data and start over?</strong><br>
+                               A: You can clear all data stored by this simulator by using your browser's developer tools:
+                               <ol>
+                                   <li>Open Developer Tools (usually by pressing F12, or right-clicking on the page and selecting "Inspect" or "Inspect Element").</li>
+                                   <li>Go to the "Application" tab (it might be called "Storage" in some browsers).</li>
+                                   <li>Find "Local Storage" in the left-hand panel and expand it.</li>
+                                   <li>Select the entry for this website (e.g., `handicap-calc.netlify.app` or `localhost` if running locally).</li>
+                                   <li>You can then right-click and choose "Clear" or find a button to clear all local storage for this site. <strong>Warning: This will delete all your saved courses, golfers, and scores.</strong></li>
+                               </ol>
+                            </p>
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <footer class="footer">
+        <p>&copy; <span id="currentYear"></span> WHS Simulator. Developed and maintained by SIRCH SOLUTIONS KE. For educational purposes only.</p>
+    </footer>
+
+    <script>
+        /**
+         * Sets the 'active' class on the current navigation link based on the URL.
+         */
+        function setActiveNavLink_Help() {
+            const currentPath = window.location.pathname;
+            document.querySelectorAll('nav a.nav-link').forEach(link => {
+                link.classList.remove('active');
+                // Check if the link's href is a substring of the current path
+                // This handles cases where the path might be just "/" for index.html
+                if (currentPath.endsWith(link.getAttribute('href'))) {
+                    link.classList.add('active');
+                }
+            });
+        }
+
+        /**
+ * Initializes accordion functionality with ARIA attributes and single-item expansion.
+ */
+function initAccordion() {
+    const accordionContainer = document.getElementById('helpAccordion');
+    if (!accordionContainer) {
+        console.warn('Help Accordion container (div with id helpAccordion) not found.');
+        return;
+    }
+    const accordionItems = accordionContainer.querySelectorAll('.accordion-item');
+
+    accordionItems.forEach((item, index) => {
+        const header = item.querySelector('.accordion-header');
+        const content = item.querySelector('.accordion-content');
+        const icon = header.querySelector('.accordion-icon');
+
+        if (!header || !content) {
+            console.warn('Accordion item missing header or content for item at index: ' + index, item);
+            return;
+        }
+
+        // Generate unique IDs for ARIA attributes
+        // Use existing ID if it's the WHS Terms header, otherwise generate one.
+        let headerId = `accordion-header-${index + 1}`;
+        if (header.id === 'whs-terms-header') {
+            headerId = 'whs-terms-header'; // Keep the specific ID
+        } else {
+            header.setAttribute('id', headerId);
+        }
+        
+        const contentId = `accordion-content-${index + 1}`;
+
+        // header.setAttribute('id', headerId); // Set only if not whs-terms-header or handled above
+        header.setAttribute('role', 'button');
+        header.setAttribute('tabindex', '0');
+        header.setAttribute('aria-expanded', 'false'); // Initial state: collapsed
+        header.setAttribute('aria-controls', contentId);
+
+        content.setAttribute('id', contentId);
+        content.setAttribute('role', 'region');
+        content.setAttribute('aria-labelledby', headerId);
+        content.setAttribute('aria-hidden', 'true'); // Initial state: hidden
+
+        header.addEventListener('click', () => {
+            const isCurrentlyActive = content.classList.contains('active');
+
+            // First, close all accordion items
+            accordionItems.forEach(otherItem => {
+                const otherHeader = otherItem.querySelector('.accordion-header');
+                const otherContent = otherItem.querySelector('.accordion-content');
+                const otherIcon = otherHeader.querySelector('.accordion-icon');
+
+                if (otherContent.classList.contains('active')) {
+                    otherContent.classList.remove('active');
+                    otherContent.style.maxHeight = null;
+                    otherHeader.setAttribute('aria-expanded', 'false');
+                    otherContent.setAttribute('aria-hidden', 'true');
+                    if (otherIcon) otherIcon.style.transform = 'rotate(0deg)';
+                }
+            });
+
+            // If the clicked item was not the one already active (i.e., it was closed), then open it.
+            // This ensures clicking an open item closes it, and clicking a closed item opens it while closing others.
+            if (!isCurrentlyActive) {
+                content.classList.add('active');
+                content.style.maxHeight = content.scrollHeight + "px";
+                header.setAttribute('aria-expanded', 'true');
+                content.setAttribute('aria-hidden', 'false');
+                if (icon) icon.style.transform = 'rotate(180deg)';
+            }
+        });
+
+        // Add keyboard support for Enter/Space to toggle accordion item
+        header.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault(); // Prevent page scroll if space is pressed
+                header.click();       // Simulate a click to trigger the logic above
+            }
+        });
+    });
+
+    // Auto-expand "Understanding Key WHS Terms" if a relevant hash is present
+    const whsTermHashes = [
+        'course-rating', 'slope-rating', 'handicap-index-played', 
+        'course-handicap', 'gross-score', 'adjusted-gross-score', 
+        'score-differential' // PCC is handled separately now
+    ];
+    const currentHash = window.location.hash.substring(1); // Remove '#'
+
+    if (whsTermHashes.includes(currentHash)) {
+        const whsTermsHeader = document.getElementById('whs-terms-header');
+        if (whsTermsHeader) {
+            const content = whsTermsHeader.nextElementSibling; // Assuming content div is the next sibling
+            // Check if it's not already expanded to avoid closing it if it was manually opened or already processed
+            if (content && !content.classList.contains('active')) {
+                 whsTermsHeader.click(); // Simulate click to open
+            }
+            // Scroll to the target element after a short delay to allow accordion animation
+            setTimeout(() => {
+                const targetElement = document.getElementById(currentHash);
+                if (targetElement) {
+                    targetElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }, 350); // Adjust delay based on accordion animation duration (e.g., 300ms + buffer)
+        }
+    }
+
+    // Auto-expand specific "Playing Conditions Calculation (PCC)" section if hash matches
+    if (currentHash === 'pcc-specific-definition') {
+        const pccAccordionHeader = document.getElementById('pcc-accordion-header');
+        const targetElementToScroll = document.getElementById('pcc-specific-definition');
+
+        if (pccAccordionHeader && targetElementToScroll) {
+            const pccContent = pccAccordionHeader.nextElementSibling;
+            const pccIcon = pccAccordionHeader.querySelector('.accordion-icon');
+
+            if (pccContent) {
+                // Ensure all other accordion items are closed (mimicking singleOpen behavior)
+                accordionItems.forEach(otherItem => {
+                    const otherHeader = otherItem.querySelector('.accordion-header');
+                    // Check if otherHeader exists and is not the PCC header itself
+                    if (otherHeader && otherHeader.id !== pccAccordionHeader.id) { 
+                        const otherContent = otherHeader.nextElementSibling;
+                        const otherIcon = otherHeader.querySelector('.accordion-icon');
+                        if (otherContent && otherContent.classList.contains('active')) {
+                            otherContent.classList.remove('active');
+                            otherContent.style.maxHeight = null;
+                            otherHeader.setAttribute('aria-expanded', 'false');
+                            otherContent.setAttribute('aria-hidden', 'true');
+                            if (otherIcon) otherIcon.style.transform = 'rotate(0deg)';
+                        }
+                    }
+                });
+
+                // Now, open the PCC accordion item if it's not already open
+                if (!pccContent.classList.contains('active')) {
+                    pccContent.classList.add('active');
+                    pccContent.style.maxHeight = pccContent.scrollHeight + "px";
+                    pccAccordionHeader.setAttribute('aria-expanded', 'true');
+                    pccContent.setAttribute('aria-hidden', 'false');
+                    if (pccIcon) pccIcon.style.transform = 'rotate(180deg)';
+                }
+
+                // Scroll to the target element after a short delay
+                setTimeout(() => {
+                    targetElementToScroll.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 350); // Delay to allow for accordion animation/rendering
+            }
+        }
+    }
+}
+
+        // --- Page Load Event Listener ---
+        document.addEventListener('DOMContentLoaded', () => {
+            const currentYearSpan = document.getElementById('currentYear');
+            if (currentYearSpan) {
+                currentYearSpan.textContent = new Date().getFullYear();
+            }
+            setActiveNavLink_Help(); 
+            initAccordion(); // Initialize the accordion
+        });
+    </script>
+</body>
+</html>

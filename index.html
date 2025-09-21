@@ -1,0 +1,2074 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Course Management - GolfPal WHS calculator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* Shared base styles */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f2f5;
+            color: #1a202c; 
+            line-height: 1.6;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        .main-container {
+            flex-grow: 1;
+        }
+        .card {
+            background-color: white;
+            border-radius: 0.75rem; 
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.07), 0 4px 6px -2px rgba(0, 0, 0, 0.05); 
+            overflow: hidden;
+            transition: box-shadow 0.3s ease-in-out;
+        }
+        .card:hover {
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04); 
+        }
+        .nav-link {
+            transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out, border-color 0.2s ease-in-out, transform 0.1s ease-in-out;
+            border-bottom: 4px solid transparent;
+            text-decoration: none;
+            color: #4a5568; 
+            padding-top: 1rem;
+            padding-bottom: 1rem;
+        }
+        .nav-link.active {
+            background-color: transparent;
+            color: #2c5282; 
+            border-bottom-color: #2c5282;
+            font-weight: 600;
+        }
+        .nav-link:not(.active):hover {
+            background-color: #edf2f7; 
+            color: #2b6cb0; 
+            transform: translateY(-1px);
+        }
+        .form-input, .form-select {
+            border-color: #cbd5e0; 
+            border-radius: 0.5rem;
+            padding: 0.75rem 1rem;
+            transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+            width: 100%;
+            background-color: #fdfdfe; 
+        }
+        .form-input:focus, .form-select:focus {
+            border-color: #2b6cb0; 
+            box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.3); 
+            outline: none;
+            background-color: white;
+        }
+        .form-select:disabled, .form-input:disabled {
+            background-color: #e2e8f0; 
+            color: #718096;
+            cursor: not-allowed;
+            opacity: 0.7; /* Slightly more pronounced disabled state */
+        }
+        label {
+            color: #2d3748; 
+            font-weight: 500;
+        }
+        .hole-details-container::-webkit-scrollbar, .readonly-hole-details-container::-webkit-scrollbar { width: 10px; }
+        .hole-details-container::-webkit-scrollbar-track, .readonly-hole-details-container::-webkit-scrollbar-track { background: #e2e8f0; border-radius: 10px; }
+        .hole-details-container::-webkit-scrollbar-thumb, .readonly-hole-details-container::-webkit-scrollbar-thumb { background: #a0aec0; border-radius: 10px; border: 2px solid #e2e8f0; }
+        .hole-details-container::-webkit-scrollbar-thumb:hover, .readonly-hole-details-container::-webkit-scrollbar-thumb:hover { background: #718096; }
+        .button { 
+            font-weight: 500;
+            padding: 0.625rem 1.25rem;
+            border-radius: 0.5rem;
+            transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out, box-shadow 0.2s ease-in-out;
+            border: none;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+             box-shadow: 0 2px 4px 0 rgba(0,0,0,0.1);
+        }
+        .button:hover { transform: translateY(-1px); }
+        .button:active { transform: translateY(0px); }
+
+        .button-primary {
+            background-color: #2c5282;
+            color: white;
+            font-weight: 600;
+            padding: 0.75rem 1.5rem;
+        }
+        .button-primary:hover {
+            background-color: #2a4365;
+        }
+        .button-primary[disabled] {
+            background-color: #a0aec0;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+        .button-danger {
+            background-color: #c53030;
+            color: white;
+            font-size: 0.875rem;
+        }
+        .button-danger:hover {
+            background-color: #9b2c2c;
+        }
+        .button-danger i, .button-edit i {
+            margin-right: 0.375rem;
+        }
+        .button-edit {
+            background-color: #2b6cb0;
+            color: white;
+            font-size: 0.875rem;
+        }
+        .button-edit:hover {
+            background-color: #2c5282;
+        }
+        .button-secondary {
+            background-color: #64748b; 
+            color: white;
+        }
+        .button-secondary:hover {
+            background-color: #475569; 
+        }
+        .button-edit[disabled] {
+            background-color: #a0aec0;
+            cursor: not-allowed;
+            box-shadow: none;
+            opacity: 0.7;
+        }
+        h1.page-title {
+            font-size: 2rem;
+            line-height: 2.5rem;
+            color: #1a365d;
+            letter-spacing: -0.025em;
+        }
+        h2.section-title {
+            font-size: 1.5rem;
+            line-height: 2rem;
+            color: #2c5282;
+            padding-bottom: 0.75rem;
+            border-bottom-width: 2px;
+            border-color: #e2e8f0;
+        }
+        @media (min-width: 768px) {
+            h1.page-title { font-size: 2.5rem; line-height: 1; }
+            h2.section-title { font-size: 1.75rem; line-height: 2.25rem; }
+        }
+        .footer {
+            text-align: center;
+            margin-top: auto;
+            padding: 2rem 1rem;
+            border-top: 1px solid #e2e8f0;
+            background-color: #ffffff;
+        }
+        .footer p {
+            color: #718096;
+        }
+        .list-item {
+            border: 1px solid #e2e8f0;
+            transition: all 0.2s ease-in-out;
+        }
+        .list-item:hover {
+            border-color: #a0aec0;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        }
+        .list-item strong {
+            color: #2c5282;
+        }
+        .list-item .details {
+            color: #4a5568;
+        }
+        .list-item .actions {
+            flex-shrink: 0;
+        }
+        .hole-input-item {
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+        }
+        .hole-input-item label {
+            font-size: 0.8rem;
+            color: #475569;
+        }
+        .readonly-hole-item {
+            background-color: #f9fafb; 
+            border: 1px solid #e5e7eb;
+            padding: 0.5rem 0.75rem;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+        }
+        .hidden { display: none; }
+        .action-buttons-container {
+            padding-top: 1.25rem; 
+            text-align: right;
+        }
+        .action-buttons-container .button + .button {
+            margin-left: 0.75rem; 
+        }
+        .rating-input-label { /* For CR/SR/Par labels */
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+        }
+        /* Styles for the container that will hold both pre-defined tee info and manual hole inputs */
+        #predefinedTeeAndHoleInputContainer {
+            background-color: #f9fafb; /* Light gray background */
+            border: 1px solid #e5e7eb; /* Gray border */
+            border-radius: 0.5rem; /* Rounded corners */
+            padding: 1.5rem; /* Padding inside the container */
+            margin-bottom: 1.5rem; /* Space below the container */
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container container mx-auto p-4 sm:p-6 md:p-8 max-w-6xl">
+        <header class="mb-8 md:mb-10 text-center">
+            <h1 class="page-title font-bold">GolfPal WHS calculator</h1>
+            <p class="text-gray-500 mt-2 text-sm sm:text-base">An educational tool to explore WHS calculations.</p>
+        </header>
+
+        <nav class="mb-8 md:mb-10 card !shadow-none border-b-2 border-gray-200 rounded-b-none">
+            <div class="flex">
+                <a href="index.html" class="nav-link active flex-1 py-3 sm:py-4 px-2 sm:px-4 text-center font-medium text-xs sm:text-sm md:text-base focus:outline-none">
+                    <i class="fas fa-flag mr-1 sm:mr-2"></i>Course Management
+                </a>
+                <a href="golfers.html" class="nav-link flex-1 py-3 sm:py-4 px-2 sm:px-4 text-center font-medium text-xs sm:text-sm md:text-base focus:outline-none">
+                    <i class="fas fa-users mr-1 sm:mr-2"></i>Golfers &amp; Scores
+                </a>
+                <a href="overview.html" class="nav-link flex-1 py-3 sm:py-4 px-2 sm:px-4 text-center font-medium text-xs sm:text-sm md:text-base focus:outline-none">
+                    <i class="fas fa-chart-line mr-1 sm:mr-2"></i>Handicap Overview
+                </a>
+                <a href="help.html" data-nav="help.html" class="nav-link flex-1 py-3 sm:py-4 px-2 sm:px-4 text-center font-medium text-xs sm:text-sm md:text-base focus:outline-none">
+                    <i class="fas fa-question-circle mr-1 sm:mr-2"></i>Help
+                </a>
+            </div>
+        </nav>
+
+        <main>
+            <section id="courseManagementSection" class="space-y-8">
+                <div class="card p-6 sm:p-8">
+                    <h2 id="courseFormTitle" class="section-title font-semibold mb-8">Add Course / Tee</h2>
+                    
+                    <div class="mb-6">
+                        <label for="clubSelect" class="block text-sm font-medium mb-1">Select Golf Club</label>
+                        <select id="clubSelect" class="form-select">
+                            <option value="">-- Select a Golf Club --</option>
+                            </select>
+                    </div>
+
+                    <div id="predefinedTeeAndHoleInputContainer" class="hidden space-y-4">
+                        <h3 id="predefinedOrManualEntryTitle" class="text-md font-semibold text-blue-700">Tee Configuration Details</h3>
+                        
+                        <div id="predefinedLayoutTeeSelectors" class="space-y-4">
+                            <div>
+                                <label for="predefinedClubInternalCourseSelect" class="block text-sm font-medium mb-1">Select Course Layout</label>
+                                <select id="predefinedClubInternalCourseSelect" class="form-select" disabled>
+                                    <option value="">-- Select Layout --</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="predefinedClubTeeSelect" class="block text-sm font-medium mb-1">Select Tee</label>
+                                <select id="predefinedClubTeeSelect" class="form-select" disabled>
+                                     <option value="">-- Select Tee --</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div id="predefinedTeeDetailsDisplay" class="mt-3 text-sm text-gray-700 space-y-1 p-3 bg-gray-100 rounded-md">
+                            </div>
+                        
+                        <div id="predefinedHoleDetailsDisplayContainer" class="mt-3 readonly-hole-details-container max-h-80 overflow-y-auto">
+                            </div>
+
+                        <div id="manualEntryFieldsContainer" class="space-y-6 mt-4">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-5">
+                                <div>
+                                    <label for="manualCourseName" class="block text-sm font-medium mb-1">Tee Configuration Name / Description <span class="text-red-500">*</span></label>
+                                    <input type="text" id="manualCourseName" name="manualCourseName" required class="form-input" placeholder="e.g., Men's Blue, Championship Tees">
+                                    <p class="text-xs text-gray-500 mt-1">This will be combined with the Club Name for display.</p>
+                                </div>
+                                <div>
+                                    <label for="manualTeeName" class="block text-sm font-medium mb-1">Specific Tee Color/Name (Optional)</label>
+                                    <input type="text" id="manualTeeName" name="manualTeeName" class="form-input" placeholder="e.g., White, Red, Pro">
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-5 items-end">
+                                 <div>
+                                    <label for="roundTypeSelect" class="block text-sm font-medium mb-1">Round Type <span class="text-red-500">*</span></label>
+                                    <select id="roundTypeSelect" name="roundTypeSelect" required class="form-select">
+                                        <option value="">Select...</option>
+                                        <option value="18">18 Holes</option>
+                                        <option value="9">9 Holes</option>
+                                    </select>
+                                </div>
+                                <div id="nineHoleSpecificsContainer" class="hidden">
+                                    <label for="nineHoleTypeSelect" class="block text-sm font-medium mb-1">9-Hole Specifics <span class="text-red-500">*</span></label>
+                                    <select id="nineHoleTypeSelect" name="nineHoleTypeSelect" class="form-select">
+                                        <option value="">-- Select 9-Hole Type --</option>
+                                        <option value="front">Front 9 (of an 18)</option>
+                                        <option value="back">Back 9 (of an 18)</option>
+                                        <option value="full9">Complete 9-Hole Course</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label id="manualCourseRatingLabel" for="manualCourseRating" class="rating-input-label">Course Rating (CR) <span class="text-red-500">*</span></label>
+                                    <input type="number" step="0.1" id="manualCourseRating" name="manualCourseRating" required class="form-input" placeholder="e.g., 71.5 or 35.5">
+                                </div>
+                                <div>
+                                    <label id="manualSlopeRatingLabel" for="manualSlopeRating" class="rating-input-label">Slope Rating (SR) <span class="text-red-500">*</span></label>
+                                    <input type="number" id="manualSlopeRating" name="manualSlopeRating" required class="form-input" placeholder="e.g., 128 or 60">
+                                </div>
+                                <div>
+                                    <label id="manualTotalParLabel" for="manualTotalPar" class="rating-input-label">Total Par <span class="text-red-500">*</span></label>
+                                    <input type="number" id="manualTotalPar" name="manualTotalPar" required class="form-input" placeholder="e.g., 72 or 36">
+                                </div>
+                            </div>
+                            <div class="pt-5 border-t border-gray-200">
+                                 <p id="holeDetailsPrompt" class="text-sm text-gray-500 mb-4">Select round type to enter par and stroke index for each hole.</p>
+                                 <div id="holeDetailsContainer" class="space-y-4 hole-details-container max-h-96 overflow-y-auto">
+                                    </div>
+                            </div>
+                        </div>
+                    </div>
+
+
+                    <div class="action-buttons-container mt-6 border-t border-gray-200 pt-6">
+                        <button type="button" id="cancelEditButton" class="button button-secondary hidden">
+                            <i class="fas fa-times mr-2"></i>Cancel
+                        </button>
+                        <button type="button" id="saveCourseButton" class="button button-primary" disabled> 
+                            <i class="fas fa-save mr-2"></i>Add/Save Tee
+                        </button>
+                    </div>
+                </div>
+
+                <div class="card p-6 sm:p-8">
+                    <h2 class="section-title font-semibold mb-6">My Simulator Courses & Tees</h2>
+                    <div id="savedCoursesList" class="text-gray-700">
+                        <p class="italic text-gray-500">Loading saved courses...</p>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <footer class="footer">
+        <p>&copy; <span id="currentYear"></span> WHS Simulator. Developed and maintained by SIRCH SOLUTIONS KE. For educational purposes only.</p>
+    </footer>
+
+    <script>
+        // --- Constants ---
+        const LOCAL_STORAGE_COURSES_KEY = 'whsSimulatorCourses_v3_predefined_shells'; 
+
+        // --- Pre-defined Golf Club Data ---
+        function reIndexSIsForNine(holeDetailsSubset) {
+            const sortedByOriginalSI = [...holeDetailsSubset].sort((a, b) => a.originalSI - b.originalSI);
+            const reIndexedHoleDetails = {};
+            sortedByOriginalSI.forEach((hole, index) => {
+                const originalEntry = holeDetailsSubset.find(h => h.originalHoleNum === hole.originalHoleNum);
+                reIndexedHoleDetails[(originalEntry.newHoleNum).toString()] = {
+                    par: originalEntry.par,
+                    si: index + 1 
+                };
+            });
+            return reIndexedHoleDetails;
+        }
+
+        const muthaigaPars = {
+            1: 4, 2: 3, 3: 4, 4: 5, 5: 3, 6: 4, 7: 5, 8: 4, 9: 4, 
+            10: 5, 11: 3, 12: 4, 13: 3, 14: 4, 15: 4, 16: 3, 17: 4, 18: 5 
+        };                                                              
+        const muthaiga18HoleSIs = {
+            1: 3, 2: 5, 3: 15, 4: 17, 5: 11, 6: 7, 7: 9, 8: 1, 9: 13,
+            10: 12, 11: 8, 12: 4, 13: 6, 14: 2, 15: 10, 16: 14, 17: 18, 18: 16
+        };
+        const muthaigaFull18HoleDetails = {};
+        for (let i = 1; i <= 18; i++) {
+            muthaigaFull18HoleDetails[i.toString()] = { par: muthaigaPars[i], si: muthaiga18HoleSIs[i] };
+        }
+        const frontNineForReindex = [];
+        for (let i = 1; i <= 9; i++) {
+            frontNineForReindex.push({ originalHoleNum: i, newHoleNum: i, par: muthaigaPars[i], originalSI: muthaiga18HoleSIs[i] });
+        }
+        const muthaigaFront9ReindexedDetails = reIndexSIsForNine(frontNineForReindex);
+        const backNineForReindex = [];
+        for (let i = 10; i <= 18; i++) {
+            backNineForReindex.push({ originalHoleNum: i, newHoleNum: i - 9, par: muthaigaPars[i], originalSI: muthaiga18HoleSIs[i] });
+        }
+        const muthaigaBack9ReindexedDetails = reIndexSIsForNine(backNineForReindex);
+
+        const allPredefinedClubData = [
+            {
+                clubId: 'MGC_PREDEF',
+                clubName: 'Muthaiga Golf Club',
+                courses: [
+                    {
+                        internalCourseId: 'MGC_MAIN18', courseDisplayName: 'Main Course (18 Holes)',
+                        tees: [
+                            { teeId: 'MGC_M_NDOVU_18', teeName: "Men's - Ndovu - Course 1", gender: 'M', numHoles: 18, courseRating: 74.4, slopeRating: 135, totalPar: 71, holeDetails: muthaigaFull18HoleDetails, nineHoleType: null },
+                            { teeId: 'MGC_M_SIMBA_18', teeName: "Men's - Simba - Course 2", gender: 'M', numHoles: 18, courseRating: 72.6, slopeRating: 135, totalPar: 71, holeDetails: muthaigaFull18HoleDetails, nineHoleType: null },
+                            { teeId: 'MGC_M_KIFARU_18', teeName: "Men's - Kifaru - Course 3", gender: 'M', numHoles: 18, courseRating: 69.8, slopeRating: 125, totalPar: 71, holeDetails: muthaigaFull18HoleDetails, nineHoleType: null },
+                            { teeId: 'MGC_M_CHUI_18', teeName: "Men's - Chui - Course 4", gender: 'M', numHoles: 18, courseRating: 68.8, slopeRating: 115, totalPar: 71, holeDetails: muthaigaFull18HoleDetails, nineHoleType: null },
+                            { teeId: 'MGC_W_SIMBA_18', teeName: "Women's - Simba - Course 2", gender: 'F', numHoles: 18, courseRating: 79.0, slopeRating: 141, totalPar: 71, holeDetails: muthaigaFull18HoleDetails, nineHoleType: null },
+                            { teeId: 'MGC_W_KIFARU_18', teeName: "Women's - Kifaru - Course 3", gender: 'F', numHoles: 18, courseRating: 75.1, slopeRating: 133, totalPar: 71, holeDetails: muthaigaFull18HoleDetails, nineHoleType: null },
+                            { teeId: 'MGC_W_CHUI_18', teeName: "Women's - Chui - Course 4", gender: 'F', numHoles: 18, courseRating: 74.1, slopeRating: 126, totalPar: 71, holeDetails: muthaigaFull18HoleDetails, nineHoleType: null }
+                        ]
+                    },
+                    {
+                        internalCourseId: 'MGC_FRONT9', courseDisplayName: 'Main Course - Front 9',
+                        tees: [
+                            { teeId: 'MGC_M_NDOVU_F9', teeName: "Men's - Ndovu", gender: 'M', numHoles: 9, courseRating: 38.5, slopeRating: 139, totalPar: 36, holeDetails: muthaigaFront9ReindexedDetails, nineHoleType: 'front' },
+                            { teeId: 'MGC_M_SIMBA_F9', teeName: "Men's - Simba", gender: 'M', numHoles: 9, courseRating: 37.3, slopeRating: 140, totalPar: 36, holeDetails: muthaigaFront9ReindexedDetails, nineHoleType: 'front' },
+                            { teeId: 'MGC_M_KIFARU_F9', teeName: "Men's - Kifaru", gender: 'M', numHoles: 9, courseRating: 35.4, slopeRating: 125, totalPar: 36, holeDetails: muthaigaFront9ReindexedDetails, nineHoleType: 'front' },
+                            { teeId: 'MGC_M_CHUI_F9', teeName: "Men's - Chui", gender: 'M', numHoles: 9, courseRating: 35.3, slopeRating: 117, totalPar: 36, holeDetails: muthaigaFront9ReindexedDetails, nineHoleType: 'front' },
+                            { teeId: 'MGC_W_SIMBA_F9', teeName: "Women's - Simba", gender: 'F', numHoles: 9, courseRating: 40.6, slopeRating: 147, totalPar: 36, holeDetails: muthaigaFront9ReindexedDetails, nineHoleType: 'front' },
+                            { teeId: 'MGC_W_KIFARU_F9', teeName: "Women's - Kifaru", gender: 'F', numHoles: 9, courseRating: 38.0, slopeRating: 137, totalPar: 36, holeDetails: muthaigaFront9ReindexedDetails, nineHoleType: 'front' },
+                            { teeId: 'MGC_W_CHUI_F9', teeName: "Women's - Chui", gender: 'F', numHoles: 9, courseRating: 38.2, slopeRating: 132, totalPar: 36, holeDetails: muthaigaFront9ReindexedDetails, nineHoleType: 'front' },
+                        ]
+                    },
+                    {
+                        internalCourseId: 'MGC_BACK9', courseDisplayName: 'Main Course - Back 9',
+                        tees: [
+                            { teeId: 'MGC_M_NDOVU_B9', teeName: "Men's - Ndovu", gender: 'M', numHoles: 9, courseRating: 35.9, slopeRating: 131, totalPar: 35, holeDetails: muthaigaBack9ReindexedDetails, nineHoleType: 'back' },
+                            { teeId: 'MGC_M_SIMBA_B9', teeName: "Men's - Simba", gender: 'M', numHoles: 9, courseRating: 35.3, slopeRating: 130, totalPar: 35, holeDetails: muthaigaBack9ReindexedDetails, nineHoleType: 'back' },
+                            { teeId: 'MGC_M_KIFARU_B9', teeName: "Men's - Kifaru", gender: 'M', numHoles: 9, courseRating: 34.4, slopeRating: 125, totalPar: 35, holeDetails: muthaigaBack9ReindexedDetails, nineHoleType: 'back' },
+                            { teeId: 'MGC_M_CHUI_B9', teeName: "Men's - Chui", gender: 'M', numHoles: 9, courseRating: 33.5, slopeRating: 112, totalPar: 35, holeDetails: muthaigaBack9ReindexedDetails, nineHoleType: 'back' },
+                            { teeId: 'MGC_W_SIMBA_B9', teeName: "Women's - Simba", gender: 'F', numHoles: 9, courseRating: 38.4, slopeRating: 134, totalPar: 35, holeDetails: muthaigaBack9ReindexedDetails, nineHoleType: 'back' },
+                            { teeId: 'MGC_W_KIFARU_B9', teeName: "Women's - Kifaru", gender: 'F', numHoles: 9, courseRating: 37.1, slopeRating: 128, totalPar: 35, holeDetails: muthaigaBack9ReindexedDetails, nineHoleType: 'back' },
+                            { teeId: 'MGC_W_CHUI_B9', teeName: "Women's - Chui", gender: 'F', numHoles: 9, courseRating: 35.9, slopeRating: 120, totalPar: 35, holeDetails: muthaigaBack9ReindexedDetails, nineHoleType: 'back' },
+                        ]
+                    }
+                ]
+            },
+            {
+                clubId: 'GPGC_PREDEF',
+                clubName: 'Golf Park Golf Club',
+                courses: [
+                    {
+                        internalCourseId: 'GPGC_MAIN18', courseDisplayName: 'Main Course (18 Holes)',
+                        tees: [ 
+                            { teeId: 'GPGC_M_SIMBA_18', teeName: "Men's - Simba", gender: 'M', numHoles: 18, courseRating: 70.5, slopeRating: 121, totalPar: 70, holeDetails: null, nineHoleType: null },
+                            { teeId: 'GPGC_M_CHUI_18', teeName: "Men's - Chui", gender: 'M', numHoles: 18, courseRating: 65.7, slopeRating: 102, totalPar: 70, holeDetails: null, nineHoleType: null },
+                            { teeId: 'GPGC_W_SIMBA_18', teeName: "Women's - Simba", gender: 'F', numHoles: 18, courseRating: 75.5, slopeRating: 139, totalPar: 70, holeDetails: null, nineHoleType: null },
+                            { teeId: 'GPGC_W_CHUI_18', teeName: "Women's - Chui", gender: 'F', numHoles: 18, courseRating: 71.3, slopeRating: 121, totalPar: 70, holeDetails: null, nineHoleType: null }
+                        ]
+                    },
+                    {
+                        internalCourseId: 'GPGC_FRONT9', courseDisplayName: 'Main Course - Front 9',
+                        tees: [
+                            { teeId: 'GPGC_M_SIMBA_F9', teeName: "Men's - Simba", gender: 'M', numHoles: 9, courseRating: 35.1, slopeRating: 121, totalPar: 35, holeDetails: null, nineHoleType: 'front' },
+                            { teeId: 'GPGC_M_CHUI_F9', teeName: "Men's - Chui", gender: 'M', numHoles: 9, courseRating: 32.9, slopeRating: 102, totalPar: 35, holeDetails: null, nineHoleType: 'front' },
+                            { teeId: 'GPGC_W_SIMBA_F9', teeName: "Women's - Simba", gender: 'F', numHoles: 9, courseRating: 37.7, slopeRating: 139, totalPar: 35, holeDetails: null, nineHoleType: 'front' },
+                            { teeId: 'GPGC_W_CHUI_F9', teeName: "Women's - Chui", gender: 'F', numHoles: 9, courseRating: 35.7, slopeRating: 121, totalPar: 35, holeDetails: null, nineHoleType: 'front' }
+                        ]
+                    },
+                    {
+                        internalCourseId: 'GPGC_BACK9', courseDisplayName: 'Main Course - Back 9',
+                        tees: [
+                            { teeId: 'GPGC_M_SIMBA_B9', teeName: "Men's - Simba", gender: 'M', numHoles: 9, courseRating: 35.4, slopeRating: 121, totalPar: 35, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'GPGC_M_CHUI_B9', teeName: "Men's - Chui", gender: 'M', numHoles: 9, courseRating: 32.8, slopeRating: 102, totalPar: 35, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'GPGC_W_SIMBA_B9', teeName: "Women's - Simba", gender: 'F', numHoles: 9, courseRating: 37.8, slopeRating: 138, totalPar: 35, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'GPGC_W_CHUI_B9', teeName: "Women's - Chui", gender: 'F', numHoles: 9, courseRating: 35.6, slopeRating: 120, totalPar: 35, holeDetails: null, nineHoleType: 'back' }
+                        ]
+                    }
+                ]
+            },
+            {
+                clubId: 'KCC_PREDEF',
+                clubName: 'Karen Country Club',
+                courses: [
+                    {
+                        internalCourseId: 'KCC_MAIN18', courseDisplayName: 'Main Course (18 Holes)',
+                        tees: [
+                            { teeId: 'KCC_M_NDOVU_18', teeName: "Men's - Ndovu", gender: 'M', numHoles: 18, courseRating: 73.2, slopeRating: 136, totalPar: 72, holeDetails: null, nineHoleType: null },
+                            { teeId: 'KCC_M_SIMBA_18', teeName: "Men's - Simba", gender: 'M', numHoles: 18, courseRating: 71.7, slopeRating: 133, totalPar: 72, holeDetails: null, nineHoleType: null },
+                            { teeId: 'KCC_M_KIFARU_18', teeName: "Men's - Kifaru", gender: 'M', numHoles: 18, courseRating: 68.3, slopeRating: 125, totalPar: 72, holeDetails: null, nineHoleType: null },
+                            { teeId: 'KCC_M_CHUI_18', teeName: "Men's - Chui", gender: 'M', numHoles: 18, courseRating: 66.7, slopeRating: 121, totalPar: 72, holeDetails: null, nineHoleType: null },
+                            { teeId: 'KCC_W_NDOVU_18', teeName: "Women's - Ndovu", gender: 'F', numHoles: 18, courseRating: 79.9, slopeRating: 149, totalPar: 72, holeDetails: null, nineHoleType: null },
+                            { teeId: 'KCC_W_SIMBA_18', teeName: "Women's - Simba", gender: 'F', numHoles: 18, courseRating: 78.2, slopeRating: 145, totalPar: 72, holeDetails: null, nineHoleType: null },
+                            { teeId: 'KCC_W_KIFARU_18', teeName: "Women's - Kifaru", gender: 'F', numHoles: 18, courseRating: 74.6, slopeRating: 136, totalPar: 72, holeDetails: null, nineHoleType: null },
+                            { teeId: 'KCC_W_CHUI_18', teeName: "Women's - Chui", gender: 'F', numHoles: 18, courseRating: 72.5, slopeRating: 132, totalPar: 72, holeDetails: null, nineHoleType: null }
+                        ]
+                    },
+                    {
+                        internalCourseId: 'KCC_FRONT9', courseDisplayName: 'Main Course - Front 9',
+                        tees: [
+                            { teeId: 'KCC_M_NDOVU_F9', teeName: "Men's - Ndovu", gender: 'M', numHoles: 9, courseRating: 36.8, slopeRating: 132, totalPar: 36, holeDetails: null, nineHoleType: 'front' },
+                            { teeId: 'KCC_M_SIMBA_F9', teeName: "Men's - Simba", gender: 'M', numHoles: 9, courseRating: 36.1, slopeRating: 129, totalPar: 36, holeDetails: null, nineHoleType: 'front' },
+                            { teeId: 'KCC_M_KIFARU_F9', teeName: "Men's - Kifaru", gender: 'M', numHoles: 9, courseRating: 34.3, slopeRating: 121, totalPar: 36, holeDetails: null, nineHoleType: 'front' },
+                            { teeId: 'KCC_M_CHUI_F9', teeName: "Men's - Chui", gender: 'M', numHoles: 9, courseRating: 33.5, slopeRating: 116, totalPar: 36, holeDetails: null, nineHoleType: 'front' },
+                            { teeId: 'KCC_W_NDOVU_F9', teeName: "Women's - Ndovu", gender: 'F', numHoles: 9, courseRating: 40.2, slopeRating: 148, totalPar: 36, holeDetails: null, nineHoleType: 'front' },
+                            { teeId: 'KCC_W_SIMBA_F9', teeName: "Women's - Simba", gender: 'F', numHoles: 9, courseRating: 39.4, slopeRating: 143, totalPar: 36, holeDetails: null, nineHoleType: 'front' },
+                            { teeId: 'KCC_W_KIFARU_F9', teeName: "Women's - Kifaru", gender: 'F', numHoles: 9, courseRating: 37.4, slopeRating: 138, totalPar: 36, holeDetails: null, nineHoleType: 'front' },
+                            { teeId: 'KCC_W_CHUI_F9', teeName: "Women's - Chui", gender: 'F', numHoles: 9, courseRating: 36.3, slopeRating: 134, totalPar: 36, holeDetails: null, nineHoleType: 'front' }
+                        ]
+                    },
+                    {
+                        internalCourseId: 'KCC_BACK9', courseDisplayName: 'Main Course - Back 9',
+                        tees: [
+                            { teeId: 'KCC_M_NDOVU_B9', teeName: "Men's - Ndovu", gender: 'M', numHoles: 9, courseRating: 36.4, slopeRating: 139, totalPar: 36, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'KCC_M_SIMBA_B9', teeName: "Men's - Simba", gender: 'M', numHoles: 9, courseRating: 35.6, slopeRating: 137, totalPar: 36, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'KCC_M_KIFARU_B9', teeName: "Men's - Kifaru", gender: 'M', numHoles: 9, courseRating: 34.0, slopeRating: 129, totalPar: 36, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'KCC_M_CHUI_B9', teeName: "Men's - Chui", gender: 'M', numHoles: 9, courseRating: 33.2, slopeRating: 126, totalPar: 36, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'KCC_W_NDOVU_B9', teeName: "Women's - Ndovu", gender: 'F', numHoles: 9, courseRating: 39.7, slopeRating: 150, totalPar: 36, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'KCC_W_SIMBA_B9', teeName: "Women's - Simba", gender: 'F', numHoles: 9, courseRating: 38.8, slopeRating: 146, totalPar: 36, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'KCC_W_KIFARU_B9', teeName: "Women's - Kifaru", gender: 'F', numHoles: 9, courseRating: 37.2, slopeRating: 134, totalPar: 36, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'KCC_W_CHUI_B9', teeName: "Women's - Chui", gender: 'F', numHoles: 9, courseRating: 36.2, slopeRating: 130, totalPar: 36, holeDetails: null, nineHoleType: 'back' }
+                        ]
+                    }
+                ]
+            },
+            {
+                clubId: 'KAFGC_PREDEF', 
+                clubName: 'Kenya Airforce Golf Club',
+                courses: [
+                    {
+                        internalCourseId: 'KAFGC_MAIN18', courseDisplayName: 'Main Course (18 Holes)',
+                        tees: [
+                            { teeId: 'KAFGC_M_SIMBA_18', teeName: "Men's - Simba", gender: 'M', numHoles: 18, courseRating: 69.2, slopeRating: 120, totalPar: 72, holeDetails: null, nineHoleType: null },
+                            { teeId: 'KAFGC_M_CHUI_18',  teeName: "Men's - Chui",  gender: 'M', numHoles: 18, courseRating: 65.0, slopeRating: 104, totalPar: 72, holeDetails: null, nineHoleType: null },
+                            { teeId: 'KAFGC_W_SIMBA_18', teeName: "Women's - Simba", gender: 'F', numHoles: 18, courseRating: 76.1, slopeRating: 123, totalPar: 72, holeDetails: null, nineHoleType: null },
+                            { teeId: 'KAFGC_W_CHUI_18',  teeName: "Women's - Chui",  gender: 'F', numHoles: 18, courseRating: 70.3, slopeRating: 116, totalPar: 72, holeDetails: null, nineHoleType: null }
+                        ]
+                    },
+                    {
+                        internalCourseId: 'KAFGC_FRONT9', courseDisplayName: 'Main Course - Front 9',
+                        tees: [
+                            { teeId: 'KAFGC_M_SIMBA_F9', teeName: "Men's - Simba", gender: 'M', numHoles: 9, courseRating: 34.9, slopeRating: 119, totalPar: 36, holeDetails: null, nineHoleType: 'front' },
+                            { teeId: 'KAFGC_M_CHUI_F9',  teeName: "Men's - Chui",  gender: 'M', numHoles: 9, courseRating: 32.3, slopeRating: 107, totalPar: 36, holeDetails: null, nineHoleType: 'front' },
+                            { teeId: 'KAFGC_W_SIMBA_F9', teeName: "Women's - Simba", gender: 'F', numHoles: 9, courseRating: 38.3, slopeRating: 123, totalPar: 36, holeDetails: null, nineHoleType: 'front' },
+                            { teeId: 'KAFGC_W_CHUI_F9',  teeName: "Women's - Chui",  gender: 'F', numHoles: 9, courseRating: 35.2, slopeRating: 116, totalPar: 36, holeDetails: null, nineHoleType: 'front' }
+                        ]
+                    },
+                    {
+                        internalCourseId: 'KAFGC_BACK9', courseDisplayName: 'Main Course - Back 9',
+                        tees: [
+                            { teeId: 'KAFGC_M_SIMBA_B9', teeName: "Men's - Simba", gender: 'M', numHoles: 9, courseRating: 34.3, slopeRating: 121, totalPar: 36, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'KAFGC_M_CHUI_B9',  teeName: "Men's - Chui",  gender: 'M', numHoles: 9, courseRating: 32.7, slopeRating: 101, totalPar: 36, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'KAFGC_W_SIMBA_B9', teeName: "Women's - Simba", gender: 'F', numHoles: 9, courseRating: 37.8, slopeRating: 123, totalPar: 36, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'KAFGC_W_CHUI_B9',  teeName: "Women's - Chui",  gender: 'F', numHoles: 9, courseRating: 35.1, slopeRating: 115, totalPar: 36, holeDetails: null, nineHoleType: 'back' }
+                        ]
+                    }
+                ]
+            },
+            {
+                clubId: 'KRGC_PREDEF', 
+                clubName: 'Kenya Railways Golf Club',
+                courses: [
+                    {
+                        internalCourseId: 'KRGC_MAIN18', courseDisplayName: 'Main Course (18 Holes)',
+                        tees: [
+                            { teeId: 'KRGC_M_KIFARU_18', teeName: "Men's - Kifaru", gender: 'M', numHoles: 18, courseRating: 70.5, slopeRating: 135, totalPar: 72, holeDetails: null, nineHoleType: null },
+                            { teeId: 'KRGC_M_CHUI_18',   teeName: "Men's - Chui",   gender: 'M', numHoles: 18, courseRating: 67.7, slopeRating: 111, totalPar: 72, holeDetails: null, nineHoleType: null },
+                            { teeId: 'KRGC_W_KIFARU_18', teeName: "Women's - Kifaru", gender: 'F', numHoles: 18, courseRating: 76.1, slopeRating: 142, totalPar: 72, holeDetails: null, nineHoleType: null },
+                            { teeId: 'KRGC_W_CHUI_18',   teeName: "Women's - Chui",   gender: 'F', numHoles: 18, courseRating: 72.4, slopeRating: 127, totalPar: 72, holeDetails: null, nineHoleType: null }
+                        ]
+                    },
+                    {
+                        internalCourseId: 'KRGC_FRONT9', courseDisplayName: 'Main Course - Front 9',
+                        tees: [
+                            { teeId: 'KRGC_M_KIFARU_F9', teeName: "Men's - Kifaru", gender: 'M', numHoles: 9, courseRating: 35.3, slopeRating: 133, totalPar: 36, holeDetails: null, nineHoleType: 'front' },
+                            { teeId: 'KRGC_M_CHUI_F9',   teeName: "Men's - Chui",   gender: 'M', numHoles: 9, courseRating: 34.0, slopeRating: 111, totalPar: 36, holeDetails: null, nineHoleType: 'front' },
+                            { teeId: 'KRGC_W_KIFARU_F9', teeName: "Women's - Kifaru", gender: 'F', numHoles: 9, courseRating: 38.2, slopeRating: 142, totalPar: 36, holeDetails: null, nineHoleType: 'front' },
+                            { teeId: 'KRGC_W_CHUI_F9',   teeName: "Women's - Chui",   gender: 'F', numHoles: 9, courseRating: 36.4, slopeRating: 129, totalPar: 36, holeDetails: null, nineHoleType: 'front' }
+                        ]
+                    },
+                    {
+                        internalCourseId: 'KRGC_BACK9', courseDisplayName: 'Main Course - Back 9',
+                        tees: [
+                            { teeId: 'KRGC_M_KIFARU_B9', teeName: "Men's - Kifaru", gender: 'M', numHoles: 9, courseRating: 35.2, slopeRating: 136, totalPar: 36, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'KRGC_M_CHUI_B9',   teeName: "Men's - Chui",   gender: 'M', numHoles: 9, courseRating: 33.7, slopeRating: 111, totalPar: 36, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'KRGC_W_KIFARU_B9', teeName: "Women's - Kifaru", gender: 'F', numHoles: 9, courseRating: 37.9, slopeRating: 142, totalPar: 36, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'KRGC_W_CHUI_B9',   teeName: "Women's - Chui",   gender: 'F', numHoles: 9, courseRating: 36.0, slopeRating: 125, totalPar: 36, holeDetails: null, nineHoleType: 'back' }
+                        ]
+                    }
+                ]
+            },
+            {
+                clubId: 'KGC_PREDEF', 
+                clubName: 'Kiambu Golf Club',
+                courses: [
+                    {
+                        internalCourseId: 'KGC_MAIN18', courseDisplayName: 'Main Course (18 Holes)',
+                        tees: [
+                            { teeId: 'KGC_M_SIMBA_18', teeName: "Men's - Simba", gender: 'M', numHoles: 18, courseRating: 71.9, slopeRating: 131, totalPar: 72, holeDetails: null, nineHoleType: null },
+                            { teeId: 'KGC_M_CHUI_18',  teeName: "Men's - Chui",  gender: 'M', numHoles: 18, courseRating: 66.1, slopeRating: 109, totalPar: 72, holeDetails: null, nineHoleType: null }
+                        ]
+                    },
+                    {
+                        internalCourseId: 'KGC_FRONT9', courseDisplayName: 'Main Course - Front 9',
+                        tees: [
+                            { teeId: 'KGC_M_SIMBA_F9', teeName: "Men's - Simba", gender: 'M', numHoles: 9, courseRating: 36.0, slopeRating: 133, totalPar: 36, holeDetails: null, nineHoleType: 'front' },
+                            { teeId: 'KGC_M_CHUI_F9',  teeName: "Men's - Chui",  gender: 'M', numHoles: 9, courseRating: 33.0, slopeRating: 111, totalPar: 36, holeDetails: null, nineHoleType: 'front' }
+                        ]
+                    },
+                    {
+                        internalCourseId: 'KGC_BACK9', courseDisplayName: 'Main Course - Back 9',
+                        tees: [
+                            { teeId: 'KGC_M_SIMBA_B9', teeName: "Men's - Simba", gender: 'M', numHoles: 9, courseRating: 35.9, slopeRating: 128, totalPar: 36, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'KGC_M_CHUI_B9',  teeName: "Men's - Chui",  gender: 'M', numHoles: 9, courseRating: 33.1, slopeRating: 107, totalPar: 36, holeDetails: null, nineHoleType: 'back' }
+                        ]
+                    }
+                ]
+            },
+            {
+                clubId: 'LCC_PREDEF', 
+                clubName: 'Limuru Country Club',
+                courses: [
+                    {
+                        internalCourseId: 'LCC_MAIN18', courseDisplayName: 'Main Course (18 Holes)',
+                        tees: [
+                            { teeId: 'LCC_M_SIMBA_18', teeName: "Men's - Simba", gender: 'M', numHoles: 18, courseRating: 72.3, slopeRating: 132, totalPar: 72, holeDetails: null, nineHoleType: null },
+                            { teeId: 'LCC_M_CHUI_18',  teeName: "Men's - Chui",  gender: 'M', numHoles: 18, courseRating: 66.7, slopeRating: 119, totalPar: 72, holeDetails: null, nineHoleType: null },
+                            { teeId: 'LCC_W_SIMBA_18', teeName: "Women's - Simba", gender: 'F', numHoles: 18, courseRating: 78.9, slopeRating: 146, totalPar: 72, holeDetails: null, nineHoleType: null },
+                            { teeId: 'LCC_W_CHUI_18',  teeName: "Women's - Chui",  gender: 'F', numHoles: 18, courseRating: 71.8, slopeRating: 125, totalPar: 72, holeDetails: null, nineHoleType: null }
+                        ]
+                    },
+                    {
+                        internalCourseId: 'LCC_FRONT9', courseDisplayName: 'Main Course - Front 9',
+                        tees: [
+                            { teeId: 'LCC_M_SIMBA_F9', teeName: "Men's - Simba", gender: 'M', numHoles: 9, courseRating: 36.3, slopeRating: 127, totalPar: 36, holeDetails: null, nineHoleType: 'front' },
+                            { teeId: 'LCC_M_CHUI_F9',  teeName: "Men's - Chui",  gender: 'M', numHoles: 9, courseRating: 33.3, slopeRating: 119, totalPar: 36, holeDetails: null, nineHoleType: 'front' },
+                            { teeId: 'LCC_W_SIMBA_F9', teeName: "Women's - Simba", gender: 'F', numHoles: 9, courseRating: 39.5, slopeRating: 142, totalPar: 36, holeDetails: null, nineHoleType: 'front' },
+                            { teeId: 'LCC_W_CHUI_F9',  teeName: "Women's - Chui",  gender: 'F', numHoles: 9, courseRating: 36.0, slopeRating: 123, totalPar: 36, holeDetails: null, nineHoleType: 'front' }
+                        ]
+                    },
+                    {
+                        internalCourseId: 'LCC_BACK9', courseDisplayName: 'Main Course - Back 9',
+                        tees: [
+                            { teeId: 'LCC_M_SIMBA_B9', teeName: "Men's - Simba", gender: 'M', numHoles: 9, courseRating: 36.0, slopeRating: 136, totalPar: 36, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'LCC_M_CHUI_B9',  teeName: "Men's - Chui",  gender: 'M', numHoles: 9, courseRating: 33.4, slopeRating: 119, totalPar: 36, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'LCC_W_SIMBA_B9', teeName: "Women's - Simba", gender: 'F', numHoles: 9, courseRating: 39.4, slopeRating: 149, totalPar: 36, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'LCC_W_CHUI_B9',  teeName: "Women's - Chui",  gender: 'F', numHoles: 9, courseRating: 35.8, slopeRating: 126, totalPar: 36, holeDetails: null, nineHoleType: 'back' }
+                        ]
+                    }
+                ]
+            },
+            {
+                clubId: 'MAKGC_PREDEF', 
+                clubName: 'Machakos Golf Club',
+                courses: [
+                    {
+                        internalCourseId: 'MAKGC_MAIN18', courseDisplayName: 'Main Course (18 Holes)',
+                        tees: [
+                            { teeId: 'MAKGC_M_SIMBA_18', teeName: "Men's - Simba", gender: 'M', numHoles: 18, courseRating: 70.5, slopeRating: 129, totalPar: 72, holeDetails: null, nineHoleType: null },
+                            { teeId: 'MAKGC_M_CHUI_18',  teeName: "Men's - Chui",  gender: 'M', numHoles: 18, courseRating: 66.1, slopeRating: 121, totalPar: 72, holeDetails: null, nineHoleType: null },
+                            { teeId: 'MAKGC_W_SIMBA_18', teeName: "Women's - Simba", gender: 'F', numHoles: 18, courseRating: 77.6, slopeRating: 147, totalPar: 72, holeDetails: null, nineHoleType: null },
+                            { teeId: 'MAKGC_W_CHUI_18',  teeName: "Women's - Chui",  gender: 'F', numHoles: 18, courseRating: 71.7, slopeRating: 125, totalPar: 72, holeDetails: null, nineHoleType: null }
+                        ]
+                    },
+                    {
+                        internalCourseId: 'MAKGC_FRONT9', courseDisplayName: 'Main Course - Front 9',
+                        tees: [
+                            { teeId: 'MAKGC_M_SIMBA_F9', teeName: "Men's - Simba", gender: 'M', numHoles: 9, courseRating: 35.5, slopeRating: 130, totalPar: 36, holeDetails: null, nineHoleType: 'front' },
+                            { teeId: 'MAKGC_M_CHUI_F9',  teeName: "Men's - Chui",  gender: 'M', numHoles: 9, courseRating: 33.4, slopeRating: 123, totalPar: 36, holeDetails: null, nineHoleType: 'front' },
+                            { teeId: 'MAKGC_W_SIMBA_F9', teeName: "Women's - Simba", gender: 'F', numHoles: 9, courseRating: 39.0, slopeRating: 147, totalPar: 36, holeDetails: null, nineHoleType: 'front' },
+                            { teeId: 'MAKGC_W_CHUI_F9',  teeName: "Women's - Chui",  gender: 'F', numHoles: 9, courseRating: 36.1, slopeRating: 127, totalPar: 36, holeDetails: null, nineHoleType: 'front' }
+                        ]
+                    },
+                    {
+                        internalCourseId: 'MAKGC_BACK9', courseDisplayName: 'Main Course - Back 9',
+                        tees: [
+                            { teeId: 'MAKGC_M_SIMBA_B9', teeName: "Men's - Simba", gender: 'M', numHoles: 9, courseRating: 35.0, slopeRating: 128, totalPar: 36, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'MAKGC_M_CHUI_B9',  teeName: "Men's - Chui",  gender: 'M', numHoles: 9, courseRating: 32.7, slopeRating: 118, totalPar: 36, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'MAKGC_W_SIMBA_B9', teeName: "Women's - Simba", gender: 'F', numHoles: 9, courseRating: 38.6, slopeRating: 147, totalPar: 36, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'MAKGC_W_CHUI_B9',  teeName: "Women's - Chui",  gender: 'F', numHoles: 9, courseRating: 35.6, slopeRating: 123, totalPar: 36, holeDetails: null, nineHoleType: 'back' }
+                        ]
+                    }
+                ]
+            },
+            {
+                clubId: 'RNGC_PREDEF', 
+                clubName: 'Royal Nairobi Golf Club',
+                courses: [
+                    {
+                        internalCourseId: 'RNGC_MAIN18', courseDisplayName: 'Main Course (18 Holes)',
+                        tees: [
+                            { teeId: 'RNGC_M_NDOVU_18', teeName: "Men's - Ndovu", gender: 'M', numHoles: 18, courseRating: 73.4, slopeRating: 134, totalPar: 72, holeDetails: null, nineHoleType: null },
+                            { teeId: 'RNGC_M_SIMBA_18', teeName: "Men's - Simba", gender: 'M', numHoles: 18, courseRating: 71.6, slopeRating: 128, totalPar: 72, holeDetails: null, nineHoleType: null },
+                            { teeId: 'RNGC_M_KIFARU_18',teeName: "Men's - Kifaru",gender: 'M', numHoles: 18, courseRating: 69.4, slopeRating: 123, totalPar: 72, holeDetails: null, nineHoleType: null },
+                            { teeId: 'RNGC_M_CHUI_18',  teeName: "Men's - Chui",  gender: 'M', numHoles: 18, courseRating: 67.3, slopeRating: 119, totalPar: 72, holeDetails: null, nineHoleType: null },
+                            { teeId: 'RNGC_W_NDOVU_18', teeName: "Women's - Ndovu", gender: 'F', numHoles: 18, courseRating: 80.4, slopeRating: 148, totalPar: 72, holeDetails: null, nineHoleType: null },
+                            { teeId: 'RNGC_W_SIMBA_18', teeName: "Women's - Simba", gender: 'F', numHoles: 18, courseRating: 78.1, slopeRating: 144, totalPar: 72, holeDetails: null, nineHoleType: null },
+                            { teeId: 'RNGC_W_KIFARU_18',teeName: "Women's - Kifaru",gender: 'F', numHoles: 18, courseRating: 75.8, slopeRating: 138, totalPar: 72, holeDetails: null, nineHoleType: null },
+                            { teeId: 'RNGC_W_CHUI_18',  teeName: "Women's - Chui",  gender: 'F', numHoles: 18, courseRating: 72.9, slopeRating: 131, totalPar: 72, holeDetails: null, nineHoleType: null }
+                        ]
+                    },
+                    {
+                        internalCourseId: 'RNGC_FRONT9', courseDisplayName: 'Main Course - Front 9',
+                        tees: [
+                            { teeId: 'RNGC_M_NDOVU_F9', teeName: "Men's - Ndovu", gender: 'M', numHoles: 9, courseRating: 36.2, slopeRating: 136, totalPar: 36, holeDetails: null, nineHoleType: 'front' },
+                            { teeId: 'RNGC_M_SIMBA_F9', teeName: "Men's - Simba", gender: 'M', numHoles: 9, courseRating: 35.4, slopeRating: 127, totalPar: 36, holeDetails: null, nineHoleType: 'front' },
+                            { teeId: 'RNGC_M_KIFARU_F9',teeName: "Men's - Kifaru",gender: 'M', numHoles: 9, courseRating: 34.7, slopeRating: 122, totalPar: 36, holeDetails: null, nineHoleType: 'front' },
+                            { teeId: 'RNGC_M_CHUI_F9',  teeName: "Men's - Chui",  gender: 'M', numHoles: 9, courseRating: 33.6, slopeRating: 119, totalPar: 36, holeDetails: null, nineHoleType: 'front' },
+                            { teeId: 'RNGC_W_NDOVU_F9', teeName: "Women's - Ndovu", gender: 'F', numHoles: 9, courseRating: 39.8, slopeRating: 142, totalPar: 36, holeDetails: null, nineHoleType: 'front' },
+                            { teeId: 'RNGC_W_SIMBA_F9', teeName: "Women's - Simba", gender: 'F', numHoles: 9, courseRating: 38.7, slopeRating: 141, totalPar: 36, holeDetails: null, nineHoleType: 'front' },
+                            { teeId: 'RNGC_W_KIFARU_F9',teeName: "Women's - Kifaru",gender: 'F', numHoles: 9, courseRating: 37.9, slopeRating: 137, totalPar: 36, holeDetails: null, nineHoleType: 'front' },
+                            { teeId: 'RNGC_W_CHUI_F9',  teeName: "Women's - Chui",  gender: 'F', numHoles: 9, courseRating: 36.3, slopeRating: 127, totalPar: 36, holeDetails: null, nineHoleType: 'front' }
+                        ]
+                    },
+                    {
+                        internalCourseId: 'RNGC_BACK9', courseDisplayName: 'Main Course - Back 9',
+                        tees: [
+                            { teeId: 'RNGC_M_NDOVU_B9', teeName: "Men's - Ndovu", gender: 'M', numHoles: 9, courseRating: 37.2, slopeRating: 131, totalPar: 36, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'RNGC_M_SIMBA_B9', teeName: "Men's - Simba", gender: 'M', numHoles: 9, courseRating: 36.2, slopeRating: 129, totalPar: 36, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'RNGC_M_KIFARU_B9',teeName: "Men's - Kifaru",gender: 'M', numHoles: 9, courseRating: 34.7, slopeRating: 123, totalPar: 36, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'RNGC_M_CHUI_B9',  teeName: "Men's - Chui",  gender: 'M', numHoles: 9, courseRating: 33.7, slopeRating: 119, totalPar: 36, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'RNGC_W_NDOVU_B9', teeName: "Women's - Ndovu", gender: 'F', numHoles: 9, courseRating: 40.6, slopeRating: 153, totalPar: 36, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'RNGC_W_SIMBA_B9', teeName: "Women's - Simba", gender: 'F', numHoles: 9, courseRating: 39.4, slopeRating: 146, totalPar: 36, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'RNGC_W_KIFARU_B9',teeName: "Women's - Kifaru",gender: 'F', numHoles: 9, courseRating: 37.9, slopeRating: 138, totalPar: 36, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'RNGC_W_CHUI_B9',  teeName: "Women's - Chui",  gender: 'F', numHoles: 9, courseRating: 36.6, slopeRating: 134, totalPar: 36, holeDetails: null, nineHoleType: 'back' }
+                        ]
+                    }
+                ]
+            },
+            {
+                clubId: 'RSC_PREDEF', 
+                clubName: 'Ruiru Sports Club',
+                courses: [
+                    {
+                        internalCourseId: 'RSC_MAIN18', courseDisplayName: 'Main Course (18 Holes)',
+                        tees: [
+                            { teeId: 'RSC_M_NDOVU_18', teeName: "Men's - Ndovu", gender: 'M', numHoles: 18, courseRating: 72.5, slopeRating: 125, totalPar: 73, holeDetails: null, nineHoleType: null },
+                            { teeId: 'RSC_M_CHUI_18',  teeName: "Men's - Chui",  gender: 'M', numHoles: 18, courseRating: 66.6, slopeRating: 108, totalPar: 73, holeDetails: null, nineHoleType: null },
+                            { teeId: 'RSC_W_NDOVU_18', teeName: "Women's - Ndovu", gender: 'F', numHoles: 18, courseRating: 79.1, slopeRating: 142, totalPar: 73, holeDetails: null, nineHoleType: null },
+                            { teeId: 'RSC_W_CHUI_18',  teeName: "Women's - Chui",  gender: 'F', numHoles: 18, courseRating: 72.6, slopeRating: 129, totalPar: 73, holeDetails: null, nineHoleType: null }
+                        ]
+                    },
+                    {
+                        internalCourseId: 'RSC_FRONT9', courseDisplayName: 'Main Course - Front 9',
+                        tees: [
+                            { teeId: 'RSC_M_NDOVU_F9', teeName: "Men's - Ndovu", gender: 'M', numHoles: 9, courseRating: 35.8, slopeRating: 125, totalPar: 36, holeDetails: null, nineHoleType: 'front' }, 
+                            { teeId: 'RSC_M_CHUI_F9',  teeName: "Men's - Chui",  gender: 'M', numHoles: 9, courseRating: 32.9, slopeRating: 104, totalPar: 36, holeDetails: null, nineHoleType: 'front' },
+                            { teeId: 'RSC_W_NDOVU_F9', teeName: "Women's - Ndovu", gender: 'F', numHoles: 9, courseRating: 39.3, slopeRating: 137, totalPar: 36, holeDetails: null, nineHoleType: 'front' },
+                            { teeId: 'RSC_W_CHUI_F9',  teeName: "Women's - Chui",  gender: 'F', numHoles: 9, courseRating: 35.8, slopeRating: 120, totalPar: 36, holeDetails: null, nineHoleType: 'front' }
+                        ]
+                    },
+                    {
+                        internalCourseId: 'RSC_BACK9', courseDisplayName: 'Main Course - Back 9',
+                        tees: [
+                            { teeId: 'RSC_M_NDOVU_B9', teeName: "Men's - Ndovu", gender: 'M', numHoles: 9, courseRating: 36.7, slopeRating: 125, totalPar: 37, holeDetails: null, nineHoleType: 'back' }, 
+                            { teeId: 'RSC_M_CHUI_B9',  teeName: "Men's - Chui",  gender: 'M', numHoles: 9, courseRating: 33.7, slopeRating: 112, totalPar: 37, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'RSC_W_NDOVU_B9', teeName: "Women's - Ndovu", gender: 'F', numHoles: 9, courseRating: 39.8, slopeRating: 147, totalPar: 37, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'RSC_W_CHUI_B9',  teeName: "Women's - Chui",  gender: 'F', numHoles: 9, courseRating: 36.8, slopeRating: 137, totalPar: 37, holeDetails: null, nineHoleType: 'back' }
+                        ]
+                    }
+                ]
+            },
+            {
+                clubId: 'SGC_PREDEF', 
+                clubName: 'Sigona Golf Club',
+                courses: [
+                    {
+                        internalCourseId: 'SGC_MAIN18', courseDisplayName: 'Main Course (18 Holes)',
+                        tees: [
+                            { teeId: 'SGC_M_SIMBA_18', teeName: "Men's - Simba", gender: 'M', numHoles: 18, courseRating: 72.8, slopeRating: 127, totalPar: 72, holeDetails: null, nineHoleType: null },
+                            { teeId: 'SGC_M_KIFARU_18',teeName: "Men's - Kifaru",gender: 'M', numHoles: 18, courseRating: 70.2, slopeRating: 123, totalPar: 72, holeDetails: null, nineHoleType: null },
+                            { teeId: 'SGC_M_CHUI_18',  teeName: "Men's - Chui",  gender: 'M', numHoles: 18, courseRating: 66.6, slopeRating: 118, totalPar: 72, holeDetails: null, nineHoleType: null },
+                            { teeId: 'SGC_W_SIMBA_18', teeName: "Women's - Simba", gender: 'F', numHoles: 18, courseRating: 79.0, slopeRating: 154, totalPar: 72, holeDetails: null, nineHoleType: null },
+                            { teeId: 'SGC_W_KIFARU_18',teeName: "Women's - Kifaru",gender: 'F', numHoles: 18, courseRating: 75.8, slopeRating: 140, totalPar: 72, holeDetails: null, nineHoleType: null },
+                            { teeId: 'SGC_W_CHUI_18',  teeName: "Women's - Chui",  gender: 'F', numHoles: 18, courseRating: 72.3, slopeRating: 124, totalPar: 72, holeDetails: null, nineHoleType: null }
+                        ]
+                    },
+                    {
+                        internalCourseId: 'SGC_FRONT9', courseDisplayName: 'Main Course - Front 9',
+                        tees: [
+                            { teeId: 'SGC_M_SIMBA_F9', teeName: "Men's - Simba", gender: 'M', numHoles: 9, courseRating: 37.0, slopeRating: 126, totalPar: 36, holeDetails: null, nineHoleType: 'front' },
+                            { teeId: 'SGC_M_KIFARU_F9',teeName: "Men's - Kifaru",gender: 'M', numHoles: 9, courseRating: 35.4, slopeRating: 122, totalPar: 36, holeDetails: null, nineHoleType: 'front' },
+                            { teeId: 'SGC_M_CHUI_F9',  teeName: "Men's - Chui",  gender: 'M', numHoles: 9, courseRating: 33.6, slopeRating: 119, totalPar: 36, holeDetails: null, nineHoleType: 'front' },
+                            { teeId: 'SGC_W_SIMBA_F9', teeName: "Women's - Simba", gender: 'F', numHoles: 9, courseRating: 39.8, slopeRating: 155, totalPar: 36, holeDetails: null, nineHoleType: 'front' },
+                            { teeId: 'SGC_W_KIFARU_F9',teeName: "Women's - Kifaru",gender: 'F', numHoles: 9, courseRating: 37.9, slopeRating: 138, totalPar: 36, holeDetails: null, nineHoleType: 'front' },
+                            { teeId: 'SGC_W_CHUI_F9',  teeName: "Women's - Chui",  gender: 'F', numHoles: 9, courseRating: 36.5, slopeRating: 123, totalPar: 36, holeDetails: null, nineHoleType: 'front' }
+                        ]
+                    },
+                    {
+                        internalCourseId: 'SGC_BACK9', courseDisplayName: 'Main Course - Back 9',
+                        tees: [
+                            { teeId: 'SGC_M_SIMBA_B9', teeName: "Men's - Simba", gender: 'M', numHoles: 9, courseRating: 35.8, slopeRating: 128, totalPar: 36, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'SGC_M_KIFARU_B9',teeName: "Men's - Kifaru",gender: 'M', numHoles: 9, courseRating: 34.8, slopeRating: 123, totalPar: 36, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'SGC_M_CHUI_B9',  teeName: "Men's - Chui",  gender: 'M', numHoles: 9, courseRating: 33.0, slopeRating: 116, totalPar: 36, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'SGC_W_SIMBA_B9', teeName: "Women's - Simba", gender: 'F', numHoles: 9, courseRating: 39.2, slopeRating: 153, totalPar: 36, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'SGC_W_KIFARU_B9',teeName: "Women's - Kifaru",gender: 'F', numHoles: 9, courseRating: 37.9, slopeRating: 141, totalPar: 36, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'SGC_W_CHUI_B9',  teeName: "Women's - Chui",  gender: 'F', numHoles: 9, courseRating: 35.8, slopeRating: 124, totalPar: 36, holeDetails: null, nineHoleType: 'back' }
+                        ]
+                    }
+                ]
+            },
+            {
+                clubId: 'TBGC_PREDEF', 
+                clubName: 'Thika Barracks Golf Club',
+                courses: [
+                    {
+                        internalCourseId: 'TBGC_MAIN18', courseDisplayName: 'Main Course (18 Holes)',
+                        tees: [
+                            { teeId: 'TBGC_M_KIFARU_18', teeName: "Men's - Kifaru", gender: 'M', numHoles: 18, courseRating: 69.0, slopeRating: 117, totalPar: 72, holeDetails: null, nineHoleType: null },
+                            { teeId: 'TBGC_M_NYATI_18',  teeName: "Men's - Nyati",  gender: 'M', numHoles: 18, courseRating: 65.1, slopeRating: 100, totalPar: 72, holeDetails: null, nineHoleType: null },
+                            { teeId: 'TBGC_W_KIFARU_18', teeName: "Women's - Kifaru", gender: 'F', numHoles: 18, courseRating: 75.6, slopeRating: 130, totalPar: 72, holeDetails: null, nineHoleType: null },
+                            { teeId: 'TBGC_W_NYATI_18',  teeName: "Women's - Nyati",  gender: 'F', numHoles: 18, courseRating: 69.6, slopeRating: 117, totalPar: 72, holeDetails: null, nineHoleType: null }
+                        ]
+                    },
+                    {
+                        internalCourseId: 'TBGC_FRONT9', courseDisplayName: 'Main Course - Front 9',
+                        tees: [
+                            { teeId: 'TBGC_M_KIFARU_F9', teeName: "Men's - Kifaru", gender: 'M', numHoles: 9, courseRating: 34.5, slopeRating: 118, totalPar: 36, holeDetails: null, nineHoleType: 'front' },
+                            { teeId: 'TBGC_M_NYATI_F9',  teeName: "Men's - Nyati",  gender: 'M', numHoles: 9, courseRating: 32.8, slopeRating: 101, totalPar: 36, holeDetails: null, nineHoleType: 'front' },
+                            { teeId: 'TBGC_W_KIFARU_F9', teeName: "Women's - Kifaru", gender: 'F', numHoles: 9, courseRating: 37.9, slopeRating: 130, totalPar: 36, holeDetails: null, nineHoleType: 'front' },
+                            { teeId: 'TBGC_W_NYATI_F9',  teeName: "Women's - Nyati",  gender: 'F', numHoles: 9, courseRating: 34.9, slopeRating: 119, totalPar: 36, holeDetails: null, nineHoleType: 'front' }
+                        ]
+                    },
+                    {
+                        internalCourseId: 'TBGC_BACK9', courseDisplayName: 'Main Course - Back 9',
+                        tees: [
+                            { teeId: 'TBGC_M_KIFARU_B9', teeName: "Men's - Kifaru", gender: 'M', numHoles: 9, courseRating: 34.5, slopeRating: 116, totalPar: 36, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'TBGC_M_NYATI_B9',  teeName: "Men's - Nyati",  gender: 'M', numHoles: 9, courseRating: 32.3, slopeRating: 99, totalPar: 36, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'TBGC_W_KIFARU_B9', teeName: "Women's - Kifaru", gender: 'F', numHoles: 9, courseRating: 37.7, slopeRating: 129, totalPar: 36, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'TBGC_W_NYATI_B9',  teeName: "Women's - Nyati",  gender: 'F', numHoles: 9, courseRating: 34.7, slopeRating: 115, totalPar: 36, holeDetails: null, nineHoleType: 'back' }
+                        ]
+                    }
+                ]
+            },
+            {
+                clubId: 'TGGR_PREDEF', 
+                clubName: 'Thika Greens Golf Resort',
+                courses: [
+                    {
+                        internalCourseId: 'TGGR_MAIN18', courseDisplayName: 'Main Course (18 Holes)',
+                        tees: [
+                            { teeId: 'TGGR_M_TWIGA_18', teeName: "Men's - Twiga", gender: 'M', numHoles: 18, courseRating: 75.7, slopeRating: 135, totalPar: 73, holeDetails: null, nineHoleType: null },
+                            { teeId: 'TGGR_M_NDOVU_18', teeName: "Men's - Ndovu", gender: 'M', numHoles: 18, courseRating: 73.0, slopeRating: 134, totalPar: 73, holeDetails: null, nineHoleType: null },
+                            { teeId: 'TGGR_M_KIFARU_18',teeName: "Men's - Kifaru",gender: 'M', numHoles: 18, courseRating: 69.2, slopeRating: 117, totalPar: 73, holeDetails: null, nineHoleType: null },
+                            { teeId: 'TGGR_M_NYATI_18', teeName: "Men's - Nyati", gender: 'M', numHoles: 18, courseRating: 65.0, slopeRating: 110, totalPar: 73, holeDetails: null, nineHoleType: null },
+                            { teeId: 'TGGR_W_NDOVU_18', teeName: "Women's - Ndovu", gender: 'F', numHoles: 18, courseRating: 79.8, slopeRating: 147, totalPar: 73, holeDetails: null, nineHoleType: null },
+                            { teeId: 'TGGR_W_KIFARU_18',teeName: "Women's - Kifaru",gender: 'F', numHoles: 18, courseRating: 75.5, slopeRating: 142, totalPar: 73, holeDetails: null, nineHoleType: null },
+                            { teeId: 'TGGR_W_NYATI_18', teeName: "Women's - Nyati", gender: 'F', numHoles: 18, courseRating: 70.1, slopeRating: 129, totalPar: 73, holeDetails: null, nineHoleType: null }
+                        ]
+                    },
+                    {
+                        internalCourseId: 'TGGR_FRONT9', courseDisplayName: 'Main Course - Front 9',
+                        tees: [
+                            { teeId: 'TGGR_M_TWIGA_F9', teeName: "Men's - Twiga", gender: 'M', numHoles: 9, courseRating: 36.8, slopeRating: 133, totalPar: 36, holeDetails: null, nineHoleType: 'front' },
+                            { teeId: 'TGGR_M_NDOVU_F9', teeName: "Men's - Ndovu", gender: 'M', numHoles: 9, courseRating: 35.6, slopeRating: 126, totalPar: 36, holeDetails: null, nineHoleType: 'front' },
+                            { teeId: 'TGGR_M_KIFARU_F9',teeName: "Men's - Kifaru",gender: 'M', numHoles: 9, courseRating: 33.8, slopeRating: 110, totalPar: 36, holeDetails: null, nineHoleType: 'front' },
+                            { teeId: 'TGGR_M_NYATI_F9', teeName: "Men's - Nyati", gender: 'M', numHoles: 9, courseRating: 31.4, slopeRating: 102, totalPar: 36, holeDetails: null, nineHoleType: 'front' },
+                            { teeId: 'TGGR_W_NDOVU_F9', teeName: "Women's - Ndovu", gender: 'F', numHoles: 9, courseRating: 38.5, slopeRating: 148, totalPar: 36, holeDetails: null, nineHoleType: 'front' },
+                            { teeId: 'TGGR_W_KIFARU_F9',teeName: "Women's - Kifaru",gender: 'F', numHoles: 9, courseRating: 36.4, slopeRating: 137, totalPar: 36, holeDetails: null, nineHoleType: 'front' },
+                            { teeId: 'TGGR_W_NYATI_F9', teeName: "Women's - Nyati", gender: 'F', numHoles: 9, courseRating: 33.9, slopeRating: 120, totalPar: 36, holeDetails: null, nineHoleType: 'front' }
+                        ]
+                    },
+                    {
+                        internalCourseId: 'TGGR_BACK9', courseDisplayName: 'Main Course - Back 9',
+                        tees: [
+                            { teeId: 'TGGR_M_TWIGA_B9', teeName: "Men's - Twiga", gender: 'M', numHoles: 9, courseRating: 38.9, slopeRating: 136, totalPar: 37, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'TGGR_M_NDOVU_B9', teeName: "Men's - Ndovu", gender: 'M', numHoles: 9, courseRating: 37.4, slopeRating: 142, totalPar: 37, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'TGGR_M_KIFARU_B9',teeName: "Men's - Kifaru",gender: 'M', numHoles: 9, courseRating: 35.4, slopeRating: 123, totalPar: 37, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'TGGR_M_NYATI_B9', teeName: "Men's - Nyati", gender: 'M', numHoles: 9, courseRating: 33.6, slopeRating: 118, totalPar: 37, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'TGGR_W_NDOVU_B9', teeName: "Women's - Ndovu", gender: 'F', numHoles: 9, courseRating: 41.3, slopeRating: 146, totalPar: 37, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'TGGR_W_KIFARU_B9',teeName: "Women's - Kifaru",gender: 'F', numHoles: 9, courseRating: 39.1, slopeRating: 147, totalPar: 37, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'TGGR_W_NYATI_B9', teeName: "Women's - Nyati", gender: 'F', numHoles: 9, courseRating: 36.2, slopeRating: 137, totalPar: 37, holeDetails: null, nineHoleType: 'back' }
+                        ]
+                    }
+                ]
+            },
+            {
+                clubId: 'TSC_PREDEF', 
+                clubName: 'Thika Sports Club',
+                courses: [
+                    {
+                        internalCourseId: 'TSC_MAIN18', courseDisplayName: 'Main Course (18 Holes)',
+                        tees: [
+                            { teeId: 'TSC_M_SIMBA_18', teeName: "Men's - Simba", gender: 'M', numHoles: 18, courseRating: 70.8, slopeRating: 124, totalPar: 72, holeDetails: null, nineHoleType: null },
+                            { teeId: 'TSC_M_CHUI_18',  teeName: "Men's - Chui",  gender: 'M', numHoles: 18, courseRating: 67.1, slopeRating: 114, totalPar: 72, holeDetails: null, nineHoleType: null },
+                            { teeId: 'TSC_W_SIMBA_18', teeName: "Women's - Simba", gender: 'F', numHoles: 18, courseRating: 77.1, slopeRating: 138, totalPar: 72, holeDetails: null, nineHoleType: null },
+                            { teeId: 'TSC_W_CHUI_18',  teeName: "Women's - Chui",  gender: 'F', numHoles: 18, courseRating: 72.3, slopeRating: 122, totalPar: 72, holeDetails: null, nineHoleType: null }
+                        ]
+                    },
+                    {
+                        internalCourseId: 'TSC_FRONT9', courseDisplayName: 'Main Course - Front 9',
+                        tees: [
+                            { teeId: 'TSC_M_SIMBA_F9', teeName: "Men's - Simba", gender: 'M', numHoles: 9, courseRating: 34.8, slopeRating: 119, totalPar: 36, holeDetails: null, nineHoleType: 'front' },
+                            { teeId: 'TSC_M_CHUI_F9',  teeName: "Men's - Chui",  gender: 'M', numHoles: 9, courseRating: 32.8, slopeRating: 109, totalPar: 36, holeDetails: null, nineHoleType: 'front' },
+                            { teeId: 'TSC_W_SIMBA_F9', teeName: "Women's - Simba", gender: 'F', numHoles: 9, courseRating: 38.0, slopeRating: 134, totalPar: 36, holeDetails: null, nineHoleType: 'front' },
+                            { teeId: 'TSC_W_CHUI_F9',  teeName: "Women's - Chui",  gender: 'F', numHoles: 9, courseRating: 35.5, slopeRating: 118, totalPar: 36, holeDetails: null, nineHoleType: 'front' }
+                        ]
+                    },
+                    {
+                        internalCourseId: 'TSC_BACK9', courseDisplayName: 'Main Course - Back 9',
+                        tees: [
+                            { teeId: 'TSC_M_SIMBA_B9', teeName: "Men's - Simba", gender: 'M', numHoles: 9, courseRating: 36.0, slopeRating: 128, totalPar: 36, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'TSC_M_CHUI_B9',  teeName: "Men's - Chui",  gender: 'M', numHoles: 9, courseRating: 34.3, slopeRating: 118, totalPar: 36, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'TSC_W_SIMBA_B9', teeName: "Women's - Simba", gender: 'F', numHoles: 9, courseRating: 39.1, slopeRating: 142, totalPar: 36, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'TSC_W_CHUI_B9',  teeName: "Women's - Chui",  gender: 'F', numHoles: 9, courseRating: 36.8, slopeRating: 125, totalPar: 36, holeDetails: null, nineHoleType: 'back' }
+                        ]
+                    }
+                ]
+            },
+            {
+                clubId: 'VSC1_PREDEF', 
+                clubName: 'VetLab Sports Club (Set 1)',
+                courses: [
+                    {
+                        internalCourseId: 'VSC1_MAIN18', courseDisplayName: 'Main Course (18 Holes)',
+                        tees: [
+                            { teeId: 'VSC1_M_TWIGA_18', teeName: "Men's - Twiga", gender: 'M', numHoles: 18, courseRating: 77.4, slopeRating: 139, totalPar: 72, holeDetails: null, nineHoleType: null },
+                            { teeId: 'VSC1_M_NDOVU_18', teeName: "Men's - Ndovu", gender: 'M', numHoles: 18, courseRating: 73.6, slopeRating: 133, totalPar: 72, holeDetails: null, nineHoleType: null },
+                            { teeId: 'VSC1_M_SIMBA_18', teeName: "Men's - Simba", gender: 'M', numHoles: 18, courseRating: 70.5, slopeRating: 127, totalPar: 72, holeDetails: null, nineHoleType: null },
+                            { teeId: 'VSC1_M_KIFARU_18',teeName: "Men's - Kifaru",gender: 'M', numHoles: 18, courseRating: 68.9, slopeRating: 124, totalPar: 72, holeDetails: null, nineHoleType: null },
+                            { teeId: 'VSC1_W_NDOVU_18', teeName: "Women's - Ndovu", gender: 'F', numHoles: 18, courseRating: 80.4, slopeRating: 148, totalPar: 72, holeDetails: null, nineHoleType: null },
+                            { teeId: 'VSC1_W_SIMBA_18', teeName: "Women's - Simba", gender: 'F', numHoles: 18, courseRating: 76.7, slopeRating: 137, totalPar: 72, holeDetails: null, nineHoleType: null },
+                            { teeId: 'VSC1_W_KIFARU_18',teeName: "Women's - Kifaru",gender: 'F', numHoles: 18, courseRating: 74.5, slopeRating: 128, totalPar: 72, holeDetails: null, nineHoleType: null }
+                        ]
+                    },
+                    {
+                        internalCourseId: 'VSC1_FRONT9', courseDisplayName: 'Main Course - Front 9',
+                        tees: [
+                            { teeId: 'VSC1_M_TWIGA_F9', teeName: "Men's - Twiga", gender: 'M', numHoles: 9, courseRating: 38.6, slopeRating: 138, totalPar: 36, holeDetails: null, nineHoleType: 'front' },
+                            { teeId: 'VSC1_M_NDOVU_F9', teeName: "Men's - Ndovu", gender: 'M', numHoles: 9, courseRating: 36.7, slopeRating: 138, totalPar: 36, holeDetails: null, nineHoleType: 'front' },
+                            { teeId: 'VSC1_M_SIMBA_F9', teeName: "Men's - Simba", gender: 'M', numHoles: 9, courseRating: 34.8, slopeRating: 128, totalPar: 36, holeDetails: null, nineHoleType: 'front' },
+                            { teeId: 'VSC1_M_KIFARU_F9',teeName: "Men's - Kifaru",gender: 'M', numHoles: 9, courseRating: 34.6, slopeRating: 123, totalPar: 36, holeDetails: null, nineHoleType: 'front' },
+                            { teeId: 'VSC1_W_NDOVU_F9', teeName: "Women's - Ndovu", gender: 'F', numHoles: 9, courseRating: 40.3, slopeRating: 148, totalPar: 36, holeDetails: null, nineHoleType: 'front' },
+                            { teeId: 'VSC1_W_SIMBA_F9', teeName: "Women's - Simba", gender: 'F', numHoles: 9, courseRating: 38.0, slopeRating: 136, totalPar: 36, holeDetails: null, nineHoleType: 'front' },
+                            { teeId: 'VSC1_W_KIFARU_F9',teeName: "Women's - Kifaru",gender: 'F', numHoles: 9, courseRating: 37.3, slopeRating: 131, totalPar: 36, holeDetails: null, nineHoleType: 'front' }
+                        ]
+                    },
+                    {
+                        internalCourseId: 'VSC1_BACK9', courseDisplayName: 'Main Course - Back 9',
+                        tees: [
+                            { teeId: 'VSC1_M_TWIGA_B9', teeName: "Men's - Twiga", gender: 'M', numHoles: 9, courseRating: 38.8, slopeRating: 140, totalPar: 36, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'VSC1_M_NDOVU_B9', teeName: "Men's - Ndovu", gender: 'M', numHoles: 9, courseRating: 36.9, slopeRating: 128, totalPar: 36, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'VSC1_M_SIMBA_B9', teeName: "Men's - Simba", gender: 'M', numHoles: 9, courseRating: 35.7, slopeRating: 126, totalPar: 36, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'VSC1_M_KIFARU_B9',teeName: "Men's - Kifaru",gender: 'M', numHoles: 9, courseRating: 34.3, slopeRating: 124, totalPar: 36, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'VSC1_W_NDOVU_B9', teeName: "Women's - Ndovu", gender: 'F', numHoles: 9, courseRating: 40.1, slopeRating: 147, totalPar: 36, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'VSC1_W_SIMBA_B9', teeName: "Women's - Simba", gender: 'F', numHoles: 9, courseRating: 38.7, slopeRating: 137, totalPar: 36, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'VSC1_W_KIFARU_B9',teeName: "Women's - Kifaru",gender: 'F', numHoles: 9, courseRating: 37.2, slopeRating: 124, totalPar: 36, holeDetails: null, nineHoleType: 'back' }
+                        ]
+                    }
+                ]
+            },
+            {
+                clubId: 'VSC2_PREDEF', 
+                clubName: 'VetLab Sports Club 2 - 2024',
+                courses: [
+                    {
+                        internalCourseId: 'VSC2_MAIN18', courseDisplayName: 'Main Course (18 Holes)',
+                        tees: [
+                            { teeId: 'VSC2_M_TWIGA_18', teeName: "Men's - Twiga", gender: 'M', numHoles: 18, courseRating: 76.4, slopeRating: 139, totalPar: 72, holeDetails: null, nineHoleType: null },
+                            { teeId: 'VSC2_M_NDOVU_18', teeName: "Men's - Ndovu", gender: 'M', numHoles: 18, courseRating: 73.1, slopeRating: 133, totalPar: 72, holeDetails: null, nineHoleType: null },
+                            { teeId: 'VSC2_M_SIMBA_18', teeName: "Men's - Simba", gender: 'M', numHoles: 18, courseRating: 70.0, slopeRating: 128, totalPar: 72, holeDetails: null, nineHoleType: null },
+                            { teeId: 'VSC2_M_KIFARU_18',teeName: "Men's - Kifaru",gender: 'M', numHoles: 18, courseRating: 68.8, slopeRating: 121, totalPar: 72, holeDetails: null, nineHoleType: null },
+                            { teeId: 'VSC2_W_NDOVU_18', teeName: "Women's - Ndovu", gender: 'F', numHoles: 18, courseRating: 80.0, slopeRating: 142, totalPar: 72, holeDetails: null, nineHoleType: null },
+                            { teeId: 'VSC2_W_SIMBA_18', teeName: "Women's - Simba", gender: 'F', numHoles: 18, courseRating: 76.4, slopeRating: 135, totalPar: 72, holeDetails: null, nineHoleType: null },
+                            { teeId: 'VSC2_W_KIFARU_18',teeName: "Women's - Kifaru",gender: 'F', numHoles: 18, courseRating: 74.3, slopeRating: 128, totalPar: 72, holeDetails: null, nineHoleType: null }
+                        ]
+                    },
+                    {
+                        internalCourseId: 'VSC2_FRONT9', courseDisplayName: 'Main Course - Front 9',
+                        tees: [
+                            { teeId: 'VSC2_M_TWIGA_F9', teeName: "Men's - Twiga", gender: 'M', numHoles: 9, courseRating: 38.6, slopeRating: 138, totalPar: 36, holeDetails: null, nineHoleType: 'front' },
+                            { teeId: 'VSC2_M_NDOVU_F9', teeName: "Men's - Ndovu", gender: 'M', numHoles: 9, courseRating: 36.7, slopeRating: 138, totalPar: 36, holeDetails: null, nineHoleType: 'front' },
+                            { teeId: 'VSC2_M_SIMBA_F9', teeName: "Men's - Simba", gender: 'M', numHoles: 9, courseRating: 34.8, slopeRating: 128, totalPar: 36, holeDetails: null, nineHoleType: 'front' },
+                            { teeId: 'VSC2_M_KIFARU_F9',teeName: "Men's - Kifaru",gender: 'M', numHoles: 9, courseRating: 34.6, slopeRating: 123, totalPar: 36, holeDetails: null, nineHoleType: 'front' },
+                            { teeId: 'VSC2_W_NDOVU_F9', teeName: "Women's - Ndovu", gender: 'F', numHoles: 9, courseRating: 40.3, slopeRating: 143, totalPar: 36, holeDetails: null, nineHoleType: 'front' },
+                            { teeId: 'VSC2_W_SIMBA_F9', teeName: "Women's - Simba", gender: 'F', numHoles: 9, courseRating: 38.0, slopeRating: 136, totalPar: 36, holeDetails: null, nineHoleType: 'front' },
+                            { teeId: 'VSC2_W_KIFARU_F9',teeName: "Women's - Kifaru",gender: 'F', numHoles: 9, courseRating: 37.3, slopeRating: 131, totalPar: 36, holeDetails: null, nineHoleType: 'front' }
+                        ]
+                    },
+                    {
+                        internalCourseId: 'VSC2_BACK9', courseDisplayName: 'Main Course - Back 9',
+                        tees: [
+                            { teeId: 'VSC2_M_TWIGA_B9', teeName: "Men's - Twiga", gender: 'M', numHoles: 9, courseRating: 37.8, slopeRating: 139, totalPar: 36, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'VSC2_M_NDOVU_B9', teeName: "Men's - Ndovu", gender: 'M', numHoles: 9, courseRating: 36.4, slopeRating: 127, totalPar: 36, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'VSC2_M_SIMBA_B9', teeName: "Men's - Simba", gender: 'M', numHoles: 9, courseRating: 35.2, slopeRating: 128, totalPar: 36, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'VSC2_M_KIFARU_B9',teeName: "Men's - Kifaru",gender: 'M', numHoles: 9, courseRating: 34.2, slopeRating: 118, totalPar: 36, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'VSC2_W_NDOVU_B9', teeName: "Women's - Ndovu", gender: 'F', numHoles: 9, courseRating: 39.7, slopeRating: 140, totalPar: 36, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'VSC2_W_SIMBA_B9', teeName: "Women's - Simba", gender: 'F', numHoles: 9, courseRating: 38.4, slopeRating: 134, totalPar: 36, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'VSC2_W_KIFARU_B9',teeName: "Women's - Kifaru",gender: 'F', numHoles: 9, courseRating: 37.0, slopeRating: 125, totalPar: 36, holeDetails: null, nineHoleType: 'back' }
+                        ]
+                    }
+                ]
+            },
+            {
+                clubId: 'VSC3_PREDEF', 
+                clubName: 'VetLab Sports Club 3 - 2024',
+                courses: [
+                    {
+                        internalCourseId: 'VSC3_MAIN18', courseDisplayName: 'Main Course (18 Holes)',
+                        tees: [
+                            { teeId: 'VSC3_M_TWIGA_18', teeName: "Men's - Twiga", gender: 'M', numHoles: 18, courseRating: 75.7, slopeRating: 137, totalPar: 72, holeDetails: null, nineHoleType: null },
+                            { teeId: 'VSC3_M_NDOVU_18', teeName: "Men's - Ndovu", gender: 'M', numHoles: 18, courseRating: 72.7, slopeRating: 133, totalPar: 72, holeDetails: null, nineHoleType: null },
+                            { teeId: 'VSC3_M_SIMBA_18', teeName: "Men's - Simba", gender: 'M', numHoles: 18, courseRating: 69.7, slopeRating: 126, totalPar: 72, holeDetails: null, nineHoleType: null },
+                            { teeId: 'VSC3_M_KIFARU_18',teeName: "Men's - Kifaru",gender: 'M', numHoles: 18, courseRating: 68.9, slopeRating: 120, totalPar: 72, holeDetails: null, nineHoleType: null },
+                            { teeId: 'VSC3_W_NDOVU_18', teeName: "Women's - Ndovu", gender: 'F', numHoles: 18, courseRating: 79.6, slopeRating: 141, totalPar: 72, holeDetails: null, nineHoleType: null },
+                            { teeId: 'VSC3_W_SIMBA_18', teeName: "Women's - Simba", gender: 'F', numHoles: 18, courseRating: 76.0, slopeRating: 135, totalPar: 72, holeDetails: null, nineHoleType: null },
+                            { teeId: 'VSC3_W_KIFARU_18',teeName: "Women's - Kifaru",gender: 'F', numHoles: 18, courseRating: 73.7, slopeRating: 129, totalPar: 72, holeDetails: null, nineHoleType: null }
+                        ]
+                    },
+                    {
+                        internalCourseId: 'VSC3_FRONT9', courseDisplayName: 'Main Course - Front 9',
+                        tees: [
+                            { teeId: 'VSC3_M_TWIGA_F9', teeName: "Men's - Twiga", gender: 'M', numHoles: 9, courseRating: 38.6, slopeRating: 138, totalPar: 36, holeDetails: null, nineHoleType: 'front' },
+                            { teeId: 'VSC3_M_NDOVU_F9', teeName: "Men's - Ndovu", gender: 'M', numHoles: 9, courseRating: 36.7, slopeRating: 138, totalPar: 36, holeDetails: null, nineHoleType: 'front' },
+                            { teeId: 'VSC3_M_SIMBA_F9', teeName: "Men's - Simba", gender: 'M', numHoles: 9, courseRating: 34.8, slopeRating: 128, totalPar: 36, holeDetails: null, nineHoleType: 'front' },
+                            { teeId: 'VSC3_M_KIFARU_F9',teeName: "Men's - Kifaru",gender: 'M', numHoles: 9, courseRating: 34.6, slopeRating: 123, totalPar: 36, holeDetails: null, nineHoleType: 'front' },
+                            { teeId: 'VSC3_W_NDOVU_F9', teeName: "Women's - Ndovu", gender: 'F', numHoles: 9, courseRating: 40.3, slopeRating: 143, totalPar: 36, holeDetails: null, nineHoleType: 'front' },
+                            { teeId: 'VSC3_W_SIMBA_F9', teeName: "Women's - Simba", gender: 'F', numHoles: 9, courseRating: 38.0, slopeRating: 136, totalPar: 36, holeDetails: null, nineHoleType: 'front' },
+                            { teeId: 'VSC3_W_KIFARU_F9',teeName: "Women's - Kifaru",gender: 'F', numHoles: 9, courseRating: 37.3, slopeRating: 131, totalPar: 36, holeDetails: null, nineHoleType: 'front' }
+                        ]
+                    },
+                    {
+                        internalCourseId: 'VSC3_BACK9', courseDisplayName: 'Main Course - Back 9',
+                        tees: [
+                            { teeId: 'VSC3_M_TWIGA_B9', teeName: "Men's - Twiga", gender: 'M', numHoles: 9, courseRating: 37.1, slopeRating: 135, totalPar: 36, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'VSC3_M_NDOVU_B9', teeName: "Men's - Ndovu", gender: 'M', numHoles: 9, courseRating: 36.0, slopeRating: 127, totalPar: 36, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'VSC3_M_SIMBA_B9', teeName: "Men's - Simba", gender: 'M', numHoles: 9, courseRating: 34.9, slopeRating: 124, totalPar: 36, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'VSC3_M_KIFARU_B9',teeName: "Men's - Kifaru",gender: 'M', numHoles: 9, courseRating: 34.3, slopeRating: 117, totalPar: 36, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'VSC3_W_NDOVU_B9', teeName: "Women's - Ndovu", gender: 'F', numHoles: 9, courseRating: 39.3, slopeRating: 138, totalPar: 36, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'VSC3_W_SIMBA_B9', teeName: "Women's - Simba", gender: 'F', numHoles: 9, courseRating: 38.0, slopeRating: 133, totalPar: 36, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'VSC3_W_KIFARU_B9',teeName: "Women's - Kifaru",gender: 'F', numHoles: 9, courseRating: 36.4, slopeRating: 125, totalPar: 36, holeDetails: null, nineHoleType: 'back' }
+                        ]
+                    }
+                ]
+            },
+            {
+                clubId: 'WGHCC_PREDEF', 
+                clubName: 'Windsor Golf Hotel and Country Club',
+                courses: [
+                    {
+                        internalCourseId: 'WGHCC_MAIN18', courseDisplayName: 'Main Course (18 Holes)',
+                        tees: [
+                            { teeId: 'WGHCC_M_NDOVU_18', teeName: "Men's - Ndovu", gender: 'M', numHoles: 18, courseRating: 74.5, slopeRating: 139, totalPar: 72, holeDetails: null, nineHoleType: null },
+                            { teeId: 'WGHCC_M_SIMBA_18', teeName: "Men's - Simba", gender: 'M', numHoles: 18, courseRating: 72.4, slopeRating: 135, totalPar: 72, holeDetails: null, nineHoleType: null },
+                            { teeId: 'WGHCC_M_KIFARU_18',teeName: "Men's - Kifaru",gender: 'M', numHoles: 18, courseRating: 71.0, slopeRating: 128, totalPar: 72, holeDetails: null, nineHoleType: null },
+                            { teeId: 'WGHCC_M_CHUI_18',  teeName: "Men's - Chui",  gender: 'M', numHoles: 18, courseRating: 67.6, slopeRating: 115, totalPar: 72, holeDetails: null, nineHoleType: null },
+                            { teeId: 'WGHCC_M_NYATI_18', teeName: "Men's - Nyati", gender: 'M', numHoles: 18, courseRating: 66.6, slopeRating: 112, totalPar: 72, holeDetails: null, nineHoleType: null },
+                            { teeId: 'WGHCC_W_SIMBA_18', teeName: "Women's - Simba", gender: 'F', numHoles: 18, courseRating: 78.9, slopeRating: 147, totalPar: 72, holeDetails: null, nineHoleType: null },
+                            { teeId: 'WGHCC_W_KIFARU_18',teeName: "Women's - Kifaru",gender: 'F', numHoles: 18, courseRating: 76.6, slopeRating: 140, totalPar: 72, holeDetails: null, nineHoleType: null },
+                            { teeId: 'WGHCC_W_CHUI_18',  teeName: "Women's - Chui",  gender: 'F', numHoles: 18, courseRating: 72.7, slopeRating: 134, totalPar: 72, holeDetails: null, nineHoleType: null },
+                            { teeId: 'WGHCC_W_NYATI_18', teeName: "Women's - Nyati", gender: 'F', numHoles: 18, courseRating: 71.2, slopeRating: 131, totalPar: 72, holeDetails: null, nineHoleType: null }
+                        ]
+                    },
+                    {
+                        internalCourseId: 'WGHCC_FRONT9', courseDisplayName: 'Main Course - Front 9',
+                        tees: [
+                            { teeId: 'WGHCC_M_NDOVU_F9', teeName: "Men's - Ndovu", gender: 'M', numHoles: 9, courseRating: 37.2, slopeRating: 137, totalPar: 36, holeDetails: null, nineHoleType: 'front' },
+                            { teeId: 'WGHCC_M_SIMBA_F9', teeName: "Men's - Simba", gender: 'M', numHoles: 9, courseRating: 36.2, slopeRating: 131, totalPar: 36, holeDetails: null, nineHoleType: 'front' },
+                            { teeId: 'WGHCC_M_KIFARU_F9',teeName: "Men's - Kifaru",gender: 'M', numHoles: 9, courseRating: 35.6, slopeRating: 128, totalPar: 36, holeDetails: null, nineHoleType: 'front' },
+                            { teeId: 'WGHCC_M_CHUI_F9',  teeName: "Men's - Chui",  gender: 'M', numHoles: 9, courseRating: 33.8, slopeRating: 117, totalPar: 36, holeDetails: null, nineHoleType: 'front' },
+                            { teeId: 'WGHCC_M_NYATI_F9', teeName: "Men's - Nyati", gender: 'M', numHoles: 9, courseRating: 33.1, slopeRating: 117, totalPar: 36, holeDetails: null, nineHoleType: 'front' },
+                            { teeId: 'WGHCC_W_SIMBA_F9', teeName: "Women's - Simba", gender: 'F', numHoles: 9, courseRating: 39.3, slopeRating: 145, totalPar: 36, holeDetails: null, nineHoleType: 'front' },
+                            { teeId: 'WGHCC_W_KIFARU_F9',teeName: "Women's - Kifaru",gender: 'F', numHoles: 9, courseRating: 38.4, slopeRating: 140, totalPar: 36, holeDetails: null, nineHoleType: 'front' },
+                            { teeId: 'WGHCC_W_CHUI_F9',  teeName: "Women's - Chui",  gender: 'F', numHoles: 9, courseRating: 36.3, slopeRating: 133, totalPar: 36, holeDetails: null, nineHoleType: 'front' },
+                            { teeId: 'WGHCC_W_NYATI_F9', teeName: "Women's - Nyati", gender: 'F', numHoles: 9, courseRating: 35.4, slopeRating: 128, totalPar: 36, holeDetails: null, nineHoleType: 'front' }
+                        ]
+                    },
+                    {
+                        internalCourseId: 'WGHCC_BACK9', courseDisplayName: 'Main Course - Back 9',
+                        tees: [
+                            { teeId: 'WGHCC_M_NDOVU_B9', teeName: "Men's - Ndovu", gender: 'M', numHoles: 9, courseRating: 37.3, slopeRating: 140, totalPar: 36, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'WGHCC_M_SIMBA_B9', teeName: "Men's - Simba", gender: 'M', numHoles: 9, courseRating: 36.2, slopeRating: 138, totalPar: 36, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'WGHCC_M_KIFARU_B9',teeName: "Men's - Kifaru",gender: 'M', numHoles: 9, courseRating: 35.4, slopeRating: 127, totalPar: 36, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'WGHCC_M_CHUI_B9',  teeName: "Men's - Chui",  gender: 'M', numHoles: 9, courseRating: 33.8, slopeRating: 112, totalPar: 36, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'WGHCC_M_NYATI_B9', teeName: "Men's - Nyati", gender: 'M', numHoles: 9, courseRating: 33.5, slopeRating: 107, totalPar: 36, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'WGHCC_W_SIMBA_B9', teeName: "Women's - Simba", gender: 'F', numHoles: 9, courseRating: 39.6, slopeRating: 148, totalPar: 36, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'WGHCC_W_KIFARU_B9',teeName: "Women's - Kifaru",gender: 'F', numHoles: 9, courseRating: 38.2, slopeRating: 139, totalPar: 36, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'WGHCC_W_CHUI_B9',  teeName: "Women's - Chui",  gender: 'F', numHoles: 9, courseRating: 36.4, slopeRating: 135, totalPar: 36, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'WGHCC_W_NYATI_B9', teeName: "Women's - Nyati", gender: 'F', numHoles: 9, courseRating: 35.8, slopeRating: 133, totalPar: 36, holeDetails: null, nineHoleType: 'back' }
+                        ]
+                    }
+                ]
+            },
+            {
+                clubId: 'NSC_PREDEF', 
+                clubName: 'Nanyuki Sports Club',
+                courses: [
+                    {
+                        internalCourseId: 'NSC_MAIN18', courseDisplayName: 'Main Course (18 Holes)',
+                        tees: [
+                            { teeId: 'NSC_M_KIFARU_18', teeName: "Men's - Kifaru", gender: 'M', numHoles: 18, courseRating: 67.2, slopeRating: 122, totalPar: 72, holeDetails: null, nineHoleType: null },
+                            { teeId: 'NSC_M_NYATI_18',  teeName: "Men's - Nyati",  gender: 'M', numHoles: 18, courseRating: 65.5, slopeRating: 99,  totalPar: 72, holeDetails: null, nineHoleType: null },
+                            { teeId: 'NSC_W_KIFARU_18', teeName: "Women's - Kifaru", gender: 'F', numHoles: 18, courseRating: 73.4, slopeRating: 140, totalPar: 72, holeDetails: null, nineHoleType: null },
+                            { teeId: 'NSC_W_NYATI_18',  teeName: "Women's - Nyati",  gender: 'F', numHoles: 18, courseRating: 69.3, slopeRating: 123, totalPar: 72, holeDetails: null, nineHoleType: null }
+                        ]
+                    },
+                    {
+                        internalCourseId: 'NSC_FRONT9', courseDisplayName: 'Main Course - Front 9',
+                        tees: [
+                            { teeId: 'NSC_M_KIFARU_F9', teeName: "Men's - Kifaru", gender: 'M', numHoles: 9, courseRating: 33.6, slopeRating: 121, totalPar: 36, holeDetails: null, nineHoleType: 'front' },
+                            { teeId: 'NSC_M_NYATI_F9',  teeName: "Men's - Nyati",  gender: 'M', numHoles: 9, courseRating: 32.7, slopeRating: 99,  totalPar: 36, holeDetails: null, nineHoleType: 'front' },
+                            { teeId: 'NSC_W_KIFARU_F9', teeName: "Women's - Kifaru", gender: 'F', numHoles: 9, courseRating: 36.7, slopeRating: 140, totalPar: 36, holeDetails: null, nineHoleType: 'front' },
+                            { teeId: 'NSC_W_NYATI_F9',  teeName: "Women's - Nyati",  gender: 'F', numHoles: 9, courseRating: 34.6, slopeRating: 123, totalPar: 36, holeDetails: null, nineHoleType: 'front' }
+                        ]
+                    },
+                    {
+                        internalCourseId: 'NSC_BACK9', courseDisplayName: 'Main Course - Back 9',
+                        tees: [
+                            { teeId: 'NSC_M_KIFARU_B9', teeName: "Men's - Kifaru", gender: 'M', numHoles: 9, courseRating: 33.6, slopeRating: 122, totalPar: 36, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'NSC_M_NYATI_B9',  teeName: "Men's - Nyati",  gender: 'M', numHoles: 9, courseRating: 32.8, slopeRating: 99,  totalPar: 36, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'NSC_W_KIFARU_B9', teeName: "Women's - Kifaru", gender: 'F', numHoles: 9, courseRating: 36.7, slopeRating: 139, totalPar: 36, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'NSC_W_NYATI_B9',  teeName: "Women's - Nyati",  gender: 'F', numHoles: 9, courseRating: 34.7, slopeRating: 123, totalPar: 36, holeDetails: null, nineHoleType: 'back' }
+                        ]
+                    }
+                ]
+            },
+            {
+                clubId: 'NYGC_PREDEF', 
+                clubName: 'Nyeri Golf Club',
+                courses: [
+                    {
+                        internalCourseId: 'NYGC_MAIN18', courseDisplayName: 'Main Course (18 Holes)',
+                        tees: [
+                            { teeId: 'NYGC_M_SIMBA_18', teeName: "Men's - Simba", gender: 'M', numHoles: 18, courseRating: 70.9, slopeRating: 131, totalPar: 72, holeDetails: null, nineHoleType: null },
+                            { teeId: 'NYGC_M_CHUI_18',  teeName: "Men's - Chui",  gender: 'M', numHoles: 18, courseRating: 66.8, slopeRating: 111, totalPar: 72, holeDetails: null, nineHoleType: null },
+                            { teeId: 'NYGC_W_SIMBA_18', teeName: "Women's - Simba", gender: 'F', numHoles: 18, courseRating: 76.9, slopeRating: 136, totalPar: 72, holeDetails: null, nineHoleType: null },
+                            { teeId: 'NYGC_W_CHUI_18',  teeName: "Women's - Chui",  gender: 'F', numHoles: 18, courseRating: 71.3, slopeRating: 126, totalPar: 72, holeDetails: null, nineHoleType: null }
+                        ]
+                    },
+                    {
+                        internalCourseId: 'NYGC_FRONT9', courseDisplayName: 'Main Course - Front 9',
+                        tees: [
+                            { teeId: 'NYGC_M_SIMBA_F9', teeName: "Men's - Simba", gender: 'M', numHoles: 9, courseRating: 35.4, slopeRating: 131, totalPar: 36, holeDetails: null, nineHoleType: 'front' },
+                            { teeId: 'NYGC_M_CHUI_F9',  teeName: "Men's - Chui",  gender: 'M', numHoles: 9, courseRating: 33.4, slopeRating: 111, totalPar: 36, holeDetails: null, nineHoleType: 'front' },
+                            { teeId: 'NYGC_W_SIMBA_F9', teeName: "Women's - Simba", gender: 'F', numHoles: 9, courseRating: 38.5, slopeRating: 135, totalPar: 36, holeDetails: null, nineHoleType: 'front' },
+                            { teeId: 'NYGC_W_CHUI_F9',  teeName: "Women's - Chui",  gender: 'F', numHoles: 9, courseRating: 35.7, slopeRating: 126, totalPar: 36, holeDetails: null, nineHoleType: 'front' }
+                        ]
+                    },
+                    {
+                        internalCourseId: 'NYGC_BACK9', courseDisplayName: 'Main Course - Back 9',
+                        tees: [
+                            { teeId: 'NYGC_M_SIMBA_B9', teeName: "Men's - Simba", gender: 'M', numHoles: 9, courseRating: 35.5, slopeRating: 130, totalPar: 36, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'NYGC_M_CHUI_B9',  teeName: "Men's - Chui",  gender: 'M', numHoles: 9, courseRating: 33.4, slopeRating: 111, totalPar: 36, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'NYGC_W_SIMBA_B9', teeName: "Women's - Simba", gender: 'F', numHoles: 9, courseRating: 38.4, slopeRating: 137, totalPar: 36, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'NYGC_W_CHUI_B9',  teeName: "Women's - Chui",  gender: 'F', numHoles: 9, courseRating: 35.6, slopeRating: 125, totalPar: 36, holeDetails: null, nineHoleType: 'back' }
+                        ]
+                    }
+                ]
+            },
+            {
+                clubId: 'NYCC_PREDEF', 
+                clubName: 'Nyahururu Country Club',
+                courses: [
+                    { 
+                        internalCourseId: 'NYCC_MAIN_KC', courseDisplayName: 'Main Course (Kifaru/Chui Tees)',
+                        tees: [
+                            { teeId: 'NYCC_M_KIFARU_18_KC', teeName: "Men's - Kifaru", gender: 'M', numHoles: 18, courseRating: 69.6, slopeRating: 123, totalPar: 72, holeDetails: null, nineHoleType: null },
+                            { teeId: 'NYCC_M_CHUI_18_KC',  teeName: "Men's - Chui",  gender: 'M', numHoles: 18, courseRating: 65.8, slopeRating: 122, totalPar: 72, holeDetails: null, nineHoleType: null },
+                            { teeId: 'NYCC_W_KIFARU_18_KC', teeName: "Women's - Kifaru", gender: 'F', numHoles: 18, courseRating: 75.1, slopeRating: 135, totalPar: 72, holeDetails: null, nineHoleType: null },
+                            { teeId: 'NYCC_W_CHUI_18_KC',  teeName: "Women's - Chui",  gender: 'F', numHoles: 18, courseRating: 70.5, slopeRating: 122, totalPar: 72, holeDetails: null, nineHoleType: null }
+                        ]
+                    },
+                    {
+                        internalCourseId: 'NYCC_FRONT9_KC', courseDisplayName: 'Main Course - Front 9 (Kifaru/Chui Tees)',
+                        tees: [
+                            { teeId: 'NYCC_M_KIFARU_F9_KC', teeName: "Men's - Kifaru", gender: 'M', numHoles: 9, courseRating: 34.8, slopeRating: 122, totalPar: 36, holeDetails: null, nineHoleType: 'front' },
+                            { teeId: 'NYCC_M_CHUI_F9_KC',  teeName: "Men's - Chui",  gender: 'M', numHoles: 9, courseRating: 32.9, slopeRating: 122, totalPar: 36, holeDetails: null, nineHoleType: 'front' },
+                            { teeId: 'NYCC_W_KIFARU_F9_KC', teeName: "Women's - Kifaru", gender: 'F', numHoles: 9, courseRating: 37.4, slopeRating: 137, totalPar: 36, holeDetails: null, nineHoleType: 'front' },
+                            { teeId: 'NYCC_W_CHUI_F9_KC',  teeName: "Women's - Chui",  gender: 'F', numHoles: 9, courseRating: 35.2, slopeRating: 119, totalPar: 36, holeDetails: null, nineHoleType: 'front' }
+                        ]
+                    },
+                    {
+                        internalCourseId: 'NYCC_BACK9_KC', courseDisplayName: 'Main Course - Back 9 (Kifaru/Chui Tees)',
+                        tees: [
+                            { teeId: 'NYCC_M_KIFARU_B9_KC', teeName: "Men's - Kifaru", gender: 'M', numHoles: 9, courseRating: 34.8, slopeRating: 123, totalPar: 36, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'NYCC_M_CHUI_B9_KC',  teeName: "Men's - Chui",  gender: 'M', numHoles: 9, courseRating: 32.9, slopeRating: 122, totalPar: 36, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'NYCC_W_KIFARU_B9_KC', teeName: "Women's - Kifaru", gender: 'F', numHoles: 9, courseRating: 37.7, slopeRating: 133, totalPar: 36, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'NYCC_W_CHUI_B9_KC',  teeName: "Women's - Chui",  gender: 'F', numHoles: 9, courseRating: 35.3, slopeRating: 125, totalPar: 36, holeDetails: null, nineHoleType: 'back' }
+                        ]
+                    },
+                    { 
+                        internalCourseId: 'NYCC_CHAMP18', courseDisplayName: 'Championship Course (18 Holes)',
+                        tees: [
+                            { teeId: 'NYCC_M_NDOVU_18_CH', teeName: "Men's - Ndovu", gender: 'M', numHoles: 18, courseRating: 72.5, slopeRating: 127, totalPar: 72, holeDetails: null, nineHoleType: null },
+                            { teeId: 'NYCC_M_SIMBA_18_CH', teeName: "Men's - Simba", gender: 'M', numHoles: 18, courseRating: 70.2, slopeRating: 124, totalPar: 72, holeDetails: null, nineHoleType: null },
+                            { teeId: 'NYCC_M_KIFARU_18_CH',teeName: "Men's - Kifaru",gender: 'M', numHoles: 18, courseRating: 67.9, slopeRating: 115, totalPar: 72, holeDetails: null, nineHoleType: null },
+                            { teeId: 'NYCC_W_NDOVU_18_CH', teeName: "Women's - Ndovu", gender: 'F', numHoles: 18, courseRating: 79.9, slopeRating: 138, totalPar: 72, holeDetails: null, nineHoleType: null },
+                            { teeId: 'NYCC_W_SIMBA_18_CH', teeName: "Women's - Simba", gender: 'F', numHoles: 18, courseRating: 77.3, slopeRating: 135, totalPar: 72, holeDetails: null, nineHoleType: null },
+                            { teeId: 'NYCC_W_KIFARU_18_CH',teeName: "Women's - Kifaru",gender: 'F', numHoles: 18, courseRating: 73.7, slopeRating: 124, totalPar: 72, holeDetails: null, nineHoleType: null }
+                        ]
+                    },
+                     {
+                        internalCourseId: 'NYCC_CHAMP_FRONT9', courseDisplayName: 'Championship Course - Front 9',
+                        tees: [
+                            { teeId: 'NYCC_M_NDOVU_F9_CH', teeName: "Men's - Ndovu", gender: 'M', numHoles: 9, courseRating: 36.1, slopeRating: 123, totalPar: 36, holeDetails: null, nineHoleType: 'front' },
+                            { teeId: 'NYCC_M_SIMBA_F9_CH', teeName: "Men's - Simba", gender: 'M', numHoles: 9, courseRating: 34.7, slopeRating: 121, totalPar: 36, holeDetails: null, nineHoleType: 'front' },
+                            { teeId: 'NYCC_M_KIFARU_F9_CH',teeName: "Men's - Kifaru",gender: 'M', numHoles: 9, courseRating: 33.9, slopeRating: 107, totalPar: 36, holeDetails: null, nineHoleType: 'front' },
+                            { teeId: 'NYCC_W_NDOVU_F9_CH', teeName: "Women's - Ndovu", gender: 'F', numHoles: 9, courseRating: 40.0, slopeRating: 133, totalPar: 36, holeDetails: null, nineHoleType: 'front' },
+                            { teeId: 'NYCC_W_SIMBA_F9_CH', teeName: "Women's - Simba", gender: 'F', numHoles: 9, courseRating: 38.3, slopeRating: 131, totalPar: 36, holeDetails: null, nineHoleType: 'front' },
+                            { teeId: 'NYCC_W_KIFARU_F9_CH',teeName: "Women's - Kifaru",gender: 'F', numHoles: 9, courseRating: 36.5, slopeRating: 124, totalPar: 36, holeDetails: null, nineHoleType: 'front' }
+                        ]
+                    },
+                    {
+                        internalCourseId: 'NYCC_CHAMP_BACK9', courseDisplayName: 'Championship Course - Back 9',
+                        tees: [
+                            { teeId: 'NYCC_M_NDOVU_B9_CH', teeName: "Men's - Ndovu", gender: 'M', numHoles: 9, courseRating: 36.4, slopeRating: 130, totalPar: 36, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'NYCC_M_SIMBA_B9_CH', teeName: "Men's - Simba", gender: 'M', numHoles: 9, courseRating: 35.5, slopeRating: 127, totalPar: 36, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'NYCC_M_KIFARU_B9_CH',teeName: "Men's - Kifaru",gender: 'M', numHoles: 9, courseRating: 34.0, slopeRating: 122, totalPar: 36, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'NYCC_W_NDOVU_B9_CH', teeName: "Women's - Ndovu", gender: 'F', numHoles: 9, courseRating: 39.9, slopeRating: 142, totalPar: 36, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'NYCC_W_SIMBA_B9_CH', teeName: "Women's - Simba", gender: 'F', numHoles: 9, courseRating: 39.0, slopeRating: 138, totalPar: 36, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'NYCC_W_KIFARU_B9_CH',teeName: "Women's - Kifaru",gender: 'F', numHoles: 9, courseRating: 37.2, slopeRating: 123, totalPar: 36, holeDetails: null, nineHoleType: 'back' }
+                        ]
+                    }
+                ]
+            },
+            {
+                clubId: 'GRVGR_PREDEF', 
+                clubName: 'Great Rift Valley Golf Resort',
+                courses: [
+                    {
+                        internalCourseId: 'GRVGR_MAIN18', courseDisplayName: 'Main Course (18 Holes)',
+                        tees: [
+                            { teeId: 'GRVGR_M_NDOVU_18', teeName: "Men's - Ndovu", gender: 'M', numHoles: 18, courseRating: 73.3, slopeRating: 134, totalPar: 71, holeDetails: null, nineHoleType: null },
+                            { teeId: 'GRVGR_M_KIFARU_18',teeName: "Men's - Kifaru",gender: 'M', numHoles: 18, courseRating: 70.8, slopeRating: 125, totalPar: 71, holeDetails: null, nineHoleType: null },
+                            { teeId: 'GRVGR_M_NYATI_18', teeName: "Men's - Nyati", gender: 'M', numHoles: 18, courseRating: 65.3, slopeRating: 115, totalPar: 71, holeDetails: null, nineHoleType: null },
+                            { teeId: 'GRVGR_W_KIFARU_18',teeName: "Women's - Kifaru",gender: 'F', numHoles: 18, courseRating: 76.4, slopeRating: 140, totalPar: 71, holeDetails: null, nineHoleType: null },
+                            { teeId: 'GRVGR_W_NYATI_18', teeName: "Women's - Nyati", gender: 'F', numHoles: 18, courseRating: 70.5, slopeRating: 124, totalPar: 71, holeDetails: null, nineHoleType: null }
+                        ]
+                    },
+                    {
+                        internalCourseId: 'GRVGR_FRONT9', courseDisplayName: 'Main Course - Front 9',
+                        tees: [
+                            { teeId: 'GRVGR_M_NDOVU_F9', teeName: "Men's - Ndovu", gender: 'M', numHoles: 9, courseRating: 35.6, slopeRating: 136, totalPar: 35, holeDetails: null, nineHoleType: 'front' }, 
+                            { teeId: 'GRVGR_M_KIFARU_F9',teeName: "Men's - Kifaru",gender: 'M', numHoles: 9, courseRating: 34.8, slopeRating: 129, totalPar: 35, holeDetails: null, nineHoleType: 'front' },
+                            { teeId: 'GRVGR_M_NYATI_F9', teeName: "Men's - Nyati", gender: 'M', numHoles: 9, courseRating: 32.2, slopeRating: 115, totalPar: 35, holeDetails: null, nineHoleType: 'front' },
+                            { teeId: 'GRVGR_W_KIFARU_F9',teeName: "Women's - Kifaru",gender: 'F', numHoles: 9, courseRating: 37.6, slopeRating: 137, totalPar: 35, holeDetails: null, nineHoleType: 'front' },
+                            { teeId: 'GRVGR_W_NYATI_F9', teeName: "Women's - Nyati", gender: 'F', numHoles: 9, courseRating: 34.8, slopeRating: 127, totalPar: 35, holeDetails: null, nineHoleType: 'front' }
+                        ]
+                    },
+                    {
+                        internalCourseId: 'GRVGR_BACK9', courseDisplayName: 'Main Course - Back 9',
+                        tees: [
+                            { teeId: 'GRVGR_M_NDOVU_B9', teeName: "Men's - Ndovu", gender: 'M', numHoles: 9, courseRating: 37.7, slopeRating: 132, totalPar: 36, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'GRVGR_M_KIFARU_B9',teeName: "Men's - Kifaru",gender: 'M', numHoles: 9, courseRating: 36.0, slopeRating: 121, totalPar: 36, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'GRVGR_M_NYATI_B9', teeName: "Men's - Nyati", gender: 'M', numHoles: 9, courseRating: 33.1, slopeRating: 114, totalPar: 36, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'GRVGR_W_KIFARU_B9',teeName: "Women's - Kifaru",gender: 'F', numHoles: 9, courseRating: 38.8, slopeRating: 143, totalPar: 36, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'GRVGR_W_NYATI_B9', teeName: "Women's - Nyati", gender: 'F', numHoles: 9, courseRating: 35.7, slopeRating: 121, totalPar: 36, holeDetails: null, nineHoleType: 'back' }
+                        ]
+                    }
+                ]
+            },
+            {
+                clubId: 'GCC_PREDEF', 
+                clubName: 'Gilgil Country Club',
+                courses: [
+                    {
+                        internalCourseId: 'GCC_MAIN18', courseDisplayName: 'Main Course (18 Holes)',
+                        tees: [ 
+                            { teeId: 'GCC_M_KIFARU_18', teeName: "Men's - Kifaru", gender: 'M', numHoles: 18, courseRating: 69.1, slopeRating: 110, totalPar: 71, holeDetails: null, nineHoleType: null },
+                            { teeId: 'GCC_M_NYATI_18',  teeName: "Men's - Nyati",  gender: 'M', numHoles: 18, courseRating: 64.3, slopeRating: 103, totalPar: 72, holeDetails: null, nineHoleType: null },
+                            { teeId: 'GCC_W_KIFARU_18', teeName: "Women's - Kifaru", gender: 'F', numHoles: 18, courseRating: 74.4, slopeRating: 128, totalPar: 71, holeDetails: null, nineHoleType: null },
+                            { teeId: 'GCC_W_NYATI_18',  teeName: "Women's - Nyati",  gender: 'F', numHoles: 18, courseRating: 69.1, slopeRating: 111, totalPar: 72, holeDetails: null, nineHoleType: null }
+                        ]
+                    },
+                    {
+                        internalCourseId: 'GCC_FRONT9', courseDisplayName: 'Main Course - Front 9',
+                        tees: [
+                            { teeId: 'GCC_M_KIFARU_F9', teeName: "Men's - Kifaru", gender: 'M', numHoles: 9, courseRating: 34.7, slopeRating: 113, totalPar: 35, holeDetails: null, nineHoleType: 'front' }, 
+                            { teeId: 'GCC_M_NYATI_F9',  teeName: "Men's - Nyati",  gender: 'M', numHoles: 9, courseRating: 32.7, slopeRating: 104, totalPar: 36, holeDetails: null, nineHoleType: 'front' }, 
+                            { teeId: 'GCC_W_KIFARU_F9', teeName: "Women's - Kifaru", gender: 'F', numHoles: 9, courseRating: 37.8, slopeRating: 127, totalPar: 35, holeDetails: null, nineHoleType: 'front' },
+                            { teeId: 'GCC_W_NYATI_F9',  teeName: "Women's - Nyati",  gender: 'F', numHoles: 9, courseRating: 35.2, slopeRating: 111, totalPar: 36, holeDetails: null, nineHoleType: 'front' }
+                        ]
+                    },
+                    {
+                        internalCourseId: 'GCC_BACK9', courseDisplayName: 'Main Course - Back 9',
+                        tees: [
+                            { teeId: 'GCC_M_KIFARU_B9', teeName: "Men's - Kifaru", gender: 'M', numHoles: 9, courseRating: 34.4, slopeRating: 107, totalPar: 36, holeDetails: null, nineHoleType: 'back' }, 
+                            { teeId: 'GCC_M_NYATI_B9',  teeName: "Men's - Nyati",  gender: 'M', numHoles: 9, courseRating: 31.6, slopeRating: 101, totalPar: 36, holeDetails: null, nineHoleType: 'back' }, 
+                            { teeId: 'GCC_W_KIFARU_B9', teeName: "Women's - Kifaru", gender: 'F', numHoles: 9, courseRating: 36.6, slopeRating: 129, totalPar: 36, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'GCC_W_NYATI_B9',  teeName: "Women's - Nyati",  gender: 'F', numHoles: 9, courseRating: 33.9, slopeRating: 110, totalPar: 36, holeDetails: null, nineHoleType: 'back' }
+                        ]
+                    }
+                ]
+            },
+            {
+                clubId: 'NVSC_PREDEF', 
+                clubName: 'Naivasha Sports Club',
+                courses: [
+                    {
+                        internalCourseId: 'NVSC_MAIN18', courseDisplayName: 'Main Course (18 Holes)',
+                        tees: [
+                            { teeId: 'NVSC_M_KIFARU_18', teeName: "Men's - Kifaru", gender: 'M', numHoles: 18, courseRating: 66.9, slopeRating: 110, totalPar: 72, holeDetails: null, nineHoleType: null },
+                            { teeId: 'NVSC_M_CHUI_18',  teeName: "Men's - Chui",  gender: 'M', numHoles: 18, courseRating: 65.2, slopeRating: 104, totalPar: 72, holeDetails: null, nineHoleType: null },
+                            { teeId: 'NVSC_W_KIFARU_18', teeName: "Women's - Kifaru", gender: 'F', numHoles: 18, courseRating: 73.1, slopeRating: 122, totalPar: 72, holeDetails: null, nineHoleType: null },
+                            { teeId: 'NVSC_W_CHUI_18',  teeName: "Women's - Chui",  gender: 'F', numHoles: 18, courseRating: 70.3, slopeRating: 117, totalPar: 72, holeDetails: null, nineHoleType: null }
+                        ]
+                    },
+                    {
+                        internalCourseId: 'NVSC_FRONT9', courseDisplayName: 'Main Course - Front 9',
+                        tees: [
+                            { teeId: 'NVSC_M_KIFARU_F9', teeName: "Men's - Kifaru", gender: 'M', numHoles: 9, courseRating: 33.4, slopeRating: 109, totalPar: 36, holeDetails: null, nineHoleType: 'front' },
+                            { teeId: 'NVSC_M_CHUI_F9',  teeName: "Men's - Chui",  gender: 'M', numHoles: 9, courseRating: 32.7, slopeRating: 105, totalPar: 36, holeDetails: null, nineHoleType: 'front' },
+                            { teeId: 'NVSC_W_KIFARU_F9', teeName: "Women's - Kifaru", gender: 'F', numHoles: 9, courseRating: 36.5, slopeRating: 124, totalPar: 36, holeDetails: null, nineHoleType: 'front' },
+                            { teeId: 'NVSC_W_CHUI_F9',  teeName: "Women's - Chui",  gender: 'F', numHoles: 9, courseRating: 35.4, slopeRating: 118, totalPar: 36, holeDetails: null, nineHoleType: 'front' }
+                        ]
+                    },
+                    {
+                        internalCourseId: 'NVSC_BACK9', courseDisplayName: 'Main Course - Back 9',
+                        tees: [
+                            { teeId: 'NVSC_M_KIFARU_B9', teeName: "Men's - Kifaru", gender: 'M', numHoles: 9, courseRating: 33.5, slopeRating: 111, totalPar: 36, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'NVSC_M_CHUI_B9',  teeName: "Men's - Chui",  gender: 'M', numHoles: 9, courseRating: 32.5, slopeRating: 102, totalPar: 36, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'NVSC_W_KIFARU_B9', teeName: "Women's - Kifaru", gender: 'F', numHoles: 9, courseRating: 36.6, slopeRating: 119, totalPar: 36, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'NVSC_W_CHUI_B9',  teeName: "Women's - Chui",  gender: 'F', numHoles: 9, courseRating: 34.9, slopeRating: 115, totalPar: 36, holeDetails: null, nineHoleType: 'back' }
+                        ]
+                    }
+                ]
+            },
+            {
+                clubId: 'KGC_KER_PREDEF', // Kericho Golf Club
+                clubName: 'Kericho Golf Club',
+                courses: [
+                    {
+                        internalCourseId: 'KGC_KER_MAIN18', courseDisplayName: 'Main Course (18 Holes)',
+                        tees: [
+                            { teeId: 'KGC_KER_M_KIFARU_18', teeName: "Men's - Kifaru", gender: 'M', numHoles: 18, courseRating: 69.9, slopeRating: 121, totalPar: 72, holeDetails: null, nineHoleType: null },
+                            { teeId: 'KGC_KER_M_CHUI_18',  teeName: "Men's - Chui",  gender: 'M', numHoles: 18, courseRating: 64.9, slopeRating: 115, totalPar: 72, holeDetails: null, nineHoleType: null },
+                            { teeId: 'KGC_KER_W_KIFARU_18', teeName: "Women's - Kifaru", gender: 'F', numHoles: 18, courseRating: 75.7, slopeRating: 131, totalPar: 72, holeDetails: null, nineHoleType: null },
+                            { teeId: 'KGC_KER_W_CHUI_18',  teeName: "Women's - Chui",  gender: 'F', numHoles: 18, courseRating: 70.2, slopeRating: 121, totalPar: 72, holeDetails: null, nineHoleType: null }
+                        ]
+                    },
+                    {
+                        internalCourseId: 'KGC_KER_FRONT9', courseDisplayName: 'Main Course - Front 9',
+                        tees: [
+                            { teeId: 'KGC_KER_M_KIFARU_F9', teeName: "Men's - Kifaru", gender: 'M', numHoles: 9, courseRating: 35.3, slopeRating: 119, totalPar: 36, holeDetails: null, nineHoleType: 'front' },
+                            { teeId: 'KGC_KER_M_CHUI_F9',  teeName: "Men's - Chui",  gender: 'M', numHoles: 9, courseRating: 32.9, slopeRating: 121, totalPar: 36, holeDetails: null, nineHoleType: 'front' },
+                            { teeId: 'KGC_KER_W_KIFARU_F9', teeName: "Women's - Kifaru", gender: 'F', numHoles: 9, courseRating: 38.3, slopeRating: 131, totalPar: 36, holeDetails: null, nineHoleType: 'front' },
+                            { teeId: 'KGC_KER_W_CHUI_F9',  teeName: "Women's - Chui",  gender: 'F', numHoles: 9, courseRating: 35.6, slopeRating: 127, totalPar: 36, holeDetails: null, nineHoleType: 'front' }
+                        ]
+                    },
+                    {
+                        internalCourseId: 'KGC_KER_BACK9', courseDisplayName: 'Main Course - Back 9',
+                        tees: [
+                            { teeId: 'KGC_KER_M_KIFARU_B9', teeName: "Men's - Kifaru", gender: 'M', numHoles: 9, courseRating: 34.6, slopeRating: 123, totalPar: 36, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'KGC_KER_M_CHUI_B9',  teeName: "Men's - Chui",  gender: 'M', numHoles: 9, courseRating: 32.0, slopeRating: 108, totalPar: 36, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'KGC_KER_W_KIFARU_B9', teeName: "Women's - Kifaru", gender: 'F', numHoles: 9, courseRating: 37.4, slopeRating: 131, totalPar: 36, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'KGC_KER_W_CHUI_B9',  teeName: "Women's - Chui",  gender: 'F', numHoles: 9, courseRating: 34.6, slopeRating: 114, totalPar: 36, holeDetails: null, nineHoleType: 'back' }
+                        ]
+                    }
+                ]
+            },
+            {
+                clubId: 'LLGR_PREDEF', // Leisure Lodge Golf Resort
+                clubName: 'Leisure Lodge Golf Resort',
+                courses: [
+                    {
+                        internalCourseId: 'LLGR_MAIN18', courseDisplayName: 'Main Course (18 Holes)',
+                        tees: [
+                            { teeId: 'LLGR_M_NDOVU_18', teeName: "Men's - Ndovu", gender: 'M', numHoles: 18, courseRating: 72.5, slopeRating: 133, totalPar: 72, holeDetails: null, nineHoleType: null },
+                            { teeId: 'LLGR_M_SIMBA_18', teeName: "Men's - Simba", gender: 'M', numHoles: 18, courseRating: 71.0, slopeRating: 130, totalPar: 72, holeDetails: null, nineHoleType: null },
+                            { teeId: 'LLGR_M_KIFARU_18',teeName: "Men's - Kifaru",gender: 'M', numHoles: 18, courseRating: 69.9, slopeRating: 125, totalPar: 72, holeDetails: null, nineHoleType: null },
+                            { teeId: 'LLGR_M_CHUI_18',  teeName: "Men's - Chui",  gender: 'M', numHoles: 18, courseRating: 67.7, slopeRating: 115, totalPar: 72, holeDetails: null, nineHoleType: null },
+                            { teeId: 'LLGR_M_NYATI_18', teeName: "Men's - Nyati", gender: 'M', numHoles: 18, courseRating: 66.9, slopeRating: 110, totalPar: 72, holeDetails: null, nineHoleType: null },
+                            { teeId: 'LLGR_W_NDOVU_18', teeName: "Women's - Ndovu", gender: 'F', numHoles: 18, courseRating: 78.5, slopeRating: 147, totalPar: 72, holeDetails: null, nineHoleType: null },
+                            { teeId: 'LLGR_W_SIMBA_18', teeName: "Women's - Simba", gender: 'F', numHoles: 18, courseRating: 76.8, slopeRating: 142, totalPar: 72, holeDetails: null, nineHoleType: null },
+                            { teeId: 'LLGR_W_KIFARU_18',teeName: "Women's - Kifaru",gender: 'F', numHoles: 18, courseRating: 75.3, slopeRating: 137, totalPar: 72, holeDetails: null, nineHoleType: null },
+                            { teeId: 'LLGR_W_CHUI_18',  teeName: "Women's - Chui",  gender: 'F', numHoles: 18, courseRating: 72.4, slopeRating: 126, totalPar: 72, holeDetails: null, nineHoleType: null },
+                            { teeId: 'LLGR_W_NYATI_18', teeName: "Women's - Nyati", gender: 'F', numHoles: 18, courseRating: 71.3, slopeRating: 124, totalPar: 72, holeDetails: null, nineHoleType: null }
+                        ]
+                    },
+                    {
+                        internalCourseId: 'LLGR_FRONT9', courseDisplayName: 'Main Course - Front 9',
+                        tees: [
+                            { teeId: 'LLGR_M_NDOVU_F9', teeName: "Men's - Ndovu", gender: 'M', numHoles: 9, courseRating: 36.1, slopeRating: 126, totalPar: 36, holeDetails: null, nineHoleType: 'front' },
+                            { teeId: 'LLGR_M_SIMBA_F9', teeName: "Men's - Simba", gender: 'M', numHoles: 9, courseRating: 35.0, slopeRating: 122, totalPar: 36, holeDetails: null, nineHoleType: 'front' },
+                            { teeId: 'LLGR_M_KIFARU_F9',teeName: "Men's - Kifaru",gender: 'M', numHoles: 9, courseRating: 34.5, slopeRating: 119, totalPar: 36, holeDetails: null, nineHoleType: 'front' },
+                            { teeId: 'LLGR_M_CHUI_F9',  teeName: "Men's - Chui",  gender: 'M', numHoles: 9, courseRating: 33.8, slopeRating: 114, totalPar: 36, holeDetails: null, nineHoleType: 'front' },
+                            { teeId: 'LLGR_M_NYATI_F9', teeName: "Men's - Nyati", gender: 'M', numHoles: 9, courseRating: 33.6, slopeRating: 112, totalPar: 36, holeDetails: null, nineHoleType: 'front' },
+                            { teeId: 'LLGR_W_NDOVU_F9', teeName: "Women's - Ndovu", gender: 'F', numHoles: 9, courseRating: 39.0, slopeRating: 146, totalPar: 36, holeDetails: null, nineHoleType: 'front' },
+                            { teeId: 'LLGR_W_SIMBA_F9', teeName: "Women's - Simba", gender: 'F', numHoles: 9, courseRating: 37.8, slopeRating: 140, totalPar: 36, holeDetails: null, nineHoleType: 'front' },
+                            { teeId: 'LLGR_W_KIFARU_F9',teeName: "Women's - Kifaru",gender: 'F', numHoles: 9, courseRating: 37.1, slopeRating: 137, totalPar: 36, holeDetails: null, nineHoleType: 'front' },
+                            { teeId: 'LLGR_W_CHUI_F9',  teeName: "Women's - Chui",  gender: 'F', numHoles: 9, courseRating: 36.2, slopeRating: 123, totalPar: 36, holeDetails: null, nineHoleType: 'front' },
+                            { teeId: 'LLGR_W_NYATI_F9', teeName: "Women's - Nyati", gender: 'F', numHoles: 9, courseRating: 35.8, slopeRating: 122, totalPar: 36, holeDetails: null, nineHoleType: 'front' }
+                        ]
+                    },
+                    {
+                        internalCourseId: 'LLGR_BACK9', courseDisplayName: 'Main Course - Back 9',
+                        tees: [
+                            { teeId: 'LLGR_M_NDOVU_B9', teeName: "Men's - Ndovu", gender: 'M', numHoles: 9, courseRating: 36.4, slopeRating: 139, totalPar: 36, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'LLGR_M_SIMBA_B9', teeName: "Men's - Simba", gender: 'M', numHoles: 9, courseRating: 36.0, slopeRating: 138, totalPar: 36, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'LLGR_M_KIFARU_B9',teeName: "Men's - Kifaru",gender: 'M', numHoles: 9, courseRating: 35.4, slopeRating: 130, totalPar: 36, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'LLGR_M_CHUI_B9',  teeName: "Men's - Chui",  gender: 'M', numHoles: 9, courseRating: 33.9, slopeRating: 115, totalPar: 36, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'LLGR_M_NYATI_B9', teeName: "Men's - Nyati", gender: 'M', numHoles: 9, courseRating: 33.3, slopeRating: 108, totalPar: 36, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'LLGR_W_NDOVU_B9', teeName: "Women's - Ndovu", gender: 'F', numHoles: 9, courseRating: 39.5, slopeRating: 147, totalPar: 36, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'LLGR_W_SIMBA_B9', teeName: "Women's - Simba", gender: 'F', numHoles: 9, courseRating: 39.0, slopeRating: 144, totalPar: 36, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'LLGR_W_KIFARU_B9',teeName: "Women's - Kifaru",gender: 'F', numHoles: 9, courseRating: 38.2, slopeRating: 136, totalPar: 36, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'LLGR_W_CHUI_B9',  teeName: "Women's - Chui",  gender: 'F', numHoles: 9, courseRating: 36.2, slopeRating: 128, totalPar: 36, holeDetails: null, nineHoleType: 'back' },
+                            { teeId: 'LLGR_W_NYATI_B9', teeName: "Women's - Nyati", gender: 'F', numHoles: 9, courseRating: 35.5, slopeRating: 126, totalPar: 36, holeDetails: null, nineHoleType: 'back' }
+                        ]
+                    }
+                ]
+            }
+        ];
+
+        const otherKenyaClubNames = [ 
+            // All clubs are now predefined
+        ];
+
+
+        // --- Global Variables ---
+        let userCourses = [];
+        let currentEditingCourseId = null; 
+        let currentCourseSelectionMode = 'none'; 
+        let selectedPredefinedClub = null; 
+
+        // --- DOM Element References ---
+        let roundTypeSelectEl, nineHoleTypeSelectEl, nineHoleSpecificsContainerEl,
+            holeDetailsContainerEl, holeDetailsPromptEl, 
+            savedCoursesListDivEl, courseFormTitleEl, saveCourseButtonEl, cancelEditButtonEl,
+            clubSelectEl, predefinedClubInternalCourseSelectEl, predefinedClubTeeSelectEl,
+            predefinedTeeAndHoleInputContainerEl, 
+            predefinedLayoutTeeSelectorsEl, 
+            manualEntryFieldsContainerEl, 
+            predefinedTeeDetailsDisplayEl,
+            predefinedHoleDetailsDisplayContainerEl, 
+            predefinedOrManualEntryTitleEl,
+            manualCourseNameInputEl, manualTeeNameInputEl, manualCourseRatingInputEl, 
+            manualSlopeRatingInputEl, manualTotalParInputEl,
+            manualCourseRatingLabelEl, manualSlopeRatingLabelEl, manualTotalParLabelEl;
+
+
+        // --- Utility Functions ---
+        function generateUniqueId(prefix = '') { return `${prefix}${Date.now()}${Math.random().toString(36).substr(2, 7)}`; }
+        function saveDataToLocalStorage(key, data) { 
+            try { localStorage.setItem(key, JSON.stringify(data)); } catch (e) { console.error(`Error saving data: ${e.message}`); alert("Could not save data.");}
+        }
+        function loadDataFromLocalStorage(key, defaultValue = []) { 
+             try {
+                const storedData = localStorage.getItem(key);
+                if (storedData) {
+                    const parsedData = JSON.parse(storedData);
+                    if (!Array.isArray(parsedData)) { return defaultValue; }
+                    parsedData.forEach(course => {
+                        if (typeof course.isPredefinedShell === 'undefined') course.isPredefinedShell = false; 
+                        if (typeof course.isPredefined === 'undefined' && !course.isPredefinedShell) course.isPredefined = false; 
+                        if (!course.isPredefined && !course.isPredefinedShell && typeof course.actualTeeName === 'undefined') course.actualTeeName = course.teeName;
+                        if (typeof course.nineHoleType === 'undefined') course.nineHoleType = null;
+                        
+                        if (course.holeDetails && Array.isArray(course.holeDetails)) {
+                            const newHoleDetailsObj = {};
+                            course.holeDetails.forEach(hd => {
+                                if (hd && typeof hd.hole !== 'undefined') {
+                                    newHoleDetailsObj[hd.hole.toString()] = { par: hd.par, si: hd.si };
+                                }
+                            });
+                            course.holeDetails = newHoleDetailsObj;
+                        } else if (course.holeDetails && typeof course.holeDetails === 'object') {
+                            const newHoleDetailsObj = {}; 
+                            for (const key in course.holeDetails) {
+                                newHoleDetailsObj[key.toString()] = course.holeDetails[key];
+                            }
+                            course.holeDetails = newHoleDetailsObj;
+                        }
+                    });
+                    return parsedData;
+                }
+            } catch (e) { console.error(`Error loading data: ${e.message}`); }
+            return defaultValue;
+        }
+        function setActiveNavLink() { document.querySelectorAll('nav a.nav-link').forEach(link => { link.classList.remove('active'); if (window.location.pathname.endsWith(link.getAttribute('href'))) link.classList.add('active'); }); }
+
+        function cacheCourseManagementPageElements() {
+            roundTypeSelectEl = document.getElementById('roundTypeSelect');
+            nineHoleTypeSelectEl = document.getElementById('nineHoleTypeSelect');
+            nineHoleSpecificsContainerEl = document.getElementById('nineHoleSpecificsContainer');
+            holeDetailsContainerEl = document.getElementById('holeDetailsContainer'); 
+            holeDetailsPromptEl = document.getElementById('holeDetailsPrompt');
+            savedCoursesListDivEl = document.getElementById('savedCoursesList');
+            courseFormTitleEl = document.getElementById('courseFormTitle'); 
+            saveCourseButtonEl = document.getElementById('saveCourseButton');
+            cancelEditButtonEl = document.getElementById('cancelEditButton');
+            clubSelectEl = document.getElementById('clubSelect');
+            predefinedClubInternalCourseSelectEl = document.getElementById('predefinedClubInternalCourseSelect');
+            predefinedClubTeeSelectEl = document.getElementById('predefinedClubTeeSelect');
+            predefinedTeeAndHoleInputContainerEl = document.getElementById('predefinedTeeAndHoleInputContainer');
+            predefinedLayoutTeeSelectorsEl = document.getElementById('predefinedLayoutTeeSelectors');
+            manualEntryFieldsContainerEl = document.getElementById('manualEntryFieldsContainer');
+            predefinedTeeDetailsDisplayEl = document.getElementById('predefinedTeeDetailsDisplay');
+            predefinedHoleDetailsDisplayContainerEl = document.getElementById('predefinedHoleDetailsDisplayContainer'); 
+            predefinedOrManualEntryTitleEl = document.getElementById('predefinedOrManualEntryTitle');
+            manualCourseNameInputEl = document.getElementById('manualCourseName');
+            manualTeeNameInputEl = document.getElementById('manualTeeName');
+            manualCourseRatingInputEl = document.getElementById('manualCourseRating');
+            manualSlopeRatingInputEl = document.getElementById('manualSlopeRating');
+            manualTotalParInputEl = document.getElementById('manualTotalPar');
+            manualCourseRatingLabelEl = document.getElementById('manualCourseRatingLabel');
+            manualSlopeRatingLabelEl = document.getElementById('manualSlopeRatingLabel');
+            manualTotalParLabelEl = document.getElementById('manualTotalParLabel');
+        }
+
+        // --- Course Management Functions ---
+        function generateHoleInputs_CM(prefillDetails = null, numHolesToGenerate = 0, isReadOnly = false) {
+            const holes = numHolesToGenerate || parseInt(roundTypeSelectEl.value) || 0;
+            holeDetailsContainerEl.innerHTML = ''; 
+
+            if (!holes || (holes !== 9 && holes !== 18)) {
+                holeDetailsPromptEl.textContent = 'Please select round type (18 or 9 holes) to enter details.';
+                holeDetailsPromptEl.classList.remove('hidden');
+                return;
+            }
+            holeDetailsPromptEl.classList.add('hidden');
+
+            // Determine if "Back 9" is selected for a 9-hole round
+            const isNineHoleRound = (holes === 9);
+            const isBackNineSelected = isNineHoleRound && nineHoleTypeSelectEl && nineHoleTypeSelectEl.value === 'back';
+
+            const header = document.createElement('h3');
+            header.className = 'text-lg font-medium text-gray-700 mb-4';
+            header.textContent = `${isReadOnly ? 'View Details' : 'Enter Details'} for ${holes} Holes:`;
+            holeDetailsContainerEl.appendChild(header);
+
+            const grid = document.createElement('div');
+            grid.className = 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-4';
+
+            for (let i = 1; i <= holes; i++) {
+                const holeDiv = document.createElement('div');
+                holeDiv.className = 'hole-input-item flex items-center space-x-3 p-3 rounded-lg';
+                
+                const detailKey = i.toString(); // Keys for holeDetails object remain 1-9 for a 9-hole set
+                const parValue = prefillDetails && prefillDetails[detailKey] ? prefillDetails[detailKey].par : '';
+                const siValue = prefillDetails && prefillDetails[detailKey] ? prefillDetails[detailKey].si : '';
+                
+                const displayHoleNum = isBackNineSelected ? i + 9 : i; // Calculate display hole number
+
+                holeDiv.innerHTML = `
+                    <label for="holePar${i}" class="font-semibold w-10 flex-shrink-0 text-center">H${displayHoleNum}:</label>
+                    <input type="number" id="holePar${i}" placeholder="Par" min="1" max="7" required class="form-input w-20 p-2 text-sm text-center" value="${parValue}" ${isReadOnly ? 'disabled' : ''}>
+                    <input type="number" id="holeSI${i}" placeholder="SI" min="1" max="${holes}" required class="form-input w-20 p-2 text-sm text-center" value="${siValue}" ${isReadOnly ? 'disabled' : ''}>
+                `;
+                grid.appendChild(holeDiv);
+            }
+            holeDetailsContainerEl.appendChild(grid);
+        }
+        
+        function displayReadOnlyHoleDetails_CM(holeDetailsObj, nineHoleType = null) { 
+            predefinedHoleDetailsDisplayContainerEl.innerHTML = ''; 
+            if (!holeDetailsObj || Object.keys(holeDetailsObj).length === 0) return;
+
+            const numHoles = Object.keys(holeDetailsObj).length;
+            const header = document.createElement('h4');
+            header.className = 'text-md font-semibold text-gray-600 mb-3';
+            header.textContent = `Hole-by-Hole Details (${numHoles} Holes):`;
+            predefinedHoleDetailsDisplayContainerEl.appendChild(header);
+
+            const grid = document.createElement('div');
+            grid.className = 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3';
+            const sortedHoleKeys = Object.keys(holeDetailsObj).sort((a, b) => parseInt(a) - parseInt(b));
+
+            for (const holeKey of sortedHoleKeys) {
+                const detail = holeDetailsObj[holeKey];
+                if (detail) {
+                    const itemDiv = document.createElement('div');
+                    itemDiv.className = 'readonly-hole-item';
+                    let displayHoleNum = parseInt(holeKey);
+                    if (nineHoleType === 'back' && numHoles === 9) { 
+                        displayHoleNum += 9;
+                    }
+                    itemDiv.innerHTML = `<strong>Hole ${displayHoleNum}:</strong> Par ${detail.par}, SI ${detail.si}`;
+                    grid.appendChild(itemDiv);
+                }
+            }
+            predefinedHoleDetailsDisplayContainerEl.appendChild(grid);
+            predefinedHoleDetailsDisplayContainerEl.classList.remove('hidden');
+        }
+
+        function validateCourseData_CM(courseData) { 
+            if (!courseData.userTeeDesc.trim()) {
+                alert('Tee Name/Description is missing. Please provide a name or description for this tee.');
+                return false;
+            }
+            if (isNaN(courseData.courseRating) || courseData.courseRating <= 0) {
+                alert('Course Rating is invalid. Please enter a valid positive number for the Course Rating.');
+                return false;
+            }
+            if (isNaN(courseData.slopeRating) || courseData.slopeRating < 55 || courseData.slopeRating > 155) {
+                alert('Slope Rating is invalid. Please enter a number between 55 and 155 for the Slope Rating.');
+                return false;
+            }
+            if (isNaN(courseData.totalPar) || courseData.totalPar <= 0) {
+                alert('Total Par is missing or invalid. Please enter a positive number for Total Par. This value should match the sum of pars for all holes entered below.');
+                return false;
+            }
+            if (courseData.numHoles === 9 && !courseData.nineHoleType) {
+                alert("Please specify the 9-hole type (Front 9, Back 9, or Complete 9-Hole Course).");
+                return false;
+            }
+            if (!courseData.holeDetails || Object.keys(courseData.holeDetails).length !== courseData.numHoles) {
+                 alert(`Please enter details for all ${courseData.numHoles} holes.`);
+                return false;
+            }
+            let totalCalculatedPar = 0;
+            const siValues = new Set();
+            let holeDetailsAreValid = true;
+            for (let i = 1; i <= courseData.numHoles; i++) {
+                const detail = courseData.holeDetails[i.toString()]; 
+                const maxSI = courseData.numHoles;
+                if (!detail || isNaN(detail.par) || isNaN(detail.si) ||
+                    detail.par < 1 || detail.par > 7 || // Par per hole typically 3-5, sometimes 6. Max 7 is generous.
+                    detail.si < 1 || detail.si > maxSI) {
+                    alert(`Invalid Par (1-7) or Stroke Index (1-${maxSI}) for Hole ${i}.`);
+                    holeDetailsAreValid = false;
+                    break;
+                }
+                totalCalculatedPar += detail.par;
+                if (siValues.has(detail.si)) {
+                    alert(`Duplicate Stroke Index ${detail.si} found for Hole ${i}. SIs must be unique.`);
+                    holeDetailsAreValid = false;
+                    break;
+                }
+                siValues.add(detail.si);
+            }
+            if (!holeDetailsAreValid) return false;
+            if (totalCalculatedPar !== courseData.totalPar) {
+                alert(`The sum of individual hole pars (${totalCalculatedPar}) does not match the Total Par entered (${courseData.totalPar}).`);
+                return false;
+            }
+            if (siValues.size !== courseData.numHoles) {
+                 alert(`For a ${courseData.numHoles}-hole course, all Stroke Indexes from 1 to ${courseData.numHoles} must be assigned uniquely.`);
+                return false;
+            }
+            return true;
+        }
+
+        function resetCourseForm_CM(clearClubSelectOption = false) {
+            manualCourseNameInputEl.value = ''; manualTeeNameInputEl.value = '';
+            roundTypeSelectEl.value = ''; nineHoleTypeSelectEl.value = '';
+            manualCourseRatingInputEl.value = ''; manualSlopeRatingInputEl.value = ''; manualTotalParInputEl.value = '';
+            [manualCourseNameInputEl, manualTeeNameInputEl, roundTypeSelectEl, nineHoleTypeSelectEl, 
+             manualCourseRatingInputEl, manualSlopeRatingInputEl, manualTotalParInputEl].forEach(el => el.disabled = false);
+            nineHoleSpecificsContainerEl.classList.add('hidden');
+            updateManualRatingLabels(); 
+            holeDetailsContainerEl.innerHTML = ''; 
+            holeDetailsPromptEl.textContent = 'Select club and tee options to proceed.';
+            holeDetailsPromptEl.classList.remove('hidden');
+            predefinedClubInternalCourseSelectEl.innerHTML = '<option value="">-- Select Layout --</option>';
+            predefinedClubInternalCourseSelectEl.disabled = true;
+            predefinedClubTeeSelectEl.innerHTML = '<option value="">-- Select Tee --</option>';
+            predefinedClubTeeSelectEl.disabled = true;
+            predefinedTeeDetailsDisplayEl.innerHTML = '';
+            predefinedHoleDetailsDisplayContainerEl.classList.add('hidden'); 
+            predefinedTeeAndHoleInputContainerEl.classList.add('hidden');
+            predefinedLayoutTeeSelectorsEl.classList.add('hidden'); 
+            manualEntryFieldsContainerEl.classList.add('hidden'); 
+            courseFormTitleEl.textContent = 'Add Course / Tee'; 
+            saveCourseButtonEl.innerHTML = '<i class="fas fa-save mr-2"></i>Add/Save Tee';
+            saveCourseButtonEl.disabled = true; 
+            currentEditingCourseId = null;
+            cancelEditButtonEl.classList.add('hidden');
+            if (clearClubSelectOption && clubSelectEl) {
+                clubSelectEl.value = ""; 
+                currentCourseSelectionMode = 'none';
+                selectedPredefinedClub = null;
+            }
+            clubSelectEl.disabled = false; 
+        }
+
+        function startEditCourse_CM(courseId) {
+            const courseToEdit = userCourses.find(course => course.id === courseId);
+            if (!courseToEdit) { alert("Error: Course not found for editing."); return; }
+            if (courseToEdit.isPredefined && courseToEdit.holeDetails !== null && Object.keys(courseToEdit.holeDetails).length > 0) { 
+                alert("Fully pre-defined courses (with hole data) cannot be edited."); return; 
+            }
+            currentEditingCourseId = courseId;
+            clubSelectEl.disabled = true; 
+            predefinedTeeAndHoleInputContainerEl.classList.remove('hidden');
+            manualEntryFieldsContainerEl.classList.remove('hidden'); 
+            predefinedLayoutTeeSelectorsEl.classList.add('hidden'); 
+            predefinedHoleDetailsDisplayContainerEl.classList.add('hidden'); 
+
+            const clubNamePrefix = courseToEdit.clubNameDisplay || courseToEdit.courseName.split(" - ")[0];
+            const userTeeDesc = courseToEdit.isPredefinedShell ? courseToEdit.teeName : courseToEdit.courseName.replace(clubNamePrefix + " - ", "");
+            predefinedOrManualEntryTitleEl.textContent = `Edit Tee: ${clubNamePrefix} - ${userTeeDesc}`;
+
+            manualCourseNameInputEl.value = userTeeDesc;
+            manualCourseNameInputEl.disabled = courseToEdit.isPredefinedShell;
+            manualTeeNameInputEl.value = courseToEdit.actualTeeName || ""; 
+            manualTeeNameInputEl.disabled = courseToEdit.isPredefinedShell;
+            roundTypeSelectEl.value = courseToEdit.numHoles.toString();
+            roundTypeSelectEl.disabled = true; 
+            if (courseToEdit.numHoles === 9) {
+                nineHoleSpecificsContainerEl.classList.remove('hidden');
+                nineHoleTypeSelectEl.value = courseToEdit.nineHoleType;
+                nineHoleTypeSelectEl.disabled = true; 
+            } else {
+                nineHoleSpecificsContainerEl.classList.add('hidden');
+            }
+            manualCourseRatingInputEl.value = courseToEdit.courseRating;
+            manualSlopeRatingInputEl.value = courseToEdit.slopeRating;
+            manualTotalParInputEl.value = courseToEdit.totalPar;
+            
+            manualCourseRatingInputEl.disabled = courseToEdit.isPredefinedShell;
+            manualSlopeRatingInputEl.disabled = courseToEdit.isPredefinedShell;
+            manualTotalParInputEl.disabled = false; 
+            
+            updateManualRatingLabels(courseToEdit.numHoles);
+            generateHoleInputs_CM(courseToEdit.holeDetails, courseToEdit.numHoles, false); 
+            courseFormTitleEl.textContent = 'Edit Simulator Tee'; 
+            saveCourseButtonEl.innerHTML = '<i class="fas fa-sync-alt mr-2"></i>Update Tee Details';
+            saveCourseButtonEl.disabled = false;
+            cancelEditButtonEl.classList.remove('hidden');
+            predefinedTeeAndHoleInputContainerEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            currentCourseSelectionMode = courseToEdit.isPredefinedShell ? 'predefined_shell_edit' : 'other_manual_edit';
+        }
+
+        function handleCourseFormSubmit_CM() { 
+            let courseData = {
+                id: currentEditingCourseId || generateUniqueId('C'),
+                isPredefined: false, 
+                isPredefinedShell: false, 
+                holeDetails: {} 
+            };
+
+            if (currentCourseSelectionMode === 'predefined_full' || currentCourseSelectionMode === 'predefined_shell') {
+                const selectedClubId = clubSelectEl.value;
+                const clubData = allPredefinedClubData.find(c => c.clubId === selectedClubId);
+                const selectedLayoutId = predefinedClubInternalCourseSelectEl.value;
+                const selectedTeeId = predefinedClubTeeSelectEl.value;
+                if (!clubData || !selectedLayoutId || !selectedTeeId) { alert("Error: Predefined selection incomplete."); return; }
+                const selectedLayout = clubData.courses.find(c => c.internalCourseId === selectedLayoutId);
+                const selectedPredefinedTee = selectedLayout.tees.find(t => t.teeId === selectedTeeId);
+                if (!selectedPredefinedTee) { alert("Error: Selected pre-defined tee not found."); return; }
+                if (!currentEditingCourseId && userCourses.some(c => c.id === selectedPredefinedTee.teeId)) {
+                    alert(`${clubData.clubName} - ${selectedPredefinedTee.teeName} is already in your simulator courses.`);
+                    return;
+                }
+                courseData.id = selectedPredefinedTee.teeId; 
+                courseData.clubNameDisplay = clubData.clubName; 
+                courseData.courseName = `${clubData.clubName} - ${selectedLayout.courseDisplayName}`;
+                courseData.teeName = selectedPredefinedTee.teeName;
+                courseData.actualTeeName = selectedPredefinedTee.teeName; 
+                courseData.numHoles = selectedPredefinedTee.numHoles;
+                courseData.courseRating = selectedPredefinedTee.courseRating;
+                courseData.slopeRating = selectedPredefinedTee.slopeRating;
+                courseData.totalPar = (currentCourseSelectionMode === 'predefined_shell') ? parseInt(manualTotalParInputEl.value) : selectedPredefinedTee.totalPar;
+                courseData.nineHoleType = selectedPredefinedTee.nineHoleType;
+                courseData.gender = selectedPredefinedTee.gender;
+                if (currentCourseSelectionMode === 'predefined_full') { 
+                    courseData.holeDetails = JSON.parse(JSON.stringify(selectedPredefinedTee.holeDetails)); 
+                    courseData.isPredefined = true;
+                    courseData.userTeeDesc = selectedLayout.courseDisplayName; 
+                } else { 
+                    courseData.isPredefinedShell = true;
+                    courseData.userTeeDesc = selectedLayout.courseDisplayName;
+                }
+            } else if (currentCourseSelectionMode === 'other_manual' || currentCourseSelectionMode === 'other_manual_edit' || currentCourseSelectionMode === 'predefined_shell_edit') {
+                const clubNameFromSelect = clubSelectEl.options[clubSelectEl.selectedIndex].text;
+                courseData.userTeeDesc = manualCourseNameInputEl.value.trim();
+                courseData.actualTeeName = manualTeeNameInputEl.value.trim();
+                courseData.numHoles = parseInt(roundTypeSelectEl.value);
+                courseData.nineHoleType = (courseData.numHoles === 9) ? nineHoleTypeSelectEl.value : null;
+                courseData.courseRating = parseFloat(manualCourseRatingInputEl.value);
+                courseData.slopeRating = parseInt(manualSlopeRatingInputEl.value);
+                courseData.totalPar = parseInt(manualTotalParInputEl.value); 
+                if (currentCourseSelectionMode === 'predefined_shell_edit') {
+                    const existingCourse = userCourses.find(c => c.id === currentEditingCourseId);
+                    courseData.clubNameDisplay = existingCourse.clubNameDisplay;
+                    courseData.courseName = existingCourse.courseName;
+                    courseData.teeName = existingCourse.teeName;
+                    courseData.actualTeeName = existingCourse.actualTeeName;
+                    courseData.courseRating = existingCourse.courseRating;
+                    courseData.slopeRating = existingCourse.slopeRating;
+                    courseData.nineHoleType = existingCourse.nineHoleType;
+                    courseData.gender = existingCourse.gender;
+                    courseData.isPredefinedShell = true;
+                } else { 
+                    courseData.clubNameDisplay = clubNameFromSelect;
+                    courseData.courseName = `${clubNameFromSelect} - ${courseData.userTeeDesc}`;
+                    courseData.teeName = courseData.actualTeeName ? courseData.actualTeeName : courseData.userTeeDesc;
+                }
+            } else {
+                alert("Please select a club and complete the required information."); return;
+            }
+
+            if (currentCourseSelectionMode === 'predefined_shell' || currentCourseSelectionMode === 'other_manual' || 
+                currentCourseSelectionMode === 'other_manual_edit' || currentCourseSelectionMode === 'predefined_shell_edit') {
+                if (isNaN(courseData.numHoles)) { alert("Invalid number of holes."); return; }
+                for (let i = 1; i <= courseData.numHoles; i++) {
+                    const parInput = document.getElementById(`holePar${i}`);
+                    const siInput = document.getElementById(`holeSI${i}`);
+                    if (!parInput || !siInput) { alert(`Error: Missing input field for hole ${i}.`); return; }
+                    const par = parseInt(parInput.value); const si = parseInt(siInput.value);
+                    if (!isNaN(par) && !isNaN(si)) {
+                        courseData.holeDetails[i.toString()] = { par, si }; 
+                    } else {
+                        alert(`Invalid input for Par or SI for Hole ${i}.`); return;
+                    }
+                }
+            }
+            if (!validateCourseData_CM(courseData)) return;
+            if (currentEditingCourseId) { 
+                const courseIndex = userCourses.findIndex(course => course.id === currentEditingCourseId);
+                if (courseIndex > -1) { userCourses[courseIndex] = courseData; alert('Tee details updated successfully!'); } 
+                else { alert('Error: Could not find the tee to update.'); resetCourseForm_CM(true); return; }
+            } else { 
+                 if (userCourses.some(c => c.id === courseData.id )) { 
+                    alert(`A tee with ID "${courseData.id}" for ${courseData.clubNameDisplay} already exists.`); return;
+                }
+                userCourses.push(courseData);
+                alert(`Tee for ${courseData.clubNameDisplay} - ${courseData.teeName} saved successfully!`);
+            }
+            saveDataToLocalStorage(LOCAL_STORAGE_COURSES_KEY, userCourses);
+            renderSavedCourses_CM();
+            resetCourseForm_CM(true); 
+        }
+
+        function renderSavedCourses_CM() {
+            savedCoursesListDivEl.innerHTML = '';
+            if (userCourses.length === 0) {
+                savedCoursesListDivEl.innerHTML = '<p class="text-gray-500 italic">No courses or tees added to the simulator yet.</p>';
+                return;
+            }
+            const ul = document.createElement('ul');
+            ul.className = 'space-y-4';
+            userCourses.sort((a, b) => (a.clubNameDisplay || a.courseName).localeCompare(b.clubNameDisplay || b.courseName) || (a.teeName || "").localeCompare(b.teeName || ""))
+                       .forEach(course => {
+                const li = document.createElement('li');
+                li.className = 'list-item p-4 sm:p-5 rounded-lg flex flex-col sm:flex-row justify-between items-start sm:items-center';
+                const detailsDiv = document.createElement('div');
+                detailsDiv.className = 'flex-grow mb-3 sm:mb-0';
+                let displayName = `${course.clubNameDisplay || course.courseName.split(" - ")[0]} - ${course.teeName}`;
+                let nineHoleInfo = "";
+                if (course.numHoles === 9 && course.nineHoleType) {
+                    if (course.nineHoleType === 'front') nineHoleInfo = " (Front 9)";
+                    else if (course.nineHoleType === 'back') nineHoleInfo = " (Back 9)";
+                    else if (course.nineHoleType === 'full9') nineHoleInfo = " (9-Hole Course)";
+                }
+                displayName += nineHoleInfo;
+                let typeIndicator = "";
+                if (course.isPredefined) typeIndicator = '<span class="ml-2 px-2 py-0.5 bg-green-100 text-green-700 text-xs font-semibold rounded-full">Pre-defined (Full)</span>';
+                else if (course.isPredefinedShell) typeIndicator = '<span class="ml-2 px-2 py-0.5 bg-yellow-100 text-yellow-700 text-xs font-semibold rounded-full">Pre-defined (Shell)</span>';
+                detailsDiv.innerHTML = `
+                    <strong class="block text-lg">${displayName}</strong>
+                    <span class="block text-gray-600 details">${course.numHoles} holes</span>
+                    <span class="text-xs text-gray-500 details">CR: ${course.courseRating}, SR: ${course.slopeRating}, Par: ${course.totalPar} ${typeIndicator}</span>
+                `;
+                li.appendChild(detailsDiv);
+                const actionsDiv = document.createElement('div');
+                actionsDiv.className = 'actions flex space-x-2 self-start sm:self-center mt-3 sm:mt-0';
+                const editButton = document.createElement('button');
+                editButton.className = 'button button-edit edit-course-btn';
+                editButton.dataset.courseId = course.id;
+                editButton.innerHTML = '<i class="fas fa-edit"></i> Edit';
+                editButton.disabled = course.isPredefined && course.holeDetails !== null && Object.keys(course.holeDetails).length > 0;
+                editButton.title = editButton.disabled ? 'Fully pre-defined tees cannot be edited' : 'Edit this tee configuration';
+                if (!editButton.disabled) {
+                    editButton.addEventListener('click', () => startEditCourse_CM(course.id));
+                }
+                actionsDiv.appendChild(editButton);
+                const deleteButton = document.createElement('button');
+                deleteButton.className = 'button button-danger delete-course-btn';
+                deleteButton.dataset.courseId = course.id;
+                deleteButton.innerHTML = '<i class="fas fa-trash-alt"></i> Delete';
+                deleteButton.title = 'Delete this tee from simulator';
+                deleteButton.addEventListener('click', () => deleteCourse_CM(course.id));
+                actionsDiv.appendChild(deleteButton);
+                li.appendChild(actionsDiv);
+                ul.appendChild(li);
+            });
+            savedCoursesListDivEl.appendChild(ul);
+        }
+
+        function deleteCourse_CM(courseId) {
+            if (confirm('Are you sure you want to delete this tee configuration from your simulator?')) {
+                userCourses = userCourses.filter(course => course.id !== courseId);
+                saveDataToLocalStorage(LOCAL_STORAGE_COURSES_KEY, userCourses);
+                renderSavedCourses_CM();
+                if (currentEditingCourseId === courseId) { 
+                    resetCourseForm_CM(true); 
+                }
+                alert('Tee configuration deleted from simulator.');
+            }
+        }
+        
+        function onClubSelectChange() {
+            const selectedClubId = clubSelectEl.value;
+            resetCourseForm_CM(false); 
+            selectedPredefinedClub = allPredefinedClubData.find(c => c.clubId === selectedClubId);
+
+            if (selectedPredefinedClub) { 
+                currentCourseSelectionMode = 'predefined_select_layout'; 
+                predefinedTeeAndHoleInputContainerEl.classList.remove('hidden');
+                predefinedLayoutTeeSelectorsEl.classList.remove('hidden');
+                manualEntryFieldsContainerEl.classList.add('hidden'); 
+                predefinedHoleDetailsDisplayContainerEl.classList.add('hidden'); 
+                predefinedOrManualEntryTitleEl.textContent = `Configure Tee for ${selectedPredefinedClub.clubName}`;
+                predefinedClubInternalCourseSelectEl.innerHTML = '<option value="">-- Select Layout --</option>';
+                selectedPredefinedClub.courses.forEach(course => {
+                    const option = document.createElement('option');
+                    option.value = course.internalCourseId;
+                    option.textContent = course.courseDisplayName;
+                    predefinedClubInternalCourseSelectEl.appendChild(option);
+                });
+                predefinedClubInternalCourseSelectEl.disabled = false;
+                predefinedClubTeeSelectEl.innerHTML = '<option value="">-- Select Tee --</option>';
+                predefinedClubTeeSelectEl.disabled = true;
+                predefinedTeeDetailsDisplayEl.innerHTML = '';
+                saveCourseButtonEl.innerHTML = `<i class="fas fa-plus-circle mr-2"></i>Add Tee to Simulator`;
+                saveCourseButtonEl.disabled = true; 
+            } else if (selectedClubId === "OTHER_MANUAL") { 
+                currentCourseSelectionMode = 'other_manual';
+                predefinedTeeAndHoleInputContainerEl.classList.remove('hidden');
+                predefinedLayoutTeeSelectorsEl.classList.add('hidden'); 
+                manualEntryFieldsContainerEl.classList.remove('hidden'); 
+                predefinedHoleDetailsDisplayContainerEl.classList.add('hidden');
+                predefinedOrManualEntryTitleEl.textContent = 'Enter Tee Details Manually';
+                [manualCourseNameInputEl, manualTeeNameInputEl, roundTypeSelectEl, nineHoleTypeSelectEl, 
+                 manualCourseRatingInputEl, manualSlopeRatingInputEl, manualTotalParInputEl].forEach(el => el.disabled = false);
+                saveCourseButtonEl.innerHTML = '<i class="fas fa-save mr-2"></i>Save Manually Entered Tee';
+                saveCourseButtonEl.disabled = false; 
+            } else { 
+                currentCourseSelectionMode = 'none';
+                predefinedTeeAndHoleInputContainerEl.classList.add('hidden');
+                saveCourseButtonEl.disabled = true;
+            }
+        }
+
+        function onPredefinedClubInternalCourseSelectChange() {
+            if (!selectedPredefinedClub) return;
+            const selectedLayoutId = predefinedClubInternalCourseSelectEl.value;
+            predefinedClubTeeSelectEl.innerHTML = '<option value="">-- Select Tee --</option>';
+            predefinedTeeDetailsDisplayEl.innerHTML = '';
+            predefinedHoleDetailsDisplayContainerEl.classList.add('hidden');
+            manualEntryFieldsContainerEl.classList.add('hidden'); 
+            holeDetailsContainerEl.innerHTML = ''; 
+            holeDetailsPromptEl.classList.remove('hidden');
+            saveCourseButtonEl.disabled = true;
+            if (selectedLayoutId) {
+                const selectedCourseLayout = selectedPredefinedClub.courses.find(c => c.internalCourseId === selectedLayoutId);
+                if (selectedCourseLayout) {
+                    selectedCourseLayout.tees.forEach(tee => {
+                        const option = document.createElement('option');
+                        option.value = tee.teeId;
+                        option.textContent = `${tee.teeName} (${tee.gender ? tee.gender + ', ' : ''}${tee.numHoles}h)`;
+                        predefinedClubTeeSelectEl.appendChild(option);
+                    });
+                    predefinedClubTeeSelectEl.disabled = false;
+                }
+            } else {
+                predefinedClubTeeSelectEl.disabled = true;
+            }
+        }
+
+        function onPredefinedClubTeeSelectChange() {
+            if (!selectedPredefinedClub) return;
+            const selectedTeeId = predefinedClubTeeSelectEl.value;
+            predefinedTeeDetailsDisplayEl.innerHTML = '';
+            predefinedHoleDetailsDisplayContainerEl.classList.add('hidden');
+            manualEntryFieldsContainerEl.classList.add('hidden'); 
+            holeDetailsContainerEl.innerHTML = '';
+            holeDetailsPromptEl.classList.remove('hidden');
+            saveCourseButtonEl.disabled = true;
+
+            if (selectedTeeId) {
+                const selectedLayout = selectedPredefinedClub.courses.find(c => c.internalCourseId === predefinedClubInternalCourseSelectEl.value);
+                const tee = selectedLayout.tees.find(t => t.teeId === selectedTeeId);
+                if (tee) {
+                    predefinedTeeDetailsDisplayEl.innerHTML = `
+                        <p><strong>Tee:</strong> ${tee.teeName} (${tee.gender ? tee.gender + ', ' : ''}${tee.numHoles} Holes)</p>
+                        <p><strong>CR:</strong> ${tee.courseRating.toFixed(1)}</p>
+                        <p><strong>SR:</strong> ${tee.slopeRating}</p>
+                    `; 
+                    predefinedTeeDetailsDisplayEl.classList.remove('hidden');
+                    manualCourseNameInputEl.value = selectedLayout.courseDisplayName; 
+                    manualTeeNameInputEl.value = tee.teeName; 
+                    roundTypeSelectEl.value = tee.numHoles.toString();
+                    if (tee.numHoles === 9) {
+                        nineHoleSpecificsContainerEl.classList.remove('hidden');
+                        nineHoleTypeSelectEl.value = tee.nineHoleType;
+                    } else {
+                        nineHoleSpecificsContainerEl.classList.add('hidden');
+                    }
+                    manualCourseRatingInputEl.value = tee.courseRating;
+                    manualSlopeRatingInputEl.value = tee.slopeRating;
+                    
+                    manualTotalParInputEl.value = ''; 
+                    manualTotalParInputEl.placeholder = `e.g., ${tee.totalPar}`; 
+
+                    [manualCourseNameInputEl, manualTeeNameInputEl, roundTypeSelectEl, nineHoleTypeSelectEl,
+                     manualCourseRatingInputEl, manualSlopeRatingInputEl].forEach(el => el.disabled = true);
+                    manualTotalParInputEl.disabled = false; 
+
+                    updateManualRatingLabels(tee.numHoles); 
+                    if (tee.holeDetails && Object.keys(tee.holeDetails).length > 0) { 
+                        currentCourseSelectionMode = 'predefined_full';
+                        displayReadOnlyHoleDetails_CM(tee.holeDetails, tee.nineHoleType); 
+                        manualEntryFieldsContainerEl.classList.add('hidden'); 
+                        manualTotalParInputEl.value = tee.totalPar; 
+                        manualTotalParInputEl.disabled = true;
+                    } else { 
+                        currentCourseSelectionMode = 'predefined_shell';
+                        manualEntryFieldsContainerEl.classList.remove('hidden'); 
+                        predefinedHoleDetailsDisplayContainerEl.classList.add('hidden'); 
+                        generateHoleInputs_CM(null, tee.numHoles, false); 
+                    }
+                    saveCourseButtonEl.disabled = false; 
+                }
+            }
+        }
+        
+        function onRoundTypeSelectChange() { 
+            if (currentCourseSelectionMode !== 'other_manual' && currentCourseSelectionMode !== 'other_manual_edit') return;
+            const selectedRoundType = roundTypeSelectEl.value;
+            const numHoles = parseInt(selectedRoundType);
+            if (numHoles === 9) {
+                nineHoleSpecificsContainerEl.classList.remove('hidden');
+                nineHoleTypeSelectEl.required = true;
+            } else {
+                nineHoleSpecificsContainerEl.classList.add('hidden');
+                nineHoleTypeSelectEl.required = false;
+                nineHoleTypeSelectEl.value = ""; 
+            }
+            updateManualRatingLabels(numHoles);
+            generateHoleInputs_CM(null, numHoles, false); 
+        }
+
+        function updateManualRatingLabels(numHoles = 0) {
+            const type = numHoles === 9 ? "9-Hole" : (numHoles === 18 ? "18-Hole" : "Course");
+            const placeholderCR = numHoles === 9 ? "e.g., 35.5" : "e.g., 71.5";
+            const placeholderSR = numHoles === 9 ? "e.g., 60" : "e.g., 128";
+            const placeholderPar = numHoles === 9 ? "e.g., 36" : "e.g., 72";
+            if (manualCourseRatingLabelEl) manualCourseRatingLabelEl.innerHTML = `${type} Course Rating (CR) <span class="text-red-500">*</span>`;
+            if (manualSlopeRatingLabelEl) manualSlopeRatingLabelEl.innerHTML = `${type} Slope Rating (SR) <span class="text-red-500">*</span>`;
+            if (manualTotalParLabelEl) manualTotalParLabelEl.innerHTML = `${type} Total Par <span class="text-red-500">*</span>`;
+            if (manualCourseRatingInputEl) manualCourseRatingInputEl.placeholder = placeholderCR;
+            if (manualSlopeRatingInputEl) manualSlopeRatingInputEl.placeholder = placeholderSR;
+            if (manualTotalParInputEl) manualTotalParInputEl.placeholder = placeholderPar;
+        }
+
+        function initCourseManagementPage() {
+            cacheCourseManagementPageElements();
+            userCourses = loadDataFromLocalStorage(LOCAL_STORAGE_COURSES_KEY, []);
+            renderSavedCourses_CM();
+            clubSelectEl.innerHTML = '<option value="">-- Select a Golf Club --</option>';
+            allPredefinedClubData.sort((a,b) => a.clubName.localeCompare(b.clubName)).forEach(club => { 
+                const option = document.createElement('option');
+                option.value = club.clubId;
+                option.textContent = club.clubName;
+                clubSelectEl.appendChild(option);
+            });
+            const otherOption = document.createElement('option');
+            otherOption.value = "OTHER_MANUAL";
+            otherOption.textContent = "Other (Manual Entry)";
+            clubSelectEl.appendChild(otherOption);
+            predefinedTeeAndHoleInputContainerEl.classList.add('hidden');
+            nineHoleSpecificsContainerEl.classList.add('hidden');
+            saveCourseButtonEl.disabled = true;
+            clubSelectEl.addEventListener('change', onClubSelectChange);
+            predefinedClubInternalCourseSelectEl.addEventListener('change', onPredefinedClubInternalCourseSelectChange);
+            predefinedClubTeeSelectEl.addEventListener('change', onPredefinedClubTeeSelectChange);
+            roundTypeSelectEl.addEventListener('change', onRoundTypeSelectChange); 
+            saveCourseButtonEl.addEventListener('click', handleCourseFormSubmit_CM); 
+            cancelEditButtonEl.addEventListener('click', () => {
+                resetCourseForm_CM(true); 
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const currentYearSpan = document.getElementById('currentYear');
+            if (currentYearSpan) currentYearSpan.textContent = new Date().getFullYear();
+            setActiveNavLink();
+            initCourseManagementPage();
+        });
+    </script>
+</body>
+</html>
