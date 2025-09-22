@@ -318,6 +318,90 @@
         .hole-score-info-text {font-size: 0.75rem; color: #4b5563; margin-top: 0.25rem;}
 
 
+
+        /* New Scorecard Styles */
+        .scorecard-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+        .scorecard-nine {
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+        }
+        .scorecard-nine-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 1.5rem;
+        }
+        .scorecard-nine-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1a365d;
+        }
+        .scorecard-nine-totals {
+            display: flex;
+            gap: 1.5rem;
+            font-size: 1rem;
+        }
+        .scorecard-total-item {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+        }
+        .scorecard-total-label {
+            font-size: 0.8rem;
+            color: #4a5568;
+            font-weight: 500;
+        }
+        .scorecard-total-value {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #1a202c;
+        }
+        .scorecard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 1rem;
+        }
+        .hole-card {
+            background-color: white;
+            border-radius: 0.5rem;
+            border: 1px solid #cbd5e0;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .hole-card-header {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #2c5282;
+        }
+        .hole-card-details {
+            font-size: 0.8rem;
+            color: #4a5568;
+        }
+        .hole-card-input {
+            width: 100%;
+            text-align: center;
+            font-size: 1.25rem;
+            font-weight: 600;
+            border: 2px solid #cbd5e0;
+            border-radius: 0.375rem;
+            padding: 0.5rem;
+            transition: border-color 0.2s;
+        }
+        .hole-card-input:focus {
+            border-color: #2b6cb0;
+            outline: none;
+        }
+
         /* Styles for score input visibility on small screens */
         @media (max-width: 767px) {
             .score-table-container input[id^="score-input-"] {
@@ -384,76 +468,81 @@
             <section id="scoreEntrySection" class="card p-6 sm:p-8">
                 <h2 id="scoreFormTitle" class="section-title font-semibold mb-8">Enter New Score</h2>
                 <form id="scoreEntryForm" class="space-y-6">
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-5 items-end">
-                        <div>
-                            <label for="scoreGolferSelect" class="block text-sm font-medium mb-1">Golfer <span class="text-red-500">*</span></label>
-                            <select id="scoreGolferSelect" required class="form-select"><option value="">Loading...</option></select>
-                        </div>
-                        <div>
-                            <label for="scoreCourseSelect" class="block text-sm font-medium mb-1">Course <span class="text-red-500">*</span></label>
-                            <select id="scoreCourseSelect" required class="form-select"><option value="">Loading...</option></select>
-                        </div>
-                        <div>
-                            <label for="scoreTeeSelect" class="block text-sm font-medium mb-1">Tee <span class="text-red-500">*</span></label>
-                            <select id="scoreTeeSelect" required class="form-select" disabled><option value="">Select course first...</option></select>
-                        </div>
-                        <div>
-                            <label for="scoreDateInput" class="block text-sm font-medium mb-1">Date of Round <span class="text-red-500">*</span></label>
-                            <input type="date" id="scoreDateInput" required class="form-input">
-                        </div>
-                        <div class="flex flex-col">
-                            <label for="scorePccAdjustment" class="block text-sm font-medium mb-1">PCC Adjustment</label>
-                            <div class="flex items-center">
-                                <select id="scorePccAdjustment" name="scorePccAdjustment" class="form-select" title="Playing Conditions Calculation Adjustment">
-                                    <option value="-1">-1 : Easier Conditions</option>
-                                    <option value= "0">0 : Normal Conditions</option>
-                                    <option value= "1">+1 : Slightly Harder</option>
-                                    <option value= "2">+2 : Harder</option>
-                                    <option value= "3">+3 : Much Harder</option>
+                    <!-- Step 1: Setup -->
+                    <div id="score-entry-step-1" class="score-entry-step">
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-5 items-end">
+                            <div>
+                                <label for="scoreGolferSelect" class="block text-sm font-medium mb-1">Golfer <span class="text-red-500">*</span></label>
+                                <select id="scoreGolferSelect" required class="form-select"><option value="">Loading...</option></select>
+                            </div>
+                            <div>
+                                <label for="scoreCourseSelect" class="block text-sm font-medium mb-1">Course <span class="text-red-500">*</span></label>
+                                <select id="scoreCourseSelect" required class="form-select"><option value="">Loading...</option></select>
+                            </div>
+                            <div>
+                                <label for="scoreTeeSelect" class="block text-sm font-medium mb-1">Tee <span class="text-red-500">*</span></label>
+                                <select id="scoreTeeSelect" required class="form-select" disabled><option value="">Select course first...</option></select>
+                            </div>
+                            <div>
+                                <label for="scoreDateInput" class="block text-sm font-medium mb-1">Date of Round <span class="text-red-500">*</span></label>
+                                <input type="date" id="scoreDateInput" required class="form-input">
+                            </div>
+                            <div class="flex flex-col">
+                                <label for="scorePccAdjustment" class="block text-sm font-medium mb-1">PCC Adjustment</label>
+                                <div class="flex items-center">
+                                    <select id="scorePccAdjustment" name="scorePccAdjustment" class="form-select" title="Playing Conditions Calculation Adjustment">
+                                        <option value="-1">-1 : Easier Conditions</option>
+                                        <option value= "0">0 : Normal Conditions</option>
+                                        <option value= "1">+1 : Slightly Harder</option>
+                                        <option value= "2">+2 : Harder</option>
+                                        <option value= "3">+3 : Much Harder</option>
+                                    </select>
+                                </div>
+                                <span id="automatedPccDisplay" class="pcc-info-text mt-1"></span>
+                            </div>
+                            <div>
+                                <label for="actualHolesPlayed_GS" class="block text-sm font-medium mb-1">Actual Holes Played <span class="text-red-500">*</span></label>
+                                <input type="number" id="actualHolesPlayed_GS" name="actualHolesPlayed_GS" class="form-input" min="9" max="18" step="1" required disabled>
+                                <p id="actualHolesPlayedHelper_GS" class="text-xs text-gray-500 mt-1 hidden">Enter 9 for a 9-hole round, or 10-18 for an 18-hole round.</p>
+                            </div>
+                            <div>
+                                <label for="scoreDescriptionSelect" class="block text-sm font-medium mb-1">Score Type</label>
+                                <select id="scoreDescriptionSelect" name="scoreDescriptionSelect" class="form-select" title="Type of round played">
+                                    <option value="General Play">General Play</option>
+                                    <option value="Competition - Stroke Play">Competition - Stroke Play</option>
+                                    <option value="Competition - Stableford">Competition - Stableford</option>
+                                    <option value="Competition - Other">Competition - Other</option>
+                                    <option value="Social Round">Social Round</option>
                                 </select>
                             </div>
-                            <span id="automatedPccDisplay" class="pcc-info-text mt-1"></span>
                         </div>
-                        <div>
-                            <label for="actualHolesPlayed_GS" class="block text-sm font-medium mb-1">Actual Holes Played <span class="text-red-500">*</span></label>
-                            <input type="number" id="actualHolesPlayed_GS" name="actualHolesPlayed_GS" class="form-input" min="9" max="18" step="1" required disabled>
-                            <p id="actualHolesPlayedHelper_GS" class="text-xs text-gray-500 mt-1 hidden">Enter 9 for a 9-hole round, or 10-18 for an 18-hole round.</p>
-                        </div>
-                        <div>
-                            <label for="scoreDescriptionSelect" class="block text-sm font-medium mb-1">Score Type</label>
-                            <select id="scoreDescriptionSelect" name="scoreDescriptionSelect" class="form-select" title="Type of round played">
-                                <option value="General Play">General Play</option>
-                                <option value="Competition - Stroke Play">Competition - Stroke Play</option>
-                                <option value="Competition - Stableford">Competition - Stableford</option>
-                                <option value="Competition - Other">Competition - Other</option>
-                                <option value="Social Round">Social Round</option>
-                            </select>
+                        <div class="pt-5 text-right space-x-3">
+                            <button type="button" id="next-step-1" class="button button-primary">Next</button>
                         </div>
                     </div>
 
-                    <div class="pt-4 border-t border-gray-200">
-                         <button type="button" id="calculatePccButton" class="button button-tertiary text-sm" title="Calculate PCC for selected Tee and Date based on scores in system">
-                            <i class="fas fa-cloud-sun-rain mr-2"></i>Calculate PCC (Simulated)
-                        </button>
-                        <p class="text-xs text-gray-500 mt-1">Calculates PCC for the currently selected Tee & Date using all scores in the system. This will update PCC for relevant scores and trigger HI recalculations.</p>
+                    <!-- Step 2: Scoring -->
+                    <div id="score-entry-step-2" class="score-entry-step" style="display: none;">
+                        <div class="pt-5 border-t border-gray-200">
+                            <p id="scoreHoleEntriesPrompt" class="text-sm text-gray-500 mb-4">Select golfer, course, and tee to enter scores for each hole.</p>
+                            <div id="scoreHoleEntriesContainer"></div>
+                            <p id="holeScoreHelpText" class="hole-score-info-text mt-4 hidden">For holes not played or where you picked up, leave blank. Net Double Bogey will be applied.</p>
+                        </div>
+                        <div class="pt-5 text-right space-x-3">
+                            <button type="button" id="prev-step-2" class="button button-secondary">Previous</button>
+                            <button type="button" id="next-step-2" class="button button-primary">Next</button>
+                        </div>
                     </div>
 
-                    <div class="pt-5 border-t border-gray-200">
-                        <p id="scoreHoleEntriesPrompt" class="text-sm text-gray-500 mb-4">Select golfer, course, and tee to enter scores for each hole.</p>
-                        <div id="scoreHoleEntriesContainer" class="space-y-4">
-                            <div id="frontNineScorecardContainer" class="mb-6 score-table-container"></div>
-                            <div id="backNineScorecardContainer" class="mb-6 score-table-container"></div>
-                            <div id="overallTotalsContainer" class="mt-6 pt-4 border-t border-gray-300"></div>
+                    <!-- Step 3: Review & Submit -->
+                    <div id="score-entry-step-3" class="score-entry-step" style="display: none;">
+                        <div id="review-container"></div>
+                        <div class="pt-5 text-right space-x-3">
+                            <button type="button" id="prev-step-3" class="button button-secondary">Previous</button>
+                            <button type="submit" id="submitScoreButton" class="button button-primary" disabled>
+                               <i class="fas fa-calculator mr-2"></i>Submit Score & Calculate HI
+                            </button>
                         </div>
-                        <p id="holeScoreHelpText" class="hole-score-info-text mt-4 hidden">For holes not played or where you picked up, leave blank. Net Double Bogey will be applied.</p>
-                    </div>
-                    <div class="pt-5 text-right space-x-3">
-                         <button type="button" id="cancelScoreEditButton" class="button button-secondary hidden">
-                            <i class="fas fa-times mr-2"></i>Cancel Edit
-                        </button>
-                        <button type="submit" id="submitScoreButton" class="button button-primary" disabled>
-                           <i class="fas fa-calculator mr-2"></i>Submit Score & Calculate HI
-                        </button>
                     </div>
                 </form>
                 <div class="mt-8">
@@ -482,7 +571,7 @@
     </div>
 
     <footer class="footer">
-        <p>&copy; <span id="currentYear"></span> WHS Simulator. Developed and maintained by SIRCH SOLUTIONS KE. For educational purposes only.</p>
+        <p>&copy; <span id="currentYear"></span> WHS Simulator. Developed and maintained by Devsirch-HUB. For educational purposes only.</p>
     </footer>
 
     <script>
@@ -605,6 +694,69 @@
             frontNineScorecardContainerEl = document.getElementById('frontNineScorecardContainer');
             backNineScorecardContainerEl = document.getElementById('backNineScorecardContainer');
             overallTotalsContainerEl = document.getElementById('overallTotalsContainer');
+        }
+
+        // --- Multi-step form logic ---
+        let currentStep = 1;
+        const steps = ['score-entry-step-1', 'score-entry-step-2', 'score-entry-step-3'];
+
+        function showStep(stepNumber) {
+            steps.forEach((stepId, index) => {
+                const stepEl = document.getElementById(stepId);
+                if (stepEl) {
+                    stepEl.style.display = (index + 1) === stepNumber ? 'block' : 'none';
+                }
+            });
+            currentStep = stepNumber;
+        }
+
+        function setupStepNavigation() {
+            document.getElementById('next-step-1').addEventListener('click', () => {
+                if (validateStep1()) {
+                    showStep(2);
+                }
+            });
+            document.getElementById('prev-step-2').addEventListener('click', () => showStep(1));
+            document.getElementById('next-step-2').addEventListener('click', () => {
+                generateReview();
+                showStep(3);
+            });
+            document.getElementById('prev-step-3').addEventListener('click', () => showStep(2));
+        }
+
+        function validateStep1() {
+            if (!scoreGolferSelectEl.value || !scoreCourseSelectEl.value || !scoreTeeSelectEl.value || !scoreDateInputEl.value) {
+                alert('Please select a golfer, course, tee, and date to continue.');
+                return false;
+            }
+            return true;
+        }
+
+        function generateReview() {
+            const reviewContainer = document.getElementById('review-container');
+            const golferName = scoreGolferSelectEl.options[scoreGolferSelectEl.selectedIndex].text;
+            const courseName = scoreCourseSelectEl.options[scoreCourseSelectEl.selectedIndex].text;
+            const teeName = scoreTeeSelectEl.options[scoreTeeSelectEl.selectedIndex].text;
+            const date = scoreDateInputEl.value;
+
+            let totalScore = 0;
+            for (let i = 0; i < 18; i++) {
+                const inputEl = document.getElementById(`score-input-${i}`);
+                if (inputEl && inputEl.value) {
+                    totalScore += parseInt(inputEl.value);
+                }
+            }
+
+            reviewContainer.innerHTML = `
+                <h3 class="text-lg font-semibold mb-4">Review Your Score</h3>
+                <div class="space-y-2">
+                    <p><strong>Golfer:</strong> ${golferName}</p>
+                    <p><strong>Course:</strong> ${courseName}</p>
+                    <p><strong>Tee:</strong> ${teeName}</p>
+                    <p><strong>Date:</strong> ${date}</p>
+                    <p><strong>Total Score:</strong> ${totalScore}</p>
+                </div>
+            `;
         }
 
         // --- Golfer Management Functions ---
@@ -1062,522 +1214,139 @@
             }
         }
 
+
         // --- New Scorecard UI Rendering Functions ---
         function renderScorecardLayout_GS(roundType, fullHoleDetails, existingScores = {}) {
-    console.log('[renderScorecardLayout_GS] Received roundType:', roundType);
-    console.log('[renderScorecardLayout_GS] Top of function. Round type:', roundType);
-            console.log('[renderScorecardLayout_GS] Entered. Received:', {
-                roundType: roundType,
-                hasFullHoleDetails: !!fullHoleDetails,
-                fullHoleDetailsKeys: fullHoleDetails ? Object.keys(fullHoleDetails) : 'N/A',
-                hasExistingScores: !!existingScores,
-                existingScoresKeys: existingScores ? Object.keys(existingScores) : 'N/A'
-            });
-            // Clear existing content
             const mainScorecardContainer = document.getElementById('scoreHoleEntriesContainer');
-    if (!mainScorecardContainer) {
-        console.error('CRITICAL ERROR: scoreHoleEntriesContainer not found in DOM!');
-        return;
-    }
-    mainScorecardContainer.innerHTML = ''; // Clear the main container
+            mainScorecardContainer.innerHTML = ''; // Clear the main container
+            mainScorecardContainer.className = 'scorecard-container';
 
-    // Manage help/prompt text visibility
-    if (holeScoreHelpTextEl) holeScoreHelpTextEl.classList.remove('hidden');
-    if (scoreHoleEntriesPromptEl) scoreHoleEntriesPromptEl.classList.add('hidden');
-    console.log('[renderScorecardLayout_GS] Help/prompt text visibility updated.');
+            if (holeScoreHelpTextEl) holeScoreHelpTextEl.classList.remove('hidden');
+            if (scoreHoleEntriesPromptEl) scoreHoleEntriesPromptEl.classList.add('hidden');
 
-    // Conditionally create, append, and populate scorecard sections
-    if (roundType === '18hole' || roundType === '9holeFront') {
-        const frontNineDiv = document.createElement('div');
-        frontNineDiv.id = 'frontNineScorecardContainer';
-        mainScorecardContainer.appendChild(frontNineDiv);
-        console.log('[renderScorecardLayout_GS] Created and appended frontNineScorecardContainer.');
-        _createScorecardTable_GS(
-            frontNineDiv,
-            fullHoleDetails,
-            1, // startHole
-            'OUT',
-            existingScores
-        );
-    }
+            if (roundType === '18hole' || roundType === '9holeFront') {
+                mainScorecardContainer.appendChild(_createScorecardNine_GS('Front 9', 1, fullHoleDetails, existingScores));
+            }
 
-    if (roundType === '18hole' || roundType === '9holeBack') {
-        const backNineDiv = document.createElement('div');
-        backNineDiv.id = 'backNineScorecardContainer';
-        mainScorecardContainer.appendChild(backNineDiv);
-        console.log('[renderScorecardLayout_GS] Created and appended backNineScorecardContainer.');
-        _createScorecardTable_GS(
-            backNineDiv,
-            fullHoleDetails,
-            10, // startHole
-            'IN',
-            existingScores
-        );
-    }
+            if (roundType === '18hole' || roundType === '9holeBack') {
+                mainScorecardContainer.appendChild(_createScorecardNine_GS('Back 9', 10, fullHoleDetails, existingScores));
+            }
 
-    if (roundType === '18hole') {
-        const overallTotalsDiv = document.createElement('div');
-        overallTotalsDiv.id = 'overallTotalsContainer';
-        mainScorecardContainer.appendChild(overallTotalsDiv);
-        console.log('[renderScorecardLayout_GS] Created and appended overallTotalsContainer.');
-        _createOverallTotalsTable_GS(overallTotalsDiv, fullHoleDetails);
-    }
-            
             updateDynamicScorecardTotals_GS(); // Call once to initialize totals
         }
 
-        function _createScorecardTable_GS(containerEl, fullHoleDetails, startHole, nineLabel, existingScores = {}) {
-            if (startHole === 10) {
-        console.log('[_createScorecardTable_GS] BACK NINE (startHole=10) fullHoleDetails RECEIVED:', JSON.stringify(fullHoleDetails));
-    }
-    console.log('[_createScorecardTable_GS] Entered. Creating table for:', {
-                containerId: containerEl ? containerEl.id : 'null containerEl!',
-                startHole: startHole,
-                nineLabel: nineLabel,
-                hasFullHoleDetails: !!fullHoleDetails,
-                fullHoleDetailsKeys: fullHoleDetails ? Object.keys(fullHoleDetails) : 'N/A',
-                hasExistingScores: !!existingScores,
-                existingScoresKeys: existingScores ? Object.keys(existingScores) : 'N/A'
-            });
-            console.log('[_createScorecardTable_GS] fullHoleDetails sample for hole 1:', fullHoleDetails ? fullHoleDetails['1'] : 'fullHoleDetails is null/undefined', 'fullHoleDetails itself:', fullHoleDetails);
-            const table = document.createElement('table');
-            table.className = 'w-full border-collapse text-sm shadow-sm rounded-lg score-entry-table'; // Removed overflow-hidden // Added score-entry-table for potential specific styling
+        function _createScorecardNine_GS(title, startHole, fullHoleDetails, existingScores) {
+            const nineContainer = document.createElement('div');
+            nineContainer.className = 'scorecard-nine';
 
-            const thead = table.createTHead();
-            const headerRow = thead.insertRow();
-            headerRow.className = 'bg-gray-200 text-gray-700 uppercase text-xs';
-            
-            const thLabel = document.createElement('th');
-            thLabel.textContent = 'HOLE';
-            thLabel.className = 'px-1 py-1.5 border border-gray-300 text-left sticky left-0 bg-gray-200 z-10 w-12'; // Added width
-            headerRow.appendChild(thLabel);
+            const nineHeader = document.createElement('div');
+            nineHeader.className = 'scorecard-nine-header';
 
-            for (let i = 0; i < 9; i++) {
-                const th = document.createElement('th');
-                th.textContent = startHole + i;
-                th.className = 'p-1 border border-gray-300 text-center w-10'; // Added width
-                headerRow.appendChild(th);
-            }
-            const thTotalLabel = document.createElement('th');
-            thTotalLabel.textContent = nineLabel;
-            thTotalLabel.className = 'p-1 border border-gray-300 text-center font-semibold bg-gray-300 w-16'; // Added width and darker bg
-            headerRow.appendChild(thTotalLabel);
-            console.log('[_createScorecardTable_GS] Header row fully constructed.');
-            // table.appendChild(thead); // thead is implicitly part of the table once rows are added to it via createTHead().
-            console.log('[_createScorecardTable_GS] Thead populated. Table object after thead construction:', table);
+            const nineTitle = document.createElement('h3');
+            nineTitle.className = 'scorecard-nine-title';
+            nineTitle.textContent = title;
+            nineHeader.appendChild(nineTitle);
 
-            const tbody = table.createTBody();
+            const nineTotals = document.createElement('div');
+            nineTotals.className = 'scorecard-nine-totals';
+            nineTotals.innerHTML = `
+                <div class="scorecard-total-item">
+                    <span class="scorecard-total-label">PAR</span>
+                    <span id="${title.toLowerCase().replace(' ', '-')}-par-total" class="scorecard-total-value">-</span>
+                </div>
+                <div class="scorecard-total-item">
+                    <span class="scorecard-total-label">SCORE</span>
+                    <span id="${title.toLowerCase().replace(' ', '-')}-score-total" class="scorecard-total-value">0</span>
+                </div>
+            `;
+            nineHeader.appendChild(nineTotals);
 
-            // PAR Row
-            const parRow = tbody.insertRow();
-            parRow.className = 'bg-white';
-            let nineParTotal = 0;
-            const parLabelCell = parRow.insertCell();
-            parLabelCell.textContent = 'PAR';
-            parLabelCell.className = 'px-1 py-1.5 border border-gray-300 font-semibold text-left sticky left-0 bg-white z-10';
-            for (let i = 0; i < 9; i++) {
-                const holeKey = (startHole + i).toString(); // Hole keys in holeDetails are strings '1', '2', etc.
-                const holeDetail = fullHoleDetails[holeKey];
-                console.log(`[_createScorecardTable_GS] PAR row loop, i=${i}, holeKey=${holeKey}, holeDetail:`, holeDetail);
-                const par = holeDetail ? holeDetail.par : '-';
-                if (fullHoleDetails[holeKey] && typeof fullHoleDetails[holeKey].par === 'number') {
-                    nineParTotal += fullHoleDetails[holeKey].par;
-                }
-                const cell = parRow.insertCell();
-                cell.textContent = par;
-                cell.className = 'p-1 border border-gray-300 text-center';
-            }
-            const parTotalCell = parRow.insertCell();
-            parTotalCell.textContent = nineParTotal > 0 ? nineParTotal : '-';
-            parTotalCell.className = 'p-1 border border-gray-300 text-center font-semibold bg-gray-100';
-            parTotalCell.id = `${nineLabel.toLowerCase()}-par-total`;
-
-            // SI Row
-            const siRow = tbody.insertRow();
-            siRow.className = 'bg-gray-50';
-            const siLabelCell = siRow.insertCell();
-            siLabelCell.textContent = 'SI';
-            siLabelCell.className = 'px-1 py-1.5 border border-gray-300 font-semibold text-left sticky left-0 bg-gray-50 z-10';
-            for (let i = 0; i < 9; i++) {
-                const holeKey = (startHole + i).toString();
-                const holeDetail = fullHoleDetails[holeKey];
-                console.log(`[_createScorecardTable_GS] SI row loop, i=${i}, holeKey=${holeKey}, holeDetail:`, holeDetail);
-                const si = holeDetail ? holeDetail.si : '-';
-                const cell = siRow.insertCell();
-                cell.textContent = si;
-                cell.className = 'p-1 border border-gray-300 text-center';
-            }
-            const siTotalCell = siRow.insertCell();
-            siTotalCell.textContent = '-';
-            siTotalCell.className = 'p-1 border border-gray-300 text-center bg-gray-100';
-
-            // SCORE Row
-            const scoreRow = tbody.insertRow();
-            scoreRow.className = 'bg-white';
-            const scoreLabelCell = scoreRow.insertCell();
-            scoreLabelCell.textContent = 'SCORE';
-            scoreLabelCell.className = 'px-1 py-1.5 border border-gray-300 font-semibold text-left sticky left-0 bg-white z-10';
-
-            for (let i = 0; i < 9; i++) {
-                const holeIndexForArray = (startHole - 1) + i;
-                const holeKeyForDetails = (startHole + i).toString();
-                const holeDetail = fullHoleDetails[holeKeyForDetails];
-                const cell = scoreRow.insertCell();
-                cell.className = 'p-1 border border-gray-300';
-                
-                const input = document.createElement('input');
-                input.type = 'number';
-                input.id = `score-input-${holeIndexForArray}`;
-                input.name = `scoreHole${holeKeyForDetails}`;
-                input.className = 'w-full p-1 text-center border-gray-300 rounded focus:ring-blue-500 focus:border-blue-500 text-sm';
-                input.min = '1';
-                input.placeholder = '';
-                
-                const existingScoreForHole = existingScores && existingScores[holeKeyForDetails] !== undefined && existingScores[holeKeyForDetails] !== NO_SCORE_MARKER 
-                    ? existingScores[holeKeyForDetails] 
-                    : '';
-                input.value = existingScoreForHole;
-                
-                // Add color coding based on score relative to par
-                if (existingScoreForHole && holeDetail && holeDetail.par) {
-                    const score = parseInt(existingScoreForHole);
-                    // Only apply color if score is not 0 and is a valid number
-                    if (score !== 0 && !isNaN(score)) { 
-                        const par = holeDetail.par;
-                        const scoreDiff = score - par;
-                        
-                        if (score === 1) {
-                            input.className += ' score-hole-in-one';
-                        } else if (scoreDiff <= -3) {
-                            input.className += ' score-albatross';
-                        } else if (scoreDiff === -2) {
-                            input.className += ' score-eagle';
-                        } else if (scoreDiff === -1) {
-                            input.className += ' score-birdie';
-                        } else if (scoreDiff === 0) { // Par; score cannot be 0 here due to the outer 'score !== 0' check
-                            input.className += ' score-par';
-                        } else if (scoreDiff === 1) {
-                            input.className += ' score-bogey';
-                        } else if (scoreDiff === 2) {
-                            input.className += ' score-double-bogey';
-                        } else if (scoreDiff >= 3) {
-                            input.className += ' score-triple-bogey';
-                        }
-                    }
-                }
-                
-                input.addEventListener('input', (e) => {
-                    updateDynamicScorecardTotals_GS();
-
-                    // Always remove all score-related classes first
-                    e.target.classList.remove(
-                        'score-hole-in-one', 'score-albatross', 'score-eagle',
-                        'score-birdie', 'score-par', 'score-bogey',
-                        'score-double-bogey', 'score-triple-bogey'
-                    );
-
-                    // Then, try to apply a new class if the score is valid and not 0
-                    if (e.target.value && holeDetail && holeDetail.par) {
-                        const score = parseInt(e.target.value);
-                        // Only apply color if score is not 0 and is a valid number
-                        if (score !== 0 && !isNaN(score)) {
-                            const par = holeDetail.par;
-                            const scoreDiff = score - par;
-                            
-                            // Add appropriate class
-                            if (score === 1) {
-                                e.target.classList.add('score-hole-in-one');
-                            } else if (scoreDiff <= -3) {
-                                e.target.classList.add('score-albatross');
-                            } else if (scoreDiff === -2) {
-                                e.target.classList.add('score-eagle');
-                            } else if (scoreDiff === -1) {
-                                e.target.classList.add('score-birdie');
-                            } else if (scoreDiff === 0) { // Par; score cannot be 0 here due to the outer 'score !== 0' check
-                                e.target.classList.add('score-par');
-                            } else if (scoreDiff === 1) {
-                                e.target.classList.add('score-bogey');
-                            } else if (scoreDiff === 2) {
-                                e.target.classList.add('score-double-bogey');
-                            } else if (scoreDiff >= 3) {
-                                e.target.classList.add('score-triple-bogey');
-                            }
-                        }
-                        // If score is 0, NaN, or input is empty, no color class is added (classes already cleared).
-                    }
-                });
-                
-                input.onfocus = function() { this.select(); };
-                cell.appendChild(input);
-            }
-            
-            const scoreTotalCell = scoreRow.insertCell();
-            scoreTotalCell.textContent = '0';
-            scoreTotalCell.className = 'p-1 border border-gray-300 text-center font-semibold bg-gray-100';
-            scoreTotalCell.id = `${nineLabel.toLowerCase()}-score-total`;
-
-            // table.appendChild(tbody); // This is done implicitly by createTBody or by appending rows to tbody.
-            console.log('[_createScorecardTable_GS] Tbody fully populated with PAR, SI, SCORE, and Total rows. Table object:', table);
-            
-            console.log('[_createScorecardTable_GS] Attempting to append table to container:', containerEl.id);
-            containerEl.appendChild(table);
-            
-            // Add score legend
-            const legend = document.createElement('div');
-            legend.className = 'score-legend';
-            
-            const legendItems = [
-                { class: 'score-hole-in-one', text: 'Hole in One' },
-                { class: 'score-albatross', text: 'Albatross' },
-                { class: 'score-eagle', text: 'Eagle' },
-                { class: 'score-birdie', text: 'Birdie' },
-                { class: 'score-par', text: 'Par' },
-                { class: 'score-bogey', text: 'Bogey' },
-                { class: 'score-double-bogey', text: 'Double Bogey' },
-                { class: 'score-triple-bogey', text: 'Triple Bogey+' }
-            ];
-            
-            legendItems.forEach(item => {
-                const legendItem = document.createElement('div');
-                legendItem.className = `score-legend-item ${item.class}`;
-                legendItem.textContent = item.text;
-                legend.appendChild(legendItem);
-            });
-            
-            containerEl.appendChild(legend);
-            console.log('[_createScorecardTable_GS] Table and legend successfully appended to container:', containerEl.id);
-        }
-
-        function _createOverallTotalsTable_GS(containerEl, fullHoleDetails) {
-            console.log('[_createOverallTotalsTable_GS] Entered. Container ID:', containerEl ? containerEl.id : 'null container', 'Has fullHoleDetails:', !!fullHoleDetails);
-            containerEl.innerHTML = ''; // Clear previous content
-            console.log('[_createOverallTotalsTable_GS] Container cleared. Full hole details:', fullHoleDetails);
-
-            const title = document.createElement('h3');
-            title.className = 'text-lg font-semibold mb-3 text-gray-700';
-            title.textContent = 'Round Totals (18 Holes)';
-            containerEl.appendChild(title);
+            nineContainer.appendChild(nineHeader);
 
             const grid = document.createElement('div');
-            grid.className = 'grid grid-cols-1 md:grid-cols-3 gap-4 text-sm';
+            grid.className = 'scorecard-grid';
 
-            // Total Par
-            const parDiv = document.createElement('div');
-            parDiv.className = 'p-3 bg-gray-100 rounded-md shadow-sm';
-            let totalPar18 = 0;
-            for (let i = 1; i <= 18; i++) {
-                totalPar18 += fullHoleDetails[i.toString()] ? parseInt(fullHoleDetails[i.toString()].par) : 0;
+            for (let i = 0; i < 9; i++) {
+                const holeNum = startHole + i;
+                const holeDetail = fullHoleDetails[holeNum.toString()];
+                const existingScore = existingScores[holeNum.toString()];
+                grid.appendChild(_createHoleCard_GS(holeNum, holeDetail, existingScore));
             }
-            parDiv.innerHTML = `<span class="font-medium text-gray-600">Total Par:</span> <strong id="total-18-par" class="text-lg">${totalPar18}</strong>`;
-            console.log('[_createOverallTotalsTable_GS] Total Par calculated:', totalPar18);
-            grid.appendChild(parDiv);
-            console.log('[_createOverallTotalsTable_GS] Total Par appended to grid.');
 
-            // Raw Gross Score
-            const rawGrossDiv = document.createElement('div');
-            rawGrossDiv.className = 'p-3 bg-gray-100 rounded-md shadow-sm';
-            rawGrossDiv.innerHTML = `<span class="font-medium text-gray-600">Raw Gross Score:</span> <strong id="total-18-raw-gross" class="text-lg">0</strong>`;
-            console.log('[_createOverallTotalsTable_GS] Raw Gross Score initialized.');
-            grid.appendChild(rawGrossDiv);
-            console.log('[_createOverallTotalsTable_GS] Raw Gross Score appended to grid.');
-
-            // Adjusted Gross Score
-            const agsDiv = document.createElement('div');
-            agsDiv.className = 'p-3 bg-gray-100 rounded-md shadow-sm';
-            agsDiv.innerHTML = `<span class="font-medium text-gray-600">Adjusted Gross (AGS):</span> <strong id="total-18-ags" class="text-lg">0</strong>`;
-            console.log('[_createOverallTotalsTable_GS] Adjusted Gross Score initialized.');
-            grid.appendChild(agsDiv);
-            console.log('[_createOverallTotalsTable_GS] Adjusted Gross Score appended to grid.');
-            
-            containerEl.appendChild(grid);
-            console.log('[_createOverallTotalsTable_GS] Grid appended to container:', containerEl.id);
+            nineContainer.appendChild(grid);
+            return nineContainer;
         }
+
+        function _createHoleCard_GS(holeNum, holeDetail, existingScore) {
+            const holeCard = document.createElement('div');
+            holeCard.className = 'hole-card';
+
+            const header = document.createElement('div');
+            header.className = 'hole-card-header';
+            header.textContent = `Hole ${holeNum}`;
+            holeCard.appendChild(header);
+
+            const details = document.createElement('div');
+            details.className = 'hole-card-details';
+            details.textContent = `Par ${holeDetail ? holeDetail.par : '-'} | SI ${holeDetail ? holeDetail.si : '-'}`;
+            holeCard.appendChild(details);
+
+            const input = document.createElement('input');
+            input.type = 'number';
+            input.id = `score-input-${holeNum - 1}`;
+            input.name = `scoreHole${holeNum}`;
+            input.className = 'hole-card-input';
+            input.min = '1';
+            input.placeholder = '-';
+            input.value = (existingScore !== undefined && existingScore !== NO_SCORE_MARKER) ? existingScore : '';
+            
+            input.addEventListener('input', (e) => {
+                updateDynamicScorecardTotals_GS();
+                // Color coding logic can be added here if desired
+            });
+
+            holeCard.appendChild(input);
+            return holeCard;
+        }
+
         function updateDynamicScorecardTotals_GS() {
-            const golferId = scoreGolferSelectEl ? scoreGolferSelectEl.value : null;
-            console.log('[updateDynamicScorecardTotals_GS] Entered. Golfer ID:', golferId);
-            let outScoreTotal = 0;
-            let inScoreTotal = 0;
-            const rawScoresForAGS = {}; // For calculateAGS_WHS, 1-indexed hole numbers as keys
+            let frontNinePar = 0, frontNineScore = 0;
+            let backNinePar = 0, backNineScore = 0;
 
-            // Calculate OUT scores (Holes 1-9, inputs score-input-0 to score-input-8)
-            for (let i = 0; i < 9; i++) { 
+            for (let i = 0; i < 18; i++) {
                 const inputEl = document.getElementById(`score-input-${i}`);
                 if (inputEl) {
-                    const score = inputEl.value.trim() === '' ? NO_SCORE_MARKER : parseInt(inputEl.value);
-                    rawScoresForAGS[(i + 1).toString()] = score; 
-                    if (score !== NO_SCORE_MARKER && !isNaN(score)) {
-                        outScoreTotal += score;
+                    const holeNum = i + 1;
+                    const score = inputEl.value.trim() === '' ? 0 : parseInt(inputEl.value);
+                    const holeDetail = userCourses_GS.find(t => t.id === scoreTeeSelectEl.value)?.holeDetails[holeNum.toString()];
+                    const par = holeDetail ? parseInt(holeDetail.par) : 0;
+
+                    if (i < 9) {
+                        if(!isNaN(par)) frontNinePar += par;
+                        if(!isNaN(score)) frontNineScore += score;
+                    } else {
+                        if(!isNaN(par)) backNinePar += par;
+                        if(!isNaN(score)) backNineScore += score;
                     }
                 }
             }
-            const outScoreTotalEl = document.getElementById('out-score-total');
-            if (outScoreTotalEl) outScoreTotalEl.textContent = outScoreTotal;
 
-            // Calculate IN scores (Holes 10-18, inputs score-input-9 to score-input-17)
-            for (let i = 9; i < 18; i++) { 
-                const inputEl = document.getElementById(`score-input-${i}`);
-                if (inputEl) {
-                    const score = inputEl.value.trim() === '' ? NO_SCORE_MARKER : parseInt(inputEl.value);
-                    rawScoresForAGS[(i + 1).toString()] = score; 
-                    if (score !== NO_SCORE_MARKER && !isNaN(score)) {
-                        inScoreTotal += score;
-                    }
-                }
-            }
-            const inScoreTotalEl = document.getElementById('in-score-total');
-            if (inScoreTotalEl) inScoreTotalEl.textContent = inScoreTotal;
+            const frontNineParEl = document.getElementById('front-9-par-total');
+            if (frontNineParEl) frontNineParEl.textContent = frontNinePar > 0 ? frontNinePar : '-';
+            const frontNineScoreEl = document.getElementById('front-9-score-total');
+            if (frontNineScoreEl) frontNineScoreEl.textContent = frontNineScore;
 
-            const total18RawGrossEl = document.getElementById('total-18-raw-gross');
-            if (total18RawGrossEl) {
-                total18RawGrossEl.textContent = outScoreTotal + inScoreTotal;
-            }
-
-            const selectedGolferId = scoreGolferSelectEl.value;
-            const selectedTeeId = scoreTeeSelectEl.value;
-            const golfer = golfers_GS.find(g => g.id === selectedGolferId);
-            const selectedTee = userCourses_GS.find(t => t.id === selectedTeeId); // Original full tee data
-
-            const agsDisplayEl = document.getElementById('total-18-ags'); // Assuming this element is used for AGS display
-            const agsLabelEl = agsDisplayEl ? agsDisplayEl.closest('div').querySelector('span.font-medium') : null;
-
-            if (!golfer || !selectedTee) {
-                if (agsDisplayEl) agsDisplayEl.textContent = 'N/A';
-                if (agsLabelEl) agsLabelEl.textContent = 'Adjusted Gross (AGS):';
-                console.warn("[updateDynamicScorecardTotals_GS] Golfer or Tee not selected for AGS calculation.");
-                return;
-            }
-
-            // Determine currentRoundType and currentProcessedHoleDetails (mimicking handleTeeSelectionChange_GS)
-            let determinedTeeType = selectedTee.teeType;
-            if (selectedTee.numHoles === 9 && (!determinedTeeType || (determinedTeeType !== 'Front 9' && determinedTeeType !== 'Back 9'))) {
-                const teeIdLower = selectedTee.id.toLowerCase();
-                if (teeIdLower.includes('_f9') || teeIdLower.includes('front')) determinedTeeType = 'Front 9';
-                else if (teeIdLower.includes('_b9') || teeIdLower.includes('back')) determinedTeeType = 'Back 9';
-                else determinedTeeType = 'Front 9'; // Default for ambiguous 9-hole
-            }
-
-            let currentRoundType = '18hole';
-            if (selectedTee.numHoles === 9) {
-                currentRoundType = determinedTeeType === 'Back 9' ? '9holeBack' : '9holeFront';
-            } else if (selectedTee.numHoles === 18) {
-                currentRoundType = '18hole';
-            }
-
-            let currentProcessedHoleDetails = {};
-            if (currentRoundType === '9holeFront') {
-                for (let i = 1; i <= 9; i++) currentProcessedHoleDetails[i.toString()] = selectedTee.holeDetails[i.toString()] || { par: '-', si: '-' };
-            } else if (currentRoundType === '9holeBack') {
-                for (let i = 1; i <= 9; i++) currentProcessedHoleDetails[(i + 9).toString()] = selectedTee.holeDetails[i.toString()] || { par: '-', si: '-' };
-            } else { // 18hole
-                for (let i = 1; i <= 18; i++) currentProcessedHoleDetails[i.toString()] = selectedTee.holeDetails[i.toString()] || { par: '-', si: '-' };
-            }
-
-            const intendedRoundLengthForAGS = (currentRoundType === '9holeFront' || currentRoundType === '9holeBack') ? 9 : 18;
-            const actualPlayedHolesForAGS = intendedRoundLengthForAGS; // For dynamic totals, assume all intended holes considered
-
-            const rawScoresForAGS_scoped = {};
-            let startInputIndex = 0, endInputIndex = 8; // Default for 9holeFront
-            if (currentRoundType === '9holeBack') { startInputIndex = 9; endInputIndex = 17; }
-            else if (currentRoundType === '18hole') { endInputIndex = 17; }
-
-            for (let i = startInputIndex; i <= endInputIndex; i++) {
-                const inputEl = document.getElementById(`score-input-${i}`);
-                if (inputEl) {
-                    const score = inputEl.value.trim() === '' ? NO_SCORE_MARKER : parseInt(inputEl.value);
-                    const holeKey = (currentRoundType === '9holeBack' ? (i - 9 + 10) : (i + 1)).toString();
-                    rawScoresForAGS_scoped[holeKey] = score;
-                }
-            }
-            
-            const golferHI = golfer.hiEstablished ? golfer.hi : (golfer.initialHi !== null ? golfer.initialHi : undefined);
-            if (golferHI === undefined) {
-                console.warn("Golfer HI not available for AGS calculation.");
-                if (agsDisplayEl) agsDisplayEl.textContent = 'N/A (No HI)';
-                if (agsLabelEl) agsLabelEl.textContent = `Adjusted Gross (${intendedRoundLengthForAGS} Holes):`;
-                return;
-            }
-
-            let courseHandicapForNDB;
-            // IMPORTANT: This assumes 'selectedTee' has appropriate SR/CR/Par for the 'intendedRoundLengthForAGS'.
-            // If selectedTee is always 18-hole data, this needs adjustment for 9-hole rounds (e.g. using frontNineSlope etc.)
-            if (intendedRoundLengthForAGS === 9) {
-                // Attempt to use 9-hole specific ratings if available on the selectedTee object, 
-                // or if selectedTee itself represents a 9-hole course.
-                let nineHSR = selectedTee.slopeRating, nineHCR = selectedTee.courseRating, nineHPar = selectedTee.par;
-                if (selectedTee.numHoles === 18) { // If it's an 18-hole tee but we're playing 9
-                    if (currentRoundType === '9holeFront') {
-                        nineHSR = selectedTee.frontNineSlope || selectedTee.slopeRating / 2; // Fallback if specific not present
-                        nineHCR = selectedTee.frontNineCourseRating || selectedTee.courseRating / 2;
-                        nineHPar = selectedTee.frontNinePar || selectedTee.par / 2;
-                    } else { // 9holeBack
-                        nineHSR = selectedTee.backNineSlope || selectedTee.slopeRating / 2;
-                        nineHCR = selectedTee.backNineCourseRating || selectedTee.courseRating / 2;
-                        nineHPar = selectedTee.backNinePar || selectedTee.par / 2;
-                    }
-                }
-                console.log('[updateDynamicScorecardTotals_GS] Inputs for 9-hole CH: HI:', golferHI, 'SR:', nineHSR, 'CR:', nineHCR, 'Par:', nineHPar);
-                courseHandicapForNDB = calculate9HoleCourseHandicap_WHS(golferHI, nineHSR, nineHCR, nineHPar);
-            } else {
-                courseHandicapForNDB = calculate18HoleCourseHandicap_WHS(golferHI, selectedTee.slopeRating, selectedTee.courseRating, selectedTee.par);
-            }
-
-            console.log('[updateDynamicScorecardTotals_GS] --- DIAGNOSTICS ---');
-            console.log('[updateDynamicScorecardTotals_GS] currentRoundType:', currentRoundType);
-            console.log('[updateDynamicScorecardTotals_GS] rawScoresForAGS_scoped keys:', Object.keys(rawScoresForAGS_scoped));
-            // console.log('[updateDynamicScorecardTotals_GS] rawScoresForAGS_scoped content:', JSON.stringify(rawScoresForAGS_scoped)); // Uncomment for more detail if needed
-            console.log('[updateDynamicScorecardTotals_GS] currentProcessedHoleDetails keys:', Object.keys(currentProcessedHoleDetails));
-            console.log('[updateDynamicScorecardTotals_GS] actualPlayedHolesForAGS:', actualPlayedHolesForAGS);
-            console.log('[updateDynamicScorecardTotals_GS] intendedRoundLengthForAGS:', intendedRoundLengthForAGS);
-            console.log('[updateDynamicScorecardTotals_GS] --- END DIAGNOSTICS ---');
-
-            const { ags } = calculateAGS_WHS(
-                rawScoresForAGS_scoped,
-                currentProcessedHoleDetails, // This is now correctly scoped for the round
-                actualPlayedHolesForAGS,    // 9 or 18
-                intendedRoundLengthForAGS,  // 9 or 18
-                courseHandicapForNDB,
-                golfer.hiEstablished,
-                false // Disable logging for dynamic updates
-            );
-
-            if (agsDisplayEl) agsDisplayEl.textContent = ags;
-            if (agsLabelEl) agsLabelEl.textContent = `Adjusted Gross (${intendedRoundLengthForAGS} Holes):`;
+            const backNineParEl = document.getElementById('back-9-par-total');
+            if (backNineParEl) backNineParEl.textContent = backNinePar > 0 ? backNinePar : '-';
+            const backNineScoreEl = document.getElementById('back-9-score-total');
+            if (backNineScoreEl) backNineScoreEl.textContent = backNineScore;
         }
 
+        // Deprecated function - no longer used with the new card-based layout
         function generateScoreHoleInputs_GS(numHoles, holeDetails, existingScores = null) { 
-            scoreHoleEntriesContainerEl.innerHTML = ''; 
-            const header = document.createElement('h3');
-            header.className = 'text-lg font-medium text-gray-700 mb-4';
-            header.textContent = `Enter Scores for ${numHoles} Holes:`;
-            scoreHoleEntriesContainerEl.appendChild(header);
-            const scrollWrapper = document.createElement('div');
-            scrollWrapper.className = 'max-h-[28rem] overflow-y-auto hole-details-container pr-3';
-            const grid = document.createElement('div');
-            grid.className = 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-x-4 gap-y-4';
-            for (let i = 1; i <= numHoles; i++) {
-                const holeData = holeDetails[i]; 
-                if (!holeData && numHoles <=18) { 
-                    const fullCourseTee = userCourses_GS.find(t => t.id === scoreTeeSelectEl.value);
-                } else if (!holeData) {
-                    console.warn(`No hole detail for hole ${i} (numHoles: ${numHoles})`);
-                    continue;
-                }
-                const holeDiv = document.createElement('div');
-                holeDiv.className = 'hole-input-item flex flex-col space-y-1.5 p-3 rounded-lg';
-                const prefillScore = existingScores && existingScores[i] !== undefined ? existingScores[i] : '';
-                // Removed 'required' attribute, updated placeholder
-                holeDiv.innerHTML = `<label for="scoreHole${i}" class="font-semibold text-center">H${i} <span class="font-normal text-gray-500">(P${holeData.par}, SI${holeData.si})</span></label>
-                    <input type="text" id="scoreHole${i}" name="scoreHole${i}" placeholder="Score / No Score" min="1" max="99" class="form-input p-2 text-sm text-center" value="${prefillScore}">`;
-                grid.appendChild(holeDiv);
-            }
-            scrollWrapper.appendChild(grid); 
-            scoreHoleEntriesContainerEl.appendChild(scrollWrapper);
-            // Show help text if it was hidden and inputs are generated
-            if(holeScoreHelpTextEl && holeScoreHelpTextEl.classList.contains('hidden') && numHoles > 0) {
-                holeScoreHelpTextEl.classList.remove('hidden');
-            }
+            // This function is intentionally left empty as it has been replaced by the new scorecard rendering logic.
         }
-
+        
         // --- WHS Calculation Logic Functions ---
         function logToCalcDisplay(message) { if (calculationLogPreEl) { calculationLogPreEl.textContent += message + "\n"; calculationLogPreEl.scrollTop = calculationLogPreEl.scrollHeight; } else { console.log(message); } }
 
@@ -2298,6 +2067,7 @@ if (score.hiAtTimeOfPosting !== null && score.ags !== null && score.playedHoles 
             renderSavedGolfers_GS();
             populateGolferSelect_GS();
             populateCourseSelect_GS(); 
+            setupStepNavigation();
 
             if(scoreDateInputEl) {
                 scoreDateInputEl.valueAsDate = new Date();
@@ -2348,6 +2118,22 @@ if (score.hiAtTimeOfPosting !== null && score.ags !== null && score.playedHoles 
             if (currentYearSpan) currentYearSpan.textContent = new Date().getFullYear();
             setActiveNavLink_GS();
             initGolfersPage_GS();
+        });
+    </script>
+    <script>
+        const mobileMenuButton = document.getElementById('mobile-menu-button');
+        const mobileMenu = document.getElementById('mobile-menu');
+        const openIcon = mobileMenuButton.querySelector('svg.block');
+        const closeIcon = mobileMenuButton.querySelector('svg.hidden');
+
+        mobileMenuButton.addEventListener('click', () => {
+            const isExpanded = mobileMenuButton.getAttribute('aria-expanded') === 'true';
+            mobileMenuButton.setAttribute('aria-expanded', !isExpanded);
+            mobileMenu.style.display = isExpanded ? 'none' : 'block';
+            openIcon.classList.toggle('hidden');
+            openIcon.classList.toggle('block');
+            closeIcon.classList.toggle('hidden');
+            closeIcon.classList.toggle('block');
         });
     </script>
 </body>

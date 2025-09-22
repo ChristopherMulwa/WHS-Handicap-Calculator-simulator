@@ -378,7 +378,7 @@
     </div>
 
     <footer class="footer">
-        <p>&copy; <span id="currentYear"></span> WHS Simulator. Developed and maintained by SIRCH SOLUTIONS KE. For educational purposes only.</p>
+        <p>&copy; <span id="currentYear"></span> WHS Simulator. Developed and maintained by Devsirch-HUB. For educational purposes only.</p>
     </footer>
 
     <script>
@@ -552,6 +552,45 @@ function initAccordion() {
         // --- Page Load Event Listener ---
         document.addEventListener('DOMContentLoaded', () => {
             const currentYearSpan = document.getElementById('currentYear');
+            if (currentYearSpan) {
+                currentYearSpan.textContent = new Date().getFullYear();
+            }
+            setActiveNavLink_Help(); 
+            initAccordion(); // Initialize the accordion
+        });
+    </script>
+    <script>
+        const mobileMenuButton = document.getElementById('mobile-menu-button');
+        const mobileMenu = document.getElementById('mobile-menu');
+        const openIcon = mobileMenuButton.querySelector('svg.block');
+        const closeIcon = mobileMenuButton.querySelector('svg.hidden');
+
+        mobileMenuButton.addEventListener('click', () => {
+            const isExpanded = mobileMenuButton.getAttribute('aria-expanded') === 'true';
+            mobileMenuButton.setAttribute('aria-expanded', !isExpanded);
+            mobileMenu.style.display = isExpanded ? 'none' : 'block';
+            openIcon.classList.toggle('hidden');
+            openIcon.classList.toggle('block');
+            closeIcon.classList.toggle('hidden');
+            closeIcon.classList.toggle('block');
+        });
+    </script>
+</body>
+</html>
+
+        // --- Page Load Event Listener ---
+        document.addEventListener('DOMContentLoaded', () => {
+            const currentYearSpan = document.getElementById('currentYear');
+            if (currentYearSpan) {
+                currentYearSpan.textContent = new Date().getFullYear();
+            }
+            setActiveNavLink_Help(); 
+            initAccordion(); // Initialize the accordion
+        });
+    </script>
+</body>
+</html>
+
             if (currentYearSpan) {
                 currentYearSpan.textContent = new Date().getFullYear();
             }
